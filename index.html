@@ -295,7 +295,7 @@ button.pocket{cursor:pointer}
 .sheet-head h3{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.25;min-width:0}
 .sheet-x{border:0;background:var(--sunk);width:32px;height:32px;border-radius:999px;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);flex:0 0 auto;display:grid;place-items:center;padding:0}
 .sheet-form{display:flex;flex-direction:column;gap:12px}
-.sheet-form label,.confirm label,.edit label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted);min-width:0}
+.sheet-form label,.sheet-form .field,.confirm label,.edit label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted);min-width:0}
 .sheet-form h4,.sec-title{margin:14px 0 0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
 .sheet-form textarea,#sheetBody textarea{width:100%;font:13px/1.4 ui-monospace,Menlo,monospace}
 .row-btns{display:flex;gap:8px;flex-wrap:wrap}
@@ -508,12 +508,12 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
         <option value="name">Name</option>
       </select>
     </label>
-    <label>Layout
-      <div class="seg" role="group" aria-label="Layout" id="layoutSeg">
+    <div class="field"><span id="layoutLbl">Layout</span>
+      <div class="seg" role="group" aria-labelledby="layoutLbl" id="layoutSeg">
         <button type="button" data-layout="grid" aria-pressed="true">Grid</button>
         <button type="button" data-layout="rows" aria-pressed="false">List</button>
       </div>
-    </label>
+    </div>
     <div class="row-btns">
       <button type="button" class="chip-toggle" id="prioOnly" aria-pressed="false">Priority only</button>
       <button type="button" class="chip-toggle" id="selectBtn" aria-pressed="false" hidden>Select cards</button>
@@ -916,7 +916,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     for (const n of collsOf(c)) flags.append(el("button", { class: "collchip", type: "button", text: n, title: "Show " + n, onclick: () => setColl(n) }));
     if (flags.childNodes.length) who.append(flags);
     const right = el("div", { class: "rprice" });
-    if (sp) right.append(sp.amt ? el("span", { class: "amt" + (sp.deal ? " deal" : ""), text: sp.amt }) : null, el("small", { text: sp.label }));
+    if (sp) { if (sp.amt) right.append(el("span", { class: "amt" + (sp.deal ? " deal" : ""), text: sp.amt })); right.append(el("small", { text: sp.label })); }
     if (canWrite && !state.selecting) right.prepend(el("button", { class: "star", type: "button", "aria-pressed": String(!!c.priority), "aria-label": "Priority", title: "Mark as priority", onclick: () => save(c, { priority: !c.priority }) }, starIcon()));
     else if (c.priority) right.prepend(el("span", { class: "prio-mark", "aria-label": "Priority" }, svg(STAR)));
     r.append(thumb(c), who, right);
@@ -1703,7 +1703,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     const fig = el("span", { class: "pick-img" });
     if (src) { const img = el("img", { src, alt: "", loading: "lazy", decoding: "async" }); img.addEventListener("error", () => { img.remove(); fig.append(el("span", { class: "noimg", text: name })); }, { once: true }); fig.append(img); }
     else fig.append(el("span", { class: "noimg", text: name }));
-    tile.append(fig, el("span", { class: "pick-name", text: name }), el("span", { class: "pick-sub", text: sub }), tag ? el("span", { class: "pick-tag", text: already ? "In binder" : tag }) : null);
+    tile.append(fig, el("span", { class: "pick-name", text: name }), el("span", { class: "pick-sub", text: sub })); if (tag) tile.append(el("span", { class: "pick-tag", text: already ? "In binder" : tag }));
     return tile;
   }
   function loadCatalog() {
@@ -1802,7 +1802,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   }
 
   /* ---------- app chrome ---------- */
-  wireSheet("#detailSheet", closeDetail);
+  wireSheet("#detailSheet", () => { closeDetail(); $("#detailBody").textContent = ""; });
   wireSheet("#optSheet"); wireSheet("#addSheet"); wireSheet("#acctSheet");
   $("#addBtn").addEventListener("click", () => { openPanel("#addSheet"); if (!matchMedia("(pointer:coarse)").matches || $("#confirmForm").hidden) setTimeout(() => ($("#confirmForm").hidden ? $("#quick") : $("#cName")).focus(), 60); });
   $("#acctBtn").addEventListener("click", () => openPanel("#acctSheet"));
