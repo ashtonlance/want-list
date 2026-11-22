@@ -287,6 +287,35 @@ button.pocket{cursor:pointer}
 .sheet-card{background:var(--surface);color:var(--ink);width:min(640px,100%);max-height:calc(100% - env(safe-area-inset-top,0px) - 12px);overflow:auto;overscroll-behavior:contain;
   border-radius:20px 20px 0 0;padding:6px var(--gx) calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.18);animation:up .28s cubic-bezier(.2,.8,.2,1);touch-action:pan-y}
 @media (min-width:700px){.sheet{align-items:center;padding:24px}.sheet-card{border-radius:20px;max-height:86vh;padding-bottom:20px}}
+/* ---------- scan binder pages ---------- */
+.scanview{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto;overscroll-behavior:contain;animation:fade .2s}
+.scan-in{max-width:640px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 6px) var(--gx) calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.scan-head{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:3;background:var(--bg);padding:10px 0 6px;margin-top:-6px}
+.scan-head h3{flex:1;margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em;text-align:center;min-width:0}
+.scan-sp{width:32px;flex:0 0 auto}
+.scanview .sheet-form > label.btn{color:var(--accent-ink);font-size:15px}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.scan-confirm{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;display:flex;flex-direction:column;gap:10px}
+.scan-confirm p{margin:0;font-weight:600;font-size:15px}
+.crop{position:relative;align-self:center;max-width:100%;line-height:0;border-radius:10px;overflow:hidden;background:#000}
+.crop-img{display:block;max-width:100%;max-height:62vh;width:auto;height:auto}
+.crop-svg{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.scan-foot{display:flex;flex-direction:column;gap:8px;align-items:stretch;text-align:center}
+.scan-foot .btn.wide{width:100%}
+.scan-read{display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;padding:40px 0}
+.scan-read p{margin:0}
+#scanMsg{font-weight:600;font-size:16px}
+.scan-prog{width:100%;height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}
+#scanBar{height:100%;width:0;background:var(--ink);transition:width .3s}
+.scan-sum{margin:0;font-size:16px;line-height:1.4}
+.scan-page{background:var(--sleeve)}
+.scan-tile .scan-flag{position:absolute;left:4px;top:4px;background:#fff;color:#111;font:700 10.5px/1 var(--f);padding:4px 6px;border-radius:999px;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.scan-tile.empty .plus{font-size:11px;font-weight:600;letter-spacing:.02em}
+.scan-cmp{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.scan-cmp figure{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.scan-cmp img,.scan-cmp .scan-blank,.scan-cmp .noimg{width:100%;aspect-ratio:63/88;object-fit:cover;border-radius:8px;background:var(--sunk);display:grid;place-items:center;color:var(--muted);font-weight:600;font-size:14px;box-shadow:var(--card-shadow)}
+.scan-cmp figcaption{font-size:13px;color:var(--muted);line-height:1.3;overflow-wrap:anywhere}
+.scanview input[type=search]{width:100%}
 @keyframes up{from{transform:translateY(100%)}}
 @keyframes fade{from{opacity:0}}
 @media (prefers-reduced-motion:reduce){.sheet,.sheet-card{animation:none}.skel{animation:none}}
@@ -490,6 +519,8 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 
 <div class="toast" id="toast" role="status" hidden></div>
 
+<div class="scanview" id="scan" hidden><div class="scan-in" id="scanBody" role="dialog" aria-modal="true" aria-label="Scan binder pages"></div></div>
+
 <div class="sheet" id="sheet" hidden><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Binder editor"><div class="sheet-grip" aria-hidden="true"></div><div id="sheetBody"></div></div></div>
 
 <div class="sheet" id="detailSheet" hidden><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Card details"><div class="sheet-grip" aria-hidden="true"></div><div id="detailBody"></div></div></div>
@@ -596,7 +627,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   const PLUS = '<path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>';
   const TICK = '<path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
   /* Sheets other than the binder editor: open, close, backdrop tap, drag the grip down to dismiss. */
-  const overlays = ["#sheet", "#detailSheet", "#optSheet", "#addSheet", "#acctSheet", "#lightbox"];
+  const overlays = ["#scan", "#sheet", "#detailSheet", "#optSheet", "#addSheet", "#acctSheet", "#lightbox"];
   const syncLock = () => document.body.classList.toggle("sheet-open", overlays.some(s => !$(s).hidden));
   const sheetClosers = {};
   function openPanel(id) { $(id).hidden = false; syncLock(); }
@@ -1499,13 +1530,16 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
         el("b", { text: b.name }), el("span", { text: filled + " of " + b.slots.length + " pockets" })));
     }
     tabs.append(el("button", { class: "colltab new", type: "button", text: "+ New binder", onclick: () => openSheet("new") }));
+    if (canScan()) tabs.append(el("button", { class: "colltab new", type: "button", text: "Scan pages", onclick: openScan }));
     box.append(tabs);
     const b = curBinder();
     if (!b && !B.loaded && !B.local && db) { box.append(skeletonGrid("ex-grid", 4)); return; }
     if (!b) {
       box.append(el("div", { class: "empty-state" },
         el("p", { style: "margin:0 0 12px", text: "Lay out binder pages before you buy. Tap a pocket, pick a card from your list or any card that exists, and move things around until the page looks right." }),
-        el("button", { class: "btn primary", type: "button", text: "Make your first binder", onclick: () => openSheet("new") })));
+        el("div", { class: "row-btns", style: "justify-content:center" },
+          el("button", { class: "btn primary", type: "button", text: "Make your first binder", onclick: () => openSheet("new") }),
+          canScan() ? el("button", { class: "btn", type: "button", text: "Scan binder pages", onclick: openScan }) : null)));
       return;
     }
     const filled = b.slots.filter(Boolean).map(slotInfo).filter(Boolean);
@@ -1581,6 +1615,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
         el("label", {}, "Pockets per page", (() => { const s = el("select", { id: "bPockets" }); for (const n of [4, 9, 12]) { const o = el("option", { value: n, text: n + " pockets" }); if (n === 9) o.selected = true; s.append(o); } return s; })()),
         el("button", { class: "btn primary", type: "submit", text: "Make binder" }));
       f.append(el("button", { class: "btn", type: "button", text: "Import a shared code", onclick: () => { B.sheet.kind = "import"; drawSheet(); } }));
+      if (canScan()) f.append(el("button", { class: "btn", type: "button", text: "Scan photos of binder pages", onclick: openScan }));
       f.addEventListener("submit", e => { e.preventDefault(); const n = cleanName($("#bName").value), np = +$("#bPockets").value; if (!n) return; closeSheet(); newBinder(n, np); });
       body.append(sheetHead("New binder"), f); setTimeout(() => $("#bName")?.focus(), 50); return;
     }
@@ -1723,6 +1758,309 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
       closeSheet(); persist(b, "Added " + s.n + " to your want list");
     } catch { toast("Couldn't add it. Try again."); }
   }
+  /* ---------- Scan binder pages: photo → pockets → read → review → save (nothing saves until Save) ---------- */
+  const GRID = { 4: [2, 2], 9: [3, 3], 12: [4, 3] };
+  let SC = null, scanLib = null;
+  const canScan = () => !!db && canWrite && !B.local;
+  function loadScanLib() {
+    if (!scanLib) scanLib = new Promise((res, rej) => { if (window.WLScan) return res(window.WLScan);
+      const s = document.createElement("script"); s.src = "scan.js?v=2"; s.onload = () => res(window.WLScan); s.onerror = () => { scanLib = null; rej(new Error("scan.js")); }; document.head.append(s); });
+    return scanLib;
+  }
+  function openScan() {
+    if (!canScan()) { toast("Sign in as an editor to scan pages"); return; }
+    closeSheet();
+    const cur = curBinder();
+    SC = { step: "setup", pockets: cur ? cur.pockets : 9, dest: "new", name: "", photos: [], cur: 0, pages: [], fix: -1, q: "" };
+    $("#scan").hidden = false; syncLock(); drawScan();
+    loadScanLib().catch(() => {}); loadCatalog();
+  }
+  function scanHasWork() { return SC && (SC.photos.length || SC.pages.length) && SC.step !== "saving"; }
+  function closeScan(force) {
+    if (!SC) return;
+    if (!force && scanHasWork()) { SC.confirmClose = true; drawScan(); return; }
+    SC.abort = true; for (const p of SC.photos) if (p.url) URL.revokeObjectURL(p.url);
+    SC = null; $("#scan").hidden = true; $("#scanBody").textContent = ""; syncLock();
+  }
+  function scanHead(title, back) {
+    return el("div", { class: "scan-head" },
+      back ? el("button", { class: "sheet-x", type: "button", "aria-label": "Back", text: "‹", onclick: back }) : el("span", { class: "scan-sp" }),
+      el("h3", { text: title }),
+      el("button", { class: "sheet-x", type: "button", "aria-label": "Close", text: "×", onclick: () => closeScan() }));
+  }
+  function drawScan() {
+    const body = $("#scanBody"); if (!SC) return; body.textContent = "";
+    const titles = { setup: "Scan binder pages", crop: "Line up page " + (SC.cur + 1), read: "Reading your pages", review: "Check your pages", fix: "Fix this pocket", saving: "Saving" };
+    body.append(scanHead(titles[SC.step], SC.step === "fix" ? () => { SC.step = "review"; drawScan(); } : SC.step === "crop" && SC.cur > 0 ? () => { SC.cur--; drawScan(); } : null));
+    if (SC.confirmClose) {
+      body.append(el("div", { class: "scan-confirm", role: "alert" },
+        el("p", { text: "Leave without saving? The photos and matches from this scan will be lost." }),
+        el("div", { class: "row-btns" },
+          el("button", { class: "btn danger", type: "button", text: "Leave", onclick: () => closeScan(true) }),
+          el("button", { class: "btn", type: "button", text: "Keep going", onclick: () => { SC.confirmClose = false; drawScan(); } }))));
+    }
+    ({ setup: scanSetup, crop: scanCrop, read: scanReading, review: scanReview, fix: scanFix, saving: scanSaving })[SC.step](body);
+  }
+
+  function scanSetup(body) {
+    const seg = el("div", { class: "seg", role: "group", "aria-label": "Pockets per page" });
+    for (const n of [4, 9, 12]) seg.append(el("button", { type: "button", "aria-pressed": String(SC.pockets === n), text: GRID[n][0] + " × " + GRID[n][1],
+      onclick: () => { SC.pockets = n; const d = B.list.find(b => b.id === SC.dest); if (d && d.pockets !== n) SC.dest = "new"; drawScan(); } }));
+    const dest = el("select", { "aria-label": "Where the pages go" });
+    dest.append(el("option", { value: "new", text: "A new binder" }));
+    for (const b of B.list.filter(b => b.pockets === SC.pockets)) { const o = el("option", { value: b.id, text: "Add to " + b.name }); if (SC.dest === b.id) o.selected = true; dest.append(o); }
+    const name = el("input", { type: "text", value: SC.name, placeholder: "Binder name", "aria-label": "Binder name", autocomplete: "off" });
+    name.addEventListener("input", () => { SC.name = name.value; });
+    dest.addEventListener("change", () => { SC.dest = dest.value; drawScan(); });
+    const file = el("input", { type: "file", accept: "image/*", multiple: true, class: "vh", id: "scanFile" });
+    file.addEventListener("change", () => {
+      const files = [...file.files].filter(f => /^image\//.test(f.type) || /\.(jpe?g|png|heic|webp)$/i.test(f.name)); if (!files.length) return;
+      if (SC.dest === "new" && !cleanName(SC.name)) SC.name = "Scanned binder";
+      const [cols, rows] = GRID[SC.pockets];
+      SC.photos = files.slice(0, 12).map(f => ({ file: f, url: URL.createObjectURL(f), rot: 0, corners: null, cols, rows }));
+      if (files.length > 12) toast("Using the first 12 photos");
+      SC.cur = 0; SC.step = "crop"; drawScan();
+    });
+    body.append(el("div", { class: "sheet-form" },
+      el("p", { class: "hint", text: "Take a photo of each binder page, straight on, with the whole page in the frame. I'll read every pocket and show you what I found before anything is saved." }),
+      el("div", { class: "field" }, el("span", { text: "Pockets per page" }), seg),
+      el("label", {}, "Where the pages go", dest),
+      SC.dest === "new" ? el("label", {}, "Binder name", name) : null,
+      file,
+      el("label", { class: "btn primary", for: "scanFile", text: "Choose page photos" }),
+      el("p", { class: "hint", text: "You can pick several photos at once, one per page. On iPhone you can also take them now." })));
+  }
+
+  /* Draw the photo turned by rot quarter-turns, long side up to max px. */
+  function turned(img, rot, max) {
+    const w0 = img.naturalWidth, h0 = img.naturalHeight, k = Math.min(1, max / Math.max(w0, h0)), w = Math.round(w0 * k), h = Math.round(h0 * k);
+    const c = document.createElement("canvas"); const side = rot % 2; c.width = side ? h : w; c.height = side ? w : h;
+    const x = c.getContext("2d"); x.imageSmoothingQuality = "high"; x.translate(c.width / 2, c.height / 2); x.rotate(rot * Math.PI / 2); x.drawImage(img, -w / 2, -h / 2, w, h); return c;
+  }
+  async function photoImg(p) { if (!p.img) p.img = await (await loadScanLib()).fileToImage(p.file); return p.img; }
+
+  async function scanCrop(body) {
+    const p = SC.photos[SC.cur], wrap = el("div", { class: "crop" }), status = el("p", { class: "hint", text: "Opening photo…" });
+    body.append(el("p", { class: "hint", text: "Drag the four dots to the corners of the page so the grid sits over the pockets." }), wrap, status);
+    let img; try { img = await photoImg(p); } catch { status.textContent = "Couldn't open that photo. Try a JPEG or PNG, or skip it."; img = null; }
+    if (!SC || SC.photos[SC.cur] !== p || SC.step !== "crop") return;
+    const acts = el("div", { class: "row-btns" });
+    if (img) {
+      const view = turned(img, p.rot, 1400); view.className = "crop-img";
+      if (!p.corners) { const m = 0.04; p.corners = [[m, m], [1 - m, m], [1 - m, 1 - m], [m, 1 - m]]; }
+      const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.setAttribute("viewBox", "0 0 " + view.width + " " + view.height); svg.setAttribute("class", "crop-svg");
+      wrap.append(view, svg);
+      const W = view.width, H = view.height, rr = Math.max(W, H) / 40;
+      const ns = (t, a) => { const e = document.createElementNS("http://www.w3.org/2000/svg", t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+      function paint() {
+        svg.textContent = "";
+        const q = p.corners.map(([u, v]) => [u * W, v * H]), Hm = WLScan.squareToQuad(q);
+        const map = (u, v) => { const d = Hm[6] * u + Hm[7] * v + 1; return [(Hm[0] * u + Hm[1] * v + Hm[2]) / d, (Hm[3] * u + Hm[4] * v + Hm[5]) / d]; };
+        const lw = Math.max(W, H) / 400;
+        svg.append(ns("polygon", { points: q.map(x => x.join(",")).join(" "), fill: "rgba(255,255,255,.08)", stroke: "#fff", "stroke-width": lw * 2 }));
+        for (let i = 1; i < p.cols; i++) { const [a, b] = [map(i / p.cols, 0), map(i / p.cols, 1)]; svg.append(ns("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: "#fff", "stroke-width": lw, "stroke-dasharray": lw * 6 })); }
+        for (let j = 1; j < p.rows; j++) { const [a, b] = [map(0, j / p.rows), map(1, j / p.rows)]; svg.append(ns("line", { x1: a[0], y1: a[1], x2: b[0], y2: b[1], stroke: "#fff", "stroke-width": lw, "stroke-dasharray": lw * 6 })); }
+        q.forEach(([x, y], k) => { const g = ns("g", { class: "crop-h", "data-k": k });
+          g.append(ns("circle", { cx: x, cy: y, r: rr * 1.8, fill: "transparent" }), ns("circle", { cx: x, cy: y, r: rr * 0.55, fill: "#fff", stroke: "#111", "stroke-width": lw * 1.5 })); svg.append(g); });
+      }
+      paint();
+      let drag = null;
+      const at = e => { const r = svg.getBoundingClientRect(); return [Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))]; };
+      svg.addEventListener("pointerdown", e => {
+        const r = svg.getBoundingClientRect(); let k = -1, best = 44;
+        p.corners.forEach(([u, v], i) => { const d = Math.hypot(r.left + u * r.width - e.clientX, r.top + v * r.height - e.clientY); if (d < best) { best = d; k = i; } });
+        if (k < 0) return; drag = k; svg.setPointerCapture(e.pointerId); e.preventDefault();
+      });
+      svg.addEventListener("pointermove", e => { if (drag == null) return; p.corners[drag] = at(e); paint(); });
+      const end = () => { drag = null; }; svg.addEventListener("pointerup", end); svg.addEventListener("pointercancel", end);
+      status.textContent = "";
+      acts.append(el("button", { class: "btn", type: "button", text: "Rotate", onclick: () => { p.rot = (p.rot + 1) % 4; p.corners = null; drawScan(); } }),
+        el("button", { class: "btn", type: "button", text: "Reset dots", onclick: () => { p.corners = null; drawScan(); } }));
+    }
+    const last = SC.cur === SC.photos.length - 1;
+    acts.append(el("button", { class: "btn", type: "button", text: "Skip photo", onclick: () => { p.skip = true; nextPhoto(); } }));
+    body.append(acts, el("div", { class: "scan-foot" },
+      img ? el("button", { class: "btn primary wide", type: "button", text: last ? "Read " + (SC.photos.filter(x => !x.skip).length > 1 || SC.cur > 0 ? "the pages" : "this page") : "Next photo", onclick: () => { p.skip = false; nextPhoto(); } }) : null,
+      el("span", { class: "hint", text: "Photo " + (SC.cur + 1) + " of " + SC.photos.length })));
+  }
+  function nextPhoto() {
+    if (SC.cur < SC.photos.length - 1) { SC.cur++; drawScan(); return; }
+    if (!SC.photos.some(p => !p.skip)) { SC.photos = []; SC.step = "setup"; drawScan(); toast("No photos left to read"); return; }
+    runScan();
+  }
+
+  async function runScan() {
+    SC.step = "read"; SC.pages = []; SC.prog = { page: 0, pages: SC.photos.filter(p => !p.skip).length, cell: 0, cells: SC.pockets, msg: "Getting the card reader ready. The first time takes a moment." }; SC.abort = false; drawScan();
+    const run = SC;
+    try {
+      const L = await loadScanLib(); await loadCatalog(); if (!B.catalog) throw new Error("catalog");
+      if (!B.scanIdx || B.scanIdxN !== state.cards.length) {
+        B.scanIdx = L.buildIndex(B.catalog, state.cards.map(c => ({ id: c.id, name: c.name, set: c.set, number: c.number, pid: pidOf(c) })));
+        B.scanIdxN = state.cards.length; B.scanByPid = new Map(); for (const list of B.scanIdx.byName.values()) for (const e of list) B.scanByPid.set(e.pid, e);
+      }
+      await L.getWorker();
+      let n = 0;
+      for (const p of run.photos) {
+        if (p.skip) continue; if (run.abort) return;
+        run.prog.page = ++n; run.prog.cell = 0; run.prog.msg = "Straightening page " + n; scanProgress();
+        await new Promise(r => setTimeout(r, 30));
+        const img = await photoImg(p), src = turned(img, p.rot, 3000);
+        const cells = L.rectify(src, p.corners.map(([u, v]) => [u * src.width, v * src.height]), p.cols, p.rows);
+        src.width = src.height = 0;
+        const page = { cells: [] }; run.pages.push(page);
+        for (let i = 0; i < cells.length; i++) {
+          if (run.abort) return;
+          run.prog.cell = i + 1; run.prog.msg = "Reading pocket " + (i + 1) + " of " + cells.length; scanProgress();
+          const cell = cells[i], t = document.createElement("canvas"); t.width = 240; t.height = 335; t.getContext("2d").drawImage(cell, 0, 0, 240, 335);
+          let m; try { m = await L.matchCell(B.scanIdx, await L.readCell(cell), cell); } catch { m = { conf: "none", alts: [], hint: "" }; }
+          const pick = m.conf === "empty" || m.conf === "none" ? null : m.alts[0] || null;
+          page.cells.push({ photo: t.toDataURL("image/jpeg", 0.75), m, pick, state: m.conf === "empty" ? "empty" : !pick ? "none" : m.conf === "high" ? "sure" : "check" });
+          cell.width = cell.height = 0;
+        }
+        p.img = null; if (p.url) { URL.revokeObjectURL(p.url); p.url = null; }
+      }
+      if (SC !== run) return;
+      run.step = "review"; drawScan();
+    } catch (e) {
+      if (SC !== run) return;
+      run.step = "setup"; run.pages = []; drawScan(); toast("Couldn't load the card reader. Check your connection and try again.");
+    }
+  }
+  function scanProgress() {
+    if (!SC || SC.step !== "read") return;
+    const P = SC.prog, done = (P.page - 1) * P.cells + P.cell, all = P.pages * P.cells;
+    const t = $("#scanMsg"), bar = $("#scanBar"); if (!t) return drawScan();
+    t.textContent = (P.pages > 1 && P.page ? "Page " + P.page + " of " + P.pages + ". " : "") + P.msg;
+    bar.style.width = Math.round(100 * Math.max(0, done) / all) + "%";
+  }
+  function scanReading(body) {
+    body.append(el("div", { class: "scan-read" },
+      el("div", { class: "scan-prog" }, el("div", { id: "scanBar" })),
+      el("p", { id: "scanMsg", text: "" }),
+      el("p", { class: "hint", text: "This runs on your phone, about a second or two per pocket. Keep this screen open." }),
+      el("button", { class: "btn", type: "button", text: "Stop", onclick: () => { SC.abort = true; SC.step = "setup"; SC.pages = []; drawScan(); } })));
+    scanProgress();
+  }
+
+  const cellsAll = () => SC.pages.flatMap(p => p.cells);
+  function scanReview(body) {
+    const all = cellsAll(), cards = all.filter(c => c.pick && c.state !== "empty" && c.state !== "none");
+    const check = all.filter(c => c.state === "check").length, none = all.filter(c => c.state === "none").length;
+    const destB = B.list.find(b => b.id === SC.dest), [cols] = GRID[SC.pockets];
+    body.append(el("p", { class: "scan-sum" }, el("b", { text: cards.length + (cards.length === 1 ? " card" : " cards") + " found" }),
+      document.createTextNode(check || none ? ". " + [check ? check + " to check" : "", none ? none + " I couldn't read" : ""].filter(Boolean).join(", ") + "." : ". Everything looks good.")));
+    body.append(el("p", { class: "hint", text: "Tap any pocket to fix it. Pockets marked Pick stay empty unless you choose a card." }));
+    let k = 0;
+    SC.pages.forEach((pg, pi) => {
+      const grid = el("div", { class: "pockets", style: "--cols:" + cols });
+      for (const c of pg.cells) { const idx = k++; grid.append(scanTile(c, idx)); }
+      body.append(el("div", { class: "page scan-page" }, el("div", { class: "page-label", text: "Page " + (pi + 1) }), grid));
+    });
+    const pages = SC.pages.length;
+    body.append(el("div", { class: "scan-foot" },
+      el("p", { class: "hint", text: "Saving marks these cards as owned (adding any that aren't on your list) and " + (destB ? "adds " + pages + (pages === 1 ? " page" : " pages") + " to " + destB.name : "makes a binder called " + (cleanName(SC.name) || "Scanned binder")) + "." }),
+      el("button", { class: "btn primary wide", type: "button", disabled: !cards.length, text: "Save " + cards.length + (cards.length === 1 ? " card" : " cards"), onclick: scanSave }),
+      el("button", { class: "btn wide", type: "button", text: "Start over", onclick: () => { SC.pages = []; SC.photos = []; SC.step = "setup"; drawScan(); } })));
+  }
+  function scanTile(c, idx) {
+    const btn = el("button", { class: "pocket bpocket scan-tile" + (c.state === "empty" ? " empty" : ""), type: "button", onclick: () => { SC.fix = idx; SC.q = ""; SC.step = "fix"; drawScan(); window.scrollTo(0, 0); $("#scan").scrollTop = 0; } });
+    const label = c.state === "empty" ? "Empty pocket" : c.pick ? c.pick.name + (c.state === "check" ? ", check this" : "") : "Couldn't read, pick a card";
+    btn.setAttribute("aria-label", "Pocket " + ((idx % SC.pockets) + 1) + ": " + label);
+    if (c.state === "empty") { btn.append(el("span", { class: "plus", text: "Empty" })); return btn; }
+    const src = c.pick && c.state !== "none" ? tcgImg(c.pick.pid) : c.photo;
+    const img = el("img", { src, alt: "", loading: "lazy", decoding: "async" }); img.addEventListener("error", () => { img.src = c.photo; }, { once: true });
+    btn.append(img);
+    if (c.state === "check") btn.append(el("span", { class: "scan-flag", text: "Check" }));
+    if (c.state === "none") btn.append(el("span", { class: "scan-flag", text: "Pick" }));
+    return btn;
+  }
+  function choose(c, e) { c.pick = e; c.state = e ? "sure" : "empty"; SC.step = "review"; drawScan(); }
+  function scanFix(body) {
+    const c = cellsAll()[SC.fix]; if (!c) { SC.step = "review"; drawScan(); return; }
+    const pg = Math.floor(SC.fix / SC.pockets) + 1, pk = (SC.fix % SC.pockets) + 1;
+    const cur = c.state !== "none" && c.state !== "empty" ? c.pick : null;
+    const cmp = el("div", { class: "scan-cmp" },
+      el("figure", {}, el("img", { src: c.photo, alt: "Your photo of this pocket" }), el("figcaption", { text: "Your photo" })),
+      el("figure", {}, cur ? (() => { const i = el("img", { src: tcgImg(cur.pid), alt: cur.name }); i.addEventListener("error", () => i.replaceWith(el("span", { class: "noimg", text: cur.name })), { once: true }); return i; })() : el("span", { class: "scan-blank", text: c.state === "empty" ? "Empty" : "No match" }),
+        el("figcaption", { text: cur ? cur.name + " · " + cur.set + " #" + cur.no : "Page " + pg + ", pocket " + pk })));
+    body.append(cmp);
+    const acts = el("div", { class: "row-btns" });
+    if (cur) acts.append(el("button", { class: "btn primary", type: "button", text: "Looks right", onclick: () => choose(c, cur) }));
+    acts.append(el("button", { class: "btn", type: "button", text: "Empty pocket", onclick: () => choose(c, null) }));
+    body.append(acts);
+    const alts = (c.m.alts || []).filter(e => !cur || e.pid !== cur.pid);
+    if (alts.length) {
+      body.append(el("h4", { class: "sec-title", text: cur ? "Or one of these" : "Is it one of these?" }));
+      const g = el("div", { class: "pick-grid" });
+      for (const e of alts) g.append(pickTile(tcgImg(e.pid), e.name, (e.jp ? "Japanese · " : "") + e.set + " · #" + e.no, e.mine ? "On your list" : e.market ? "~" + fmt$(e.market) : "", false, () => choose(c, e)));
+      body.append(g);
+    }
+    body.append(el("h4", { class: "sec-title", text: "Search for it" }));
+    const q = el("input", { type: "search", value: SC.q || c.m.hint || "", placeholder: "Name, set or number", "aria-label": "Search cards", enterkeyhint: "search" });
+    const jp = el("label", { class: "chk" }, el("input", { type: "checkbox" }), document.createTextNode(" Include Japanese"));
+    const res = el("div", { class: "pick-grid" });
+    body.append(q, jp, res);
+    const fill = () => {
+      res.textContent = ""; const qq = q.value.trim().toLowerCase();
+      if (qq.length < 2) { res.append(el("p", { class: "hint", text: "Type the card's name. Add the set or number to narrow it." })); return; }
+      const out = catSearch(qq, jp.firstChild.checked);
+      if (!out.length) { res.append(el("p", { class: "hint", text: "Nothing found. Check the spelling, or try fewer words." })); return; }
+      const C = B.catalog;
+      for (const r of out.slice(0, 60)) { const st = C.sets[r[2]], e = B.scanByPid.get(r[0]);
+        if (e) res.append(pickTile(tcgImg(r[0]), r[1], (st[1] ? "Japanese · " : "") + st[0] + " · #" + r[3], e.mine ? "On your list" : r[5] ? "~" + fmt$(r[5]) : "", false, () => choose(c, e))); }
+    };
+    let t; q.addEventListener("input", () => { SC.q = q.value; clearTimeout(t); t = setTimeout(fill, 150); });
+    jp.firstChild.addEventListener("change", fill);
+    fill();
+  }
+  function catSearch(qq, withJp) {
+    const toks = qq.split(/\s+/), C = B.catalog, out = [];
+    for (const r of C.cards) {
+      const st = C.sets[r[2]]; if (st[1] && !withJp) continue;
+      const hay = r[6] || (r[6] = (r[1] + " " + st[0] + " " + r[3] + " " + (st[1] ? "japanese jp" : "")).toLowerCase());
+      if (toks.every(tk => hay.includes(tk))) out.push(r);
+    }
+    const nm = toks[0];
+    out.sort((a, b2) => ((b2[1].toLowerCase().startsWith(nm)) - (a[1].toLowerCase().startsWith(nm))) || (C.sets[b2[2]][2] || "").localeCompare(C.sets[a[2]][2] || ""));
+    return out;
+  }
+
+  async function scanSave() {
+    if (!canScan()) { toast("Sign in as an editor to save"); return; }
+    const run = SC; run.step = "saving"; run.saved = 0; drawScan();
+    const slots = [], done = new Map(); let made = 0, marked = 0, failed = 0;
+    async function own(e) {
+      if (done.has(e.pid)) return done.get(e.pid);
+      let c = (e.mine && cardById(e.mine)) || state.cards.find(x => +pidOf(x) === e.pid) || cardById(docId([e.name, e.set, e.no].join(" ")));
+      if (c) { if (!isGot(c)) { if (!(await save(c, { status: "got", checkRequested: false }, null, true))) throw new Error("save"); marked++; } done.set(e.pid, c.id); return c.id; }
+      const id = docId([e.name, e.set, e.no].join(" "));
+      await db.collection("cards").doc(id).set({ name: e.name, number: String(e.no), variant: "", set: e.set, lang: e.jp ? "JP" : "EN", note: "", addedAt: today(),
+        ask: e.market ? { kind: "market", amount: e.market, source: "TCGplayer market", asOf: B.catalog && B.catalog.asOf || "" } : { kind: "none", amount: null, source: "", asOf: "" },
+        deal: null, listing: { url: "https://www.tcgplayer.com/product/" + e.pid, site: "TCGplayer", addedAt: today() }, dhUrl: null, img: null, imgSource: "", priority: false,
+        status: "got", checkRequested: false, order: -Date.now(), collections: [], slots: {} });
+      made++; done.set(e.pid, id); return id;
+    }
+    for (const c of cellsAll()) {
+      if (!c.pick || c.state === "empty" || c.state === "none") { slots.push(null); continue; }
+      try { slots.push({ k: "c", id: await own(c.pick) }); } catch { failed++; slots.push(null); }
+      run.saved++; const t = $("#scanMsg"); if (t) t.textContent = "Saved " + run.saved + " of " + run.total;
+    }
+    let b = B.list.find(x => x.id === run.dest);
+    if (b) { const first = pagesOf(b); b.slots = b.slots.concat(slots); B.page = first; }
+    else { b = { id: bid(), name: cleanName(run.name) || "Scanned binder", pockets: run.pockets, slots, createdAt: new Date().toISOString() }; B.list.push(b); B.page = 0; }
+    B.cur = b.id; store.set("wl-binder", b.id);
+    const n = slots.filter(Boolean).length;
+    await persist(b, null);
+    closeScan(true); render();
+    toast("Saved " + n + (n === 1 ? " card" : " cards") + " to " + b.name + (failed ? ". " + failed + " didn't save, so those pockets are empty." : "."));
+  }
+  function scanSaving(body) {
+    SC.total = cellsAll().filter(c => c.pick && c.state !== "empty" && c.state !== "none").length;
+    body.append(el("div", { class: "scan-read" }, el("p", { id: "scanMsg", text: "Saved " + (SC.saved || 0) + " of " + SC.total }), el("p", { class: "hint", text: "Keep this screen open for a moment." })));
+  }
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#scan").hidden) { if (SC && SC.step === "fix") { SC.step = "review"; drawScan(); } else closeScan(); } });
+  window.addEventListener("beforeunload", e => { if (scanHasWork()) { e.preventDefault(); e.returnValue = ""; } });
   $("#sheet").addEventListener("click", e => { if (e.target.id === "sheet") closeSheet(); });
   document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#sheet").hidden) closeSheet(); });
   function startBinders(localOnly, seed) {

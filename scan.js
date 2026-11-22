@@ -234,5 +234,5 @@
     return { conf, alts, hint, nums, img: best.img, margin };
   }
 
-  window.WLScan = { getWorker, fileToImage, toCanvas, rectify, readCell, buildIndex, matchCell, norm, normNo, CW, CH };
+  window.WLScan = { getWorker, fileToImage, toCanvas, rectify, squareToQuad, readCell, buildIndex, matchCell, norm, normNo, CW, CH };
 })();
