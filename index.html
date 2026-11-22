@@ -1,393 +1,535 @@
-<!doctype html><html lang="en"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Ashton's Want List</title>
-<meta name="theme-color" content="#0E1014" media="(prefers-color-scheme: dark)">
-<meta name="theme-color" content="#ECEEF2" media="(prefers-color-scheme: light)">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='2' width='24' height='28' rx='4' fill='%232246D6'/%3E%3Crect x='8' y='6' width='16' height='12' rx='2' fill='%23FFD43B'/%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112..125,600..900&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<meta name="description" content="Ashton's card want list, collections and binders.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Want List">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <style>
-/* Layout: one binder column. Summary strip, quick-add, filters, collection tabs, then either card rows ("sleeves") or a binder view of 9-pocket page spreads. Price lives on a sticker. */
+/* Mostly neutral: ink and greys carry the interface, card images carry the color. */
 :root{
-  --bg:#ECEEF2; --surface:#FFFFFF; --sunk:#F4F5F8; --ink:#14161B; --muted:#5D6371; --line:#D8DCE3;
-  --accent:#2246D6; --accent-ink:#FFFFFF; --sticker:#FFD43B; --sticker-ink:#1B1600;
-  --good:#167A3E; --good-bg:#E3F4E9; --warn:#9A4A06; --warn-bg:#FCEBD9; --danger:#B42318; --star:#E0A100;
-  --scrim:rgba(10,12,16,.82);
-  --binder:#262A33; --sleeve:#323743; --pocket:rgba(255,255,255,.07); --pocket-line:rgba(255,255,255,.16); --binder-ink:#E8EAEE; --binder-muted:#A3A9B6;
-  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
-  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
-  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
-  --r:12px;
+  --bg:#F5F5F7; --surface:#FFFFFF; --sunk:#EFEFF2; --ink:#111113; --ink-2:#3A3A3F; --muted:#6E6E76; --faint:#A1A1A8;
+  --line:rgba(17,17,19,.09); --line-2:rgba(17,17,19,.16);
+  --accent:#111113; --accent-ink:#FFFFFF; --danger:#C2261B;
+  --bar:rgba(255,255,255,.86); --scrim:rgba(0,0,0,.42); --lb:rgba(10,10,12,.92);
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.05);
+  --card-shadow:0 1px 2px rgba(0,0,0,.08),0 3px 10px rgba(0,0,0,.08);
+  --binder:#1D1D20; --sleeve:#2A2A2F; --pocket:rgba(255,255,255,.06); --pocket-line:rgba(255,255,255,.13); --binder-ink:#F2F2F4; --binder-muted:#9C9CA4;
+  --f:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+  --f-num:ui-rounded,-apple-system,BlinkMacSystemFont,"SF Pro Rounded","Segoe UI",system-ui,sans-serif;
+  --r:16px; --r-sm:10px;
+  --tb:calc(56px + env(safe-area-inset-top,0px));
+  --tab:calc(56px + env(safe-area-inset-bottom,0px));
+  --gx:max(16px,env(safe-area-inset-left,0px));
+  color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0E1014; --surface:#171A20; --sunk:#12151A; --ink:#E9EBEF; --muted:#9BA2AF; --line:#272C35;
-  --accent:#8EA2FF; --accent-ink:#0E1014; --sticker:#F2C21B; --sticker-ink:#1B1600;
-  --good:#5AD08A; --good-bg:#14301F; --warn:#F2A65A; --warn-bg:#35230F; --danger:#FF7B72; --star:#F2C21B; --scrim:rgba(0,0,0,.86);
-  --binder:#07080B; --sleeve:#1B1F27; color-scheme:dark}}
+  --bg:#000000; --surface:#151517; --sunk:#232326; --ink:#F4F4F6; --ink-2:#D2D2D8; --muted:#8E8E96; --faint:#5E5E66;
+  --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15);
+  --accent:#F4F4F6; --accent-ink:#000000; --danger:#FF6A5F;
+  --bar:rgba(10,10,11,.84); --scrim:rgba(0,0,0,.6);
+  --shadow:none; --card-shadow:0 1px 2px rgba(0,0,0,.5),0 3px 10px rgba(0,0,0,.4);
+  --binder:#0E0E10; --sleeve:#1C1C20; color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0E1014; --surface:#171A20; --sunk:#12151A; --ink:#E9EBEF; --muted:#9BA2AF; --line:#272C35;
-  --accent:#8EA2FF; --accent-ink:#0E1014; --sticker:#F2C21B; --sticker-ink:#1B1600;
-  --good:#5AD08A; --good-bg:#14301F; --warn:#F2A65A; --warn-bg:#35230F; --danger:#FF7B72; --star:#F2C21B; --scrim:rgba(0,0,0,.86);
-  --binder:#07080B; --sleeve:#1B1F27; color-scheme:dark}
+  --bg:#000000; --surface:#151517; --sunk:#232326; --ink:#F4F4F6; --ink-2:#D2D2D8; --muted:#8E8E96; --faint:#5E5E66;
+  --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15);
+  --accent:#F4F4F6; --accent-ink:#000000; --danger:#FF6A5F;
+  --bar:rgba(10,10,11,.84); --scrim:rgba(0,0,0,.6);
+  --shadow:none; --card-shadow:0 1px 2px rgba(0,0,0,.5),0 3px 10px rgba(0,0,0,.4);
+  --binder:#0E0E10; --sleeve:#1C1C20; color-scheme:dark}
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--f-body);
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 96px}
-.wrap{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
-button,input,select{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 var(--f);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
+  padding-bottom:calc(var(--tab) + 24px)}
+body.sheet-open{overflow:hidden}
+img{max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{touch-action:manipulation;-webkit-user-select:none;user-select:none}
+:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.mono,.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.wrap{max-width:980px;margin:0 auto;padding:12px var(--gx) 0;display:flex;flex-direction:column;gap:16px}
+.view{display:flex;flex-direction:column;gap:14px}
 
-header{display:flex;flex-direction:column;gap:10px}
-.eyebrow{font:600 12px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-h1{margin:0;font-family:var(--f-display);font-weight:850;font-stretch:125%;font-size:clamp(28px,6vw,44px);line-height:1;letter-spacing:-.01em;text-wrap:balance}
-.stats{display:flex;flex-wrap:wrap;gap:8px 22px;color:var(--muted);font-size:14px}
-.stats b{color:var(--ink);font-family:var(--f-mono);font-weight:600}
-.auth{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13.5px;color:var(--muted)}
-.auth form{display:flex;gap:8px;flex:1 1 280px}
-.auth input{flex:1;min-width:0}
-.auth .linkbtn{padding:6px 0}
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:30;background:var(--bar);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);
+  padding:env(safe-area-inset-top,0px) var(--gx) 0;border-bottom:.5px solid transparent;transition:border-color .2s}
+.topbar.scrolled{border-bottom-color:var(--line-2)}
+.topbar-in{max-width:980px;margin:0 auto;height:56px;display:flex;align-items:center;gap:12px}
+.tb-title{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.tb-title small{font-size:12px;font-weight:500;color:var(--muted);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-title h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.tb-acts{display:flex;align-items:center;gap:8px}
+.icon-btn{width:38px;height:38px;border-radius:999px;border:0;background:var(--sunk);display:grid;place-items:center;cursor:pointer;color:var(--ink);padding:0}
+.icon-btn svg{width:20px;height:20px}
+.icon-btn.primary{background:var(--accent);color:var(--accent-ink)}
+.acct-btn{height:38px;min-width:38px;border-radius:999px;border:0;background:var(--sunk);cursor:pointer;font-weight:600;font-size:14px;padding:0 14px;color:var(--ink)}
+.acct-btn.avatar{padding:0;width:38px;background:var(--ink);color:var(--bg);font-size:15px}
 
-.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
-.add-row{display:flex;gap:8px}
-.add-row input{flex:1;min-width:0}
-input[type=text],input[type=number],input[type=url],input[type=search],select{
-  background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:10px 12px;min-height:42px;width:100%}
-.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 14px;min-height:42px;cursor:pointer;font-weight:600;white-space:nowrap}
-.btn:hover{border-color:var(--muted)}
-.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.btn.small{min-height:34px;padding:6px 10px;font-size:13px}
+/* ---------- bottom tab bar ---------- */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--bar);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);
+  border-top:.5px solid var(--line-2);padding:0 var(--gx) env(safe-area-inset-bottom,0px);display:flex;justify-content:center}
+.tabbar .tabs{display:flex;width:100%;max-width:520px}
+.tabbar button{flex:1;border:0;background:none;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--faint);font-size:11px;font-weight:600;letter-spacing:.01em}
+.tabbar button svg{width:24px;height:24px}
+.tabbar button[aria-pressed=true]{color:var(--ink)}
+body.selecting .tabbar{display:none}
+
+/* ---------- shared controls ---------- */
+input[type=text],input[type=email],input[type=number],input[type=url],input[type=search],select,textarea{
+  background:var(--sunk);border:1px solid transparent;border-radius:var(--r-sm);padding:10px 12px;min-height:44px;width:100%;font-size:16px;-webkit-appearance:none;appearance:none}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--line-2);background:var(--surface)}
+select{padding-right:32px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none' stroke='%238E8E96' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1 1.5l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center}
+input[type=search]{padding-left:38px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238E8E96' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='7' cy='7' r='5.5'/%3E%3Cpath d='M11 11l3.5 3.5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:13px center}
+input[type=search]::-webkit-search-decoration{-webkit-appearance:none}
+.btn{border:0;background:var(--sunk);color:var(--ink);border-radius:var(--r-sm);padding:10px 16px;min-height:44px;cursor:pointer;font-weight:600;font-size:15px;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none}
+.btn:active{opacity:.7}
+.btn.primary{background:var(--accent);color:var(--accent-ink)}
+.btn.small{min-height:36px;padding:7px 12px;font-size:14px}
 .btn.danger{color:var(--danger)}
-.hint{font-size:13px;color:var(--muted);margin:8px 2px 0}
-.parsed-note{grid-column:1/-1;font-size:13px;color:var(--muted);margin:0}
-.confirm{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
-.confirm label,.edit label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
-.wide{grid-column:span 2}.full{grid-column:1/-1}
-.confirm .actions,.edit .actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
-@media (max-width:620px){.confirm{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.btn:disabled{opacity:.4;cursor:default}
+.linkbtn{border:0;background:none;padding:6px 0;cursor:pointer;color:var(--ink);font-weight:600;font-size:14px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line-2)}
+.linkbtn.danger{color:var(--danger)}
+.hint{font-size:13px;color:var(--muted);margin:0;line-height:1.45}
+.panel{background:var(--surface);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
+.seg{display:inline-flex;background:var(--sunk);border-radius:var(--r-sm);padding:3px;gap:2px}
+.seg button{border:0;background:none;padding:6px 14px;min-height:34px;border-radius:8px;cursor:pointer;color:var(--muted);font-weight:600;font-size:14px;flex:1;white-space:nowrap}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 .5px rgba(0,0,0,.04)}
+.chip-toggle{border:1px solid var(--line-2);background:var(--surface);border-radius:999px;padding:7px 14px;min-height:36px;cursor:pointer;font-weight:600;font-size:14px;color:var(--ink-2);white-space:nowrap}
+.chip-toggle[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.count{font-size:13px;color:var(--muted);white-space:nowrap}
+.scroller{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 calc(-1 * var(--gx));padding:2px var(--gx);scroll-padding:0 var(--gx)}
+.scroller::-webkit-scrollbar{display:none}
+.scroller > *{flex:0 0 auto}
 
-.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.filters input[type=search]{flex:1 1 220px;width:auto}
-.filters select{width:auto;flex:0 0 auto}
-.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
-.seg button{border:0;background:none;padding:8px 12px;min-height:40px;cursor:pointer;color:var(--muted);font-weight:600}
-.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
-.chip-toggle{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;min-height:40px;cursor:pointer;font-weight:600;color:var(--muted)}
-.chip-toggle[aria-pressed=true]{border-color:var(--star);color:var(--ink);background:color-mix(in srgb,var(--star) 18%,var(--surface))}
-.count{font-size:13px;color:var(--muted);margin-left:auto}
+/* ---------- summary ---------- */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
+.stats > span{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--muted);line-height:1.25;min-width:0}
+.stats > span:only-child{grid-column:1/-1}
+.stats b{color:var(--ink);font:700 20px/1.1 var(--f-num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+@media (max-width:620px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.banner{font-size:14px;color:var(--ink-2);background:var(--surface);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow);line-height:1.45}
+.banner.tap{cursor:pointer}
 
-/* collections */
-.collbar{display:flex;flex-direction:column;gap:10px}
-.colltabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
-.colltab{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:1px;min-width:0}
-.colltab b{font-size:14px;white-space:nowrap}
-.colltab span{font-size:11.5px;color:var(--muted);white-space:nowrap}
-.colltab[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.colltab[aria-pressed=true] span{color:inherit;opacity:.75}
-.colltab.new{border-style:dashed;color:var(--muted);justify-content:center}
-.collhead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
-.collhead h2{margin:0;font-family:var(--f-display);font-stretch:112%;font-weight:800;font-size:22px;line-height:1.1}
-.progress{flex:1 1 200px;display:flex;flex-direction:column;gap:4px;min-width:0}
-.bar{height:8px;border-radius:999px;background:var(--sunk);border:1px solid var(--line);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--good)}
-.progress small{font-size:12.5px;color:var(--muted)}
-.collops{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.inline-form{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+/* ---------- collections ---------- */
+.collbar{display:flex;flex-direction:column;gap:12px}
+.colltab{border:0;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-2);border-radius:999px;padding:7px 14px;min-height:36px;cursor:pointer;display:flex;align-items:baseline;gap:6px;font-size:14px;color:var(--ink)}
+.colltab b{font-weight:600;white-space:nowrap}
+.colltab span{font-size:12.5px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.colltab[aria-pressed=true]{background:var(--ink);color:var(--bg);box-shadow:none}
+.colltab[aria-pressed=true] span{color:inherit;opacity:.65}
+.colltab.new{color:var(--muted);box-shadow:inset 0 0 0 1px var(--line-2);background:transparent}
+.colltabs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 calc(-1 * var(--gx));padding:2px var(--gx)}
+.colltabs::-webkit-scrollbar{display:none}
+.colltabs > *{flex:0 0 auto}
+.collhead{display:flex;flex-direction:column;gap:12px}
+.collhead h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.progress{display:flex;flex-direction:column;gap:6px;min-width:0}
+.bar{height:6px;border-radius:999px;background:var(--sunk);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);border-radius:999px}
+.progress small{font-size:13px;color:var(--muted)}
+.collops{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.collops select{width:auto;min-height:36px;font-size:14px;padding-top:6px;padding-bottom:6px}
+.inline-form{display:flex;gap:8px;flex-wrap:wrap;align-items:center;width:100%}
 .inline-form input{width:auto;flex:1 1 180px}
 
-.list{display:flex;flex-direction:column;gap:8px}
-.row{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;
-  display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:4px 14px;align-items:start}
-.row.got{opacity:.62}
-.row.sel{outline:2px solid var(--accent);outline-offset:-1px}
-.thumb{grid-row:span 2;width:72px;aspect-ratio:63/88;max-width:100%;border:0;padding:0;border-radius:5px;overflow:hidden;background:var(--sunk);cursor:zoom-in;
-  box-shadow:0 1px 0 var(--line),0 2px 6px rgba(0,0,0,.12);display:grid;place-items:center;position:relative}
+/* ---------- filters ---------- */
+.filters{display:flex;flex-direction:column;gap:10px}
+.filter-row{display:flex;gap:8px;align-items:center}
+.filter-row input[type=search]{flex:1}
+.filter-row .seg{flex:1;max-width:340px}
+.filter-row .count{margin-left:auto}
+.opt-btn{position:relative}
+.opt-btn .dot{position:absolute;top:7px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 2px var(--sunk)}
+
+/* ---------- list rows ---------- */
+.list{display:flex;flex-direction:column}
+.list.rows{background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.row{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 14px;position:relative;cursor:pointer;min-height:88px}
+.row + .row::before{content:"";position:absolute;top:0;left:78px;right:0;border-top:.5px solid var(--line-2)}
+.row:active{background:var(--sunk)}
+.row.got .thumb,.row.got .who{opacity:.5}
+.row.sel{background:color-mix(in srgb,var(--ink) 6%,var(--surface))}
+.thumb{width:52px;aspect-ratio:63/88;border:0;padding:0;border-radius:4px;overflow:hidden;background:var(--sunk);display:grid;place-items:center;position:relative;box-shadow:var(--card-shadow)}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.thumb.empty{cursor:default;border:1px dashed var(--line);box-shadow:none;font-size:11px;color:var(--muted);text-align:center;line-height:1.2;padding:4px}
-.thumb.empty.can{cursor:pointer}
+.thumb.empty{box-shadow:none;font-size:10px;color:var(--faint);text-align:center;line-height:1.15;padding:3px}
 .thumb.pick{cursor:pointer}
-.check{position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:6px;background:var(--surface);border:2px solid var(--accent);display:grid;place-items:center;font-size:14px;font-weight:800;color:var(--accent-ink)}
-.check.on{background:var(--accent)}
+.check{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.9);border:1.5px solid rgba(0,0,0,.25);display:grid;place-items:center;font-size:12px;font-weight:800;color:#fff}
+.check.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
 .who{min-width:0;display:flex;flex-direction:column;gap:3px}
-.name{font-weight:700;font-size:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.star{border:0;background:none;cursor:pointer;font-size:18px;line-height:1;padding:0 2px;color:var(--line)}
-.star[aria-pressed=true]{color:var(--star)}
+.name{font-weight:600;font-size:16px;line-height:1.25;display:flex;flex-wrap:wrap;gap:4px 6px;align-items:center;letter-spacing:-.01em}
+.tag{font-size:11px;font-weight:600;line-height:1;border-radius:5px;padding:3px 5px;color:var(--muted);background:var(--sunk);letter-spacing:.01em}
+.meta{color:var(--muted);font-size:13.5px;display:flex;flex-wrap:wrap;gap:0 6px;line-height:1.3}
+.meta > span + span::before{content:"·";margin-right:6px}
+.flags{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.flag{font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 8px;background:var(--sunk);color:var(--ink-2)}
+.collchip{font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 8px;border:0;box-shadow:inset 0 0 0 1px var(--line-2);color:var(--muted);background:none;cursor:pointer}
+.note{font-size:13px;color:var(--muted)}
+.rprice{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right}
+.rprice .amt{font:600 16px/1 var(--f-num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.rprice .amt.deal{background:var(--ink);color:var(--bg);border-radius:6px;padding:4px 7px}
+.rprice small{font-size:11.5px;color:var(--muted)}
+.star{border:0;background:none;cursor:pointer;padding:6px;margin:-6px;color:var(--faint);line-height:0}
+.star svg{width:18px;height:18px}
+.star[aria-pressed=true]{color:var(--ink)}
+.star[aria-pressed=true] svg{fill:currentColor}
 .star:disabled{cursor:default}
-.tag{font:600 11px/1 var(--f-body);letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);border-radius:5px;padding:3px 5px;color:var(--muted)}
-.tag.jp{border-color:var(--danger);color:var(--danger)}
-.meta{color:var(--muted);font-size:13.5px;display:flex;flex-wrap:wrap;gap:2px 10px}
-.meta .num{color:var(--ink)}
-.flags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
-.flag{font-size:12px;font-weight:600;border-radius:999px;padding:2px 9px}
-.flag.queued{background:var(--warn-bg);color:var(--warn)}
-.flag.got{background:var(--good-bg);color:var(--good)}
-.collchip{font-size:12px;font-weight:600;border-radius:6px;padding:2px 8px;border:1px solid var(--accent);color:var(--accent);background:none;cursor:pointer}
-.note{font-size:13px;color:var(--muted);font-style:italic}
+.prio-mark{color:var(--ink);line-height:0}
+.prio-mark svg{width:13px;height:13px;fill:currentColor}
 
-.price{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;min-width:0}
-.sticker{background:var(--sticker);color:var(--sticker-ink);font:700 16px/1 var(--f-mono);padding:7px 9px 6px;border-radius:6px 6px 6px 14px;transform:rotate(-1.5deg);white-space:nowrap}
-.sticker small{font:600 10px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;display:block;margin-top:3px;opacity:.8}
-.ask{font:600 15px/1.1 var(--f-mono)}
-.ask-label{font-size:11.5px;color:var(--muted)}
-.none{font-size:13px;color:var(--muted)}
-.deal-src{font-size:12px;color:var(--muted);max-width:220px}
+/* ---------- card grid ---------- */
+.list.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px 12px}
+@media (max-width:620px){.list.grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 10px}}
+@media (max-width:360px){.list.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tile{display:flex;flex-direction:column;gap:6px;cursor:pointer;min-width:0;position:relative;-webkit-touch-callout:none}
+.tile-img{aspect-ratio:63/88;border-radius:6px;overflow:hidden;background:var(--sunk);position:relative;box-shadow:var(--card-shadow);transition:transform .15s}
+.tile:active .tile-img{transform:scale(.97)}
+.tile-img img{width:100%;height:100%;object-fit:cover;display:block}
+.tile-img .noimg{position:absolute;inset:0;display:grid;place-items:center;padding:8px;text-align:center;font-size:12px;font-weight:600;color:var(--muted);line-height:1.25}
+.tile.got .tile-img img{opacity:.42;filter:grayscale(.6)}
+.tile-badge{position:absolute;left:5px;bottom:5px;background:rgba(17,17,19,.78);color:#fff;font:600 12px/1 var(--f-num);font-variant-numeric:tabular-nums;border-radius:6px;padding:4px 6px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.tile-badge.deal{background:#fff;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.tile-badge.have{background:rgba(255,255,255,.92);color:#111}
+.tile-star{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:rgba(17,17,19,.72);display:grid;place-items:center;color:#fff}
+.tile-star svg{width:12px;height:12px;fill:currentColor}
+.tile .check{top:6px;left:6px;width:24px;height:24px;font-size:14px}
+.tile.sel .tile-img{box-shadow:0 0 0 3px var(--ink)}
+.tile-name{font-size:13px;font-weight:600;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile-sub{font-size:11.5px;color:var(--muted);line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:-4px}
 
-.shop{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
-.shop a{font-size:12.5px;font-weight:600;color:var(--ink);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--sunk);white-space:nowrap}
-.shop a:hover{border-color:var(--accent);color:var(--accent)}
-.shop a.mine{border-color:var(--accent);color:var(--accent);background:var(--surface)}
-.shop a.deal{background:var(--sticker);color:var(--sticker-ink);border-color:var(--sticker)}
-.acts{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
-.linkbtn{border:0;background:none;padding:4px 0;cursor:pointer;color:var(--muted);font-weight:600;font-size:13.5px}
-.linkbtn:hover{color:var(--ink)}
-.linkbtn.danger{color:var(--danger)}
+/* ---------- loading & empty ---------- */
+.skel{background:linear-gradient(90deg,var(--sunk) 0,color-mix(in srgb,var(--sunk) 55%,var(--surface)) 50%,var(--sunk) 100%);background-size:200% 100%;animation:shimmer 1.3s infinite linear;border-radius:6px}
+@keyframes shimmer{to{background-position:-200% 0}}
+.skel-tile{display:flex;flex-direction:column;gap:6px}
+.skel-tile .skel:first-child{aspect-ratio:63/88}
+.skel-line{height:11px}
+.empty-state{padding:44px 24px;text-align:center;color:var(--muted);font-size:15px;line-height:1.5;display:flex;flex-direction:column;align-items:center;gap:12px;grid-column:1/-1;background:var(--surface);border-radius:var(--r);box-shadow:var(--shadow)}
+.empty-state::before{content:"";width:40px;height:52px;border-radius:6px;border:2px dashed var(--line-2)}
+.empty-state p{margin:0}
 
-.edit,.picker{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;border-top:1px dashed var(--line);margin-top:10px;padding-top:12px}
-.picker{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.picker label.opt{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 9px;font-size:13.5px;font-weight:600;cursor:pointer;background:var(--sunk)}
-.picker label.opt:has(input:checked){border-color:var(--accent);color:var(--accent);background:var(--surface)}
-.picker .inline-form{flex:1 1 260px}
-.edit h4{grid-column:1/-1;margin:4px 0 0;font:700 12px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-@media (max-width:620px){
-  .edit{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .row{grid-template-columns:58px minmax(0,1fr);gap:4px 12px}
-  .thumb{width:58px;grid-row:span 2}
-  .price{grid-column:2;align-items:center;text-align:left;flex-direction:row;flex-wrap:wrap;gap:6px 10px}
-  .shop,.acts{grid-column:1/-1}
-}
-
-/* binder view */
-.binder{display:flex;flex-direction:column;gap:16px}
-.spread{background:var(--binder);border-radius:14px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
-.page{background:var(--sleeve);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
-.page-label{font:600 11px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--binder-muted)}
+/* ---------- binder views ---------- */
+.binder{display:flex;flex-direction:column;gap:14px}
+.spread{background:var(--binder);border-radius:var(--r);padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.page{background:var(--sleeve);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.page-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--binder-muted)}
 .pockets{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:7px}
-.pocket{display:block;width:100%;max-width:100%;aspect-ratio:63/88;border-radius:5px;background:var(--pocket);border:1px solid var(--pocket-line);position:relative;overflow:hidden;padding:0;min-width:0}
-button.pocket{cursor:zoom-in}
+.pocket{display:block;width:100%;max-width:100%;aspect-ratio:63/88;border-radius:5px;background:var(--pocket);border:1px solid var(--pocket-line);position:relative;overflow:hidden;padding:0;min-width:0;color:var(--binder-ink)}
+button.pocket{cursor:pointer}
 .pocket img{width:100%;height:100%;object-fit:cover;display:block}
-.pocket.need img{filter:grayscale(1);opacity:.38}
-.pocket .lbl{position:absolute;left:4px;right:4px;bottom:4px;font:600 10.5px/1.2 var(--f-body);color:var(--binder-ink);background:rgba(0,0,0,.66);border-radius:4px;padding:3px 4px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pocket .lbl.need{background:var(--sticker);color:var(--sticker-ink)}
-.pocket .noimg{position:absolute;inset:0;display:grid;place-items:center;padding:6px;text-align:center;font-size:11px;color:var(--binder-muted)}
+.pocket.need img{filter:grayscale(1);opacity:.36}
+.pocket .lbl{position:absolute;left:4px;right:4px;bottom:4px;font:600 10.5px/1.2 var(--f-num);color:var(--binder-ink);background:rgba(0,0,0,.7);border-radius:4px;padding:3px 4px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pocket .lbl.need{background:rgba(255,255,255,.92);color:#111}
+.pocket .noimg{position:absolute;inset:0;display:grid;place-items:center;padding:6px;text-align:center;font-size:11px;color:var(--binder-muted);line-height:1.2}
 .pocket-wrap{position:relative;min-width:0}
 .mv{position:absolute;top:4px;right:4px;display:flex;gap:3px;z-index:2}
-.mv button{width:24px;height:24px;border-radius:6px;border:0;background:rgba(0,0,0,.7);color:#fff;font-size:12px;cursor:pointer;line-height:1}
+.mv button{width:26px;height:26px;border-radius:7px;border:0;background:rgba(0,0,0,.66);color:#fff;font-size:11px;cursor:pointer;line-height:1}
 .mv button:disabled{opacity:.3;cursor:default}
-.binder-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 @media (max-width:700px){.spread{grid-template-columns:1fr;padding:10px}}
-
-.bulk{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.12);
-  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-.bulk .inner{max-width:960px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.bulk b{font-size:14px}
-.bulk input{width:auto;flex:1 1 180px}
-
-/* explore */
-.modebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.modebar .seg button{padding:9px 16px;font-size:15px}
-.explore{display:flex;flex-direction:column;gap:14px}
-.ex-intro{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline}
-.ex-intro h2{margin:0;font-family:var(--f-display);font-stretch:112%;font-weight:800;font-size:22px;line-height:1.1}
-.ex-intro p{margin:0;color:var(--muted);font-size:14px;flex:1 1 280px}
-.ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:12px}
-.ex-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-width:0}
-.ex-card.dim{opacity:.55}
-.ex-img{border:0;padding:10px 10px 0;background:none;cursor:zoom-in;display:block;width:100%}
-.ex-img img{width:100%;aspect-ratio:63/88;object-fit:cover;border-radius:6px;display:block;box-shadow:0 2px 8px rgba(0,0,0,.15)}
-.ex-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
-.ex-name{font-weight:700;font-size:15px;line-height:1.25}
-.ex-meta{font-size:12.5px;color:var(--muted)}
-.ex-why{font-size:12.5px;color:var(--ink);margin-top:2px}
-.ex-price{font:600 14px/1.2 var(--f-mono);margin-top:4px}
-.ex-price small{font:500 11px/1 var(--f-body);color:var(--muted)}
-.ex-links{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;margin-top:2px}
-.ex-links a{color:var(--accent);font-weight:600;text-decoration:none}
-.ex-acts{display:flex;gap:6px;margin-top:auto;padding-top:8px;flex-wrap:wrap}
-.ex-acts .btn{flex:1 1 auto}
-.ex-added{font-size:12.5px;font-weight:700;color:var(--good)}
-.ex-to{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);width:100%}
-.ex-to select{flex:1;min-width:0;font-size:13px;padding:5px 6px}
-.ex-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
-.ex-tools input[type=search]{flex:1 1 200px;width:auto}
-.ex-tools select{width:auto}
-.ex-coll{font:600 11px/1 var(--f-body);letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
-.artist{border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--accent) 40%,transparent);text-underline-offset:2px}
-.ex-sep{grid-column:1/-1;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
-.empty-state{padding:28px;text-align:center;color:var(--muted)}
-.banner{font-size:13.5px;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r);padding:10px 14px}
-footer{font-size:12.5px;color:var(--muted);line-height:1.5}
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
-
-.lightbox{position:fixed;inset:0;z-index:40;background:var(--scrim);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
-  padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
-.lightbox img{max-width:min(420px,100%);max-height:78vh;width:auto;height:auto;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
-.lightbox .cap{color:#F2F3F5;text-align:center;font-size:14px;max-width:420px}
-.lightbox .cap b{display:block;font-size:16px}
-.lightbox .close{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));border:0;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;width:42px;height:42px;font-size:22px;cursor:pointer}
-@media (prefers-reduced-motion:reduce){.sticker{transform:none}}
-
-/* ---------- binders ---------- */
 .bhead{display:flex;flex-direction:column;gap:4px}
 .bhead-top{display:flex;gap:10px;align-items:center;justify-content:space-between}
-.bhead h2{margin:0;font-family:var(--f-display);font-stretch:112%;font-weight:800;font-size:22px;line-height:1.1;min-width:0;overflow-wrap:anywhere}
+.bhead h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.2;min-width:0;overflow-wrap:anywhere}
 .bsum{margin:0;color:var(--muted);font-size:13.5px}
-.bnav{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:600;font-size:14px}
+.bnav{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:600;font-size:14px;color:var(--ink-2)}
 .bspread.one{grid-template-columns:1fr}
 .bpocket{cursor:pointer;-webkit-tap-highlight-color:transparent}
 .bpocket.empty{display:grid;place-items:center;border-style:dashed;background:transparent}
-.bpocket .plus{font-size:26px;line-height:1;color:var(--binder-muted)}
-.bpocket .own-mark{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--good);color:#fff;font:700 12px/20px var(--f-body);text-align:center}
-.bpocket.moving{outline:3px solid var(--accent);outline-offset:-3px}
-.bpocket.target{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 60%,transparent)}
-.movebar{position:sticky;top:64px;z-index:15;display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--accent);color:var(--accent-ink);border-radius:var(--r);padding:8px 8px 8px 14px;font-weight:600}
-.movebar .btn{background:var(--accent-ink);color:var(--accent);border-color:transparent}
-.toast-undo{margin-left:8px;border:0;background:none;color:inherit;font:inherit;font-weight:800;text-decoration:underline;cursor:pointer;padding:4px}
-.sheet{position:fixed;inset:0;z-index:45;background:rgba(10,12,16,.55);display:flex;align-items:flex-end;justify-content:center}
-.sheet-card{background:var(--surface);color:var(--ink);width:min(640px,100%);max-height:88vh;overflow:auto;overscroll-behavior:contain;border-radius:18px 18px 0 0;padding:6px 16px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.3)}
-@media (min-width:621px){.sheet{align-items:center}.sheet-card{border-radius:16px;max-height:84vh}}
-body.sheet-open{overflow:hidden}
-.sheet-grip{width:40px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 6px}
-.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:-6px;background:var(--surface);padding:6px 0 10px;z-index:1}
-.sheet-head h3{margin:0;font-size:18px}
-.sheet-x{border:0;background:var(--sunk);width:38px;height:38px;border-radius:999px;font-size:22px;line-height:1;cursor:pointer;color:var(--ink)}
+.bpocket .plus{font-size:24px;line-height:1;color:var(--binder-muted);font-weight:300}
+.bpocket .own-mark{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:#fff;color:#111;font:700 12px/20px var(--f);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.bpocket.moving{outline:3px solid #fff;outline-offset:-3px}
+.bpocket.target{box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+.movebar{position:sticky;top:calc(var(--tb) + 8px);z-index:15;display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--ink);color:var(--bg);border-radius:var(--r);padding:8px 8px 8px 16px;font-weight:600;font-size:14px}
+.movebar .btn{background:var(--bg);color:var(--ink)}
+.binder-tools{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+
+/* ---------- bulk select toolbar ---------- */
+.bulk{position:fixed;left:0;right:0;bottom:0;z-index:31;background:var(--bar);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);border-top:.5px solid var(--line-2);
+  padding:10px var(--gx) calc(10px + env(safe-area-inset-bottom,0px))}
+.bulk .inner{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:8px}
+.bulk .bulk-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bulk b{font-size:15px}
+.bulk .bulk-btns{display:flex;gap:8px}
+.bulk .inline-form{flex-wrap:nowrap}
+.bulk input{flex:1 1 auto;min-width:0}
+
+/* ---------- explore ---------- */
+.ex-intro h2{margin:0 0 4px;font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+.ex-intro p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+.ex-tools{display:flex;flex-direction:column;gap:10px}
+.ex-tools .scroller select{width:auto;min-height:36px;font-size:14px;padding-top:6px;padding-bottom:6px;background-color:var(--surface);box-shadow:inset 0 0 0 1px var(--line-2);border-radius:999px;padding-left:14px}
+.ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px 12px}
+@media (max-width:620px){.ex-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px}}
+.ex-card{display:flex;flex-direction:column;gap:6px;min-width:0;cursor:pointer;-webkit-touch-callout:none}
+.ex-card.dim{opacity:.5}
+.ex-card .tile-img{transition:transform .15s}
+.ex-card:active .tile-img{transform:scale(.97)}
+.ex-coll{font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+.ex-name{font-weight:600;font-size:14px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ex-meta{font-size:12.5px;color:var(--muted);line-height:1.3}
+.ex-line{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:-2px}
+.ex-price{font:600 14px/1.2 var(--f-num);font-variant-numeric:tabular-nums}
+.ex-quick{width:32px;height:32px;border-radius:999px;border:0;background:var(--sunk);color:var(--ink);display:grid;place-items:center;cursor:pointer;flex:0 0 auto;padding:0}
+.ex-quick svg{width:16px;height:16px}
+.ex-quick.done{background:var(--ink);color:var(--bg)}
+.ex-added{font-size:12.5px;font-weight:600;color:var(--muted)}
+.artist{border:0;background:none;padding:0;font:inherit;color:var(--ink);cursor:pointer;text-decoration:underline;text-decoration-color:var(--line-2);text-underline-offset:3px}
+.ex-sep{grid-column:1/-1;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;padding-top:8px}
+
+/* ---------- sheets ---------- */
+.sheet{position:fixed;inset:0;z-index:45;background:var(--scrim);display:flex;align-items:flex-end;justify-content:center;animation:fade .2s ease}
+.sheet-card{background:var(--surface);color:var(--ink);width:min(640px,100%);max-height:calc(100% - env(safe-area-inset-top,0px) - 12px);overflow:auto;overscroll-behavior:contain;
+  border-radius:20px 20px 0 0;padding:6px var(--gx) calc(20px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.18);animation:up .28s cubic-bezier(.2,.8,.2,1);touch-action:pan-y}
+@media (min-width:700px){.sheet{align-items:center;padding:24px}.sheet-card{border-radius:20px;max-height:86vh;padding-bottom:20px}}
+@keyframes up{from{transform:translateY(100%)}}
+@keyframes fade{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){.sheet,.sheet-card{animation:none}.skel{animation:none}}
+.sheet-grip{width:36px;height:5px;border-radius:3px;background:var(--line-2);margin:4px auto 4px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:-6px;background:var(--surface);padding:8px 0 12px;z-index:2}
+.sheet-head h3{margin:0;font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.25;min-width:0}
+.sheet-x{border:0;background:var(--sunk);width:32px;height:32px;border-radius:999px;font-size:20px;line-height:1;cursor:pointer;color:var(--muted);flex:0 0 auto;display:grid;place-items:center;padding:0}
 .sheet-form{display:flex;flex-direction:column;gap:12px}
-.sheet-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
-.sheet-form h4{margin:10px 0 0;font:700 12px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.sheet-form .hint{margin:0}
-.sheet-form textarea,#sheetBody textarea{width:100%;background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:10px;font:13px/1.4 var(--f-mono);color:var(--ink)}
+.sheet-form label,.confirm label,.edit label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted);min-width:0}
+.sheet-form h4,.sec-title{margin:14px 0 0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sheet-form textarea,#sheetBody textarea{width:100%;font:13px/1.4 ui-monospace,Menlo,monospace}
 .row-btns{display:flex;gap:8px;flex-wrap:wrap}
-.sheet-form a.btn{display:grid;place-items:center;text-decoration:none;min-height:46px}
+.row-btns .btn{flex:1}
+.sheet-form a.btn{min-height:46px}
 .sheet-tabs{display:flex;width:100%;margin-bottom:10px}
 .sheet-tabs button{flex:1}
 #pickQ{margin-bottom:8px}
-.pick-ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.pick-ctrls select{width:auto;flex:1 1 160px}
-.chk{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--muted);min-height:40px}
-.pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.pick-ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.pick-ctrls select{width:auto;flex:1 1 160px;min-height:38px;font-size:14px}
+.chk{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--ink-2);min-height:40px}
+.chk input{width:18px;height:18px;accent-color:var(--ink)}
+.pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:14px 10px}
 .pick-grid > .hint{grid-column:1/-1}
-.pick{border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:3px;text-align:left;cursor:pointer;min-width:0;color:var(--ink)}
-.pick.dim{opacity:.5}
-.pick-img{display:block;aspect-ratio:63/88;border-radius:5px;overflow:hidden;background:var(--surface);position:relative}
+.pick{border:0;background:none;padding:0;display:flex;flex-direction:column;gap:3px;text-align:left;cursor:pointer;min-width:0;color:var(--ink)}
+.pick.dim{opacity:.45}
+.pick-img{display:block;aspect-ratio:63/88;border-radius:5px;overflow:hidden;background:var(--sunk);position:relative;box-shadow:var(--card-shadow);margin-bottom:3px}
 .pick-img img{width:100%;height:100%;object-fit:cover;display:block}
 .pick-img .noimg,.bpocket .noimg{position:absolute;inset:0;display:grid;place-items:center;padding:6px;text-align:center;font-size:11px;font-weight:600;color:var(--muted);line-height:1.2}
 .bpocket .noimg{color:var(--binder-muted)}
-.pick-name{font-size:12.5px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-name{font-size:12.5px;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .pick-sub{font-size:11px;color:var(--muted);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pick-tag{font:600 11.5px/1.2 var(--f-mono)}
-.pocket-detail{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start;margin-bottom:14px}
-.pocket-detail img{width:120px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.pick-tag{font:600 11.5px/1.2 var(--f-num);font-variant-numeric:tabular-nums}
+.pocket-detail{display:grid;grid-template-columns:110px 1fr;gap:16px;align-items:start;margin-bottom:16px}
+.pocket-detail img{width:110px;border-radius:6px;box-shadow:var(--card-shadow)}
 .pocket-detail > div:only-child{grid-column:1/-1}
-.pd-status{margin-top:8px;font-size:13.5px;font-weight:600}
+.pd-status{margin-top:8px;font-size:14px;font-weight:600}
 .sheet-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.sheet-acts .btn{min-height:46px;text-align:center;text-decoration:none;display:grid;place-items:center;white-space:normal}
+.sheet-acts .btn{min-height:48px;text-align:center;white-space:normal}
 .sheet-acts .btn.primary{grid-column:1/-1}
-@media (max-width:620px){
-  .bspread{padding:8px}
-  .bspread .pockets{gap:6px}
-  .movebar{top:58px}
-  .pick-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-}
+@media (max-width:620px){.pick-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
-/* ---------- phone layout ---------- */
-.more-toggle{display:none}
-@media (max-width:620px){
-  body{font-size:15px;padding-block:12px 96px}
-  .wrap{gap:12px}
-  header{gap:6px}
-  h1{font-size:30px}
-  .stats{gap:4px 14px;font-size:13px}
-  .stats span:empty{display:none}
-  .modebar{position:sticky;top:0;z-index:20;margin:0 -16px;padding:8px 16px;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-  .modebar .seg{display:flex;width:100%}
-  .modebar .seg button{flex:1;padding:8px 10px;min-height:40px}
-  .panel{padding:12px}
-  #addPanel .hint{display:none}
-  #addPanel:focus-within .hint{display:block}
-  .colltabs,.filters,.collops,.ex-tools,.binder-tools{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px 2px}
-  .colltabs::-webkit-scrollbar,.filters::-webkit-scrollbar,.collops::-webkit-scrollbar,.ex-tools::-webkit-scrollbar,.binder-tools::-webkit-scrollbar{display:none}
-  .filters > *,.collops > *,.ex-tools > *{flex:0 0 auto}
-  .filters input[type=search],.ex-tools input[type=search]{flex:0 0 min(62vw,260px)}
-  .count{margin-left:0;white-space:nowrap;align-self:center}
-  .collhead{gap:8px}
-  .collhead h2{font-size:20px}
-  .progress{flex-basis:100%}
-  .inline-form input{flex:1 1 140px}
-  /* card rows: compact, details on demand */
-  .row{grid-template-columns:60px minmax(0,1fr);gap:2px 12px;padding:10px 12px}
-  .thumb{width:60px;grid-row:span 3}
-  .name{font-size:15px;gap:4px}
-  .meta{font-size:12.5px;gap:0 8px}
-  .meta span:nth-child(3){display:none}
-  .flags{gap:4px}
-  .price{grid-column:2;flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:0 8px;text-align:left;margin-top:2px}
-  .price .ask{font-size:15px}
-  .price .ask-label{font-size:11.5px}
-  .sticker{font-size:14px;transform:none;padding:5px 7px 4px}
-  .deal-src{max-width:none}
-  .row{position:relative;cursor:pointer}
-  .row .name{padding-right:34px}
-  .more-toggle{display:grid;place-items:center;position:absolute;top:6px;right:6px;width:36px;height:36px;border:1px solid var(--line);background:var(--sunk);border-radius:9px;font-size:14px;color:var(--muted);cursor:pointer}
-  .row.open .more-toggle{color:var(--ink)}
-  .row:not(.open) .shop,.row:not(.open) .acts{display:none}
-  .shop,.acts{grid-column:1/-1;cursor:default}
-  .shop a{padding:8px 12px;font-size:13px}
-  .acts{gap:0 4px}
-  .linkbtn{padding:10px 8px;font-size:14px}
-  .edit{grid-template-columns:1fr 1fr}
-  .wide{grid-column:1/-1}
-  /* binder */
-  .spread{padding:8px;gap:8px;border-radius:10px}
-  .page{padding:6px;gap:6px}
-  .pockets{gap:5px}
-  .pocket .lbl{font-size:9.5px;padding:2px 3px}
-  .mv{top:2px;right:2px;gap:2px}
-  .mv button{width:22px;height:22px;font-size:10px;background:rgba(0,0,0,.55)}
-  /* explore: two-up grid */
-  .ex-intro h2{font-size:20px}
-  .ex-intro p{font-size:13px}
-  .ex-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-  .ex-img{padding:6px 6px 0}
-  .ex-body{padding:8px 9px 10px;gap:3px}
-  .ex-name{font-size:14px}
-  .ex-meta,.ex-why,.ex-links{font-size:12px}
-  .ex-why{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-  .ex-acts{gap:5px;padding-top:6px}
-  .ex-to{flex-direction:column;align-items:stretch;gap:2px;font-size:11px}
-  .ex-to select{min-height:36px;font-size:12.5px}
-  .ex-acts .btn{flex:1 1 calc(50% - 3px);min-height:38px;padding:6px 4px;font-size:12.5px}
-  .ex-acts .btn:last-child:nth-child(odd){flex-basis:100%}
-  footer{font-size:12px}
-  .toast{bottom:calc(20px + env(safe-area-inset-bottom,0px))}
-  .bulk .inner{gap:6px}
-  .bulk .inner > b{flex-basis:100%}
-}
+/* card / pick detail sheet */
+.detail-hero{display:grid;grid-template-columns:132px minmax(0,1fr);gap:16px;align-items:start}
+.detail-img{border:0;padding:0;background:var(--sunk);border-radius:8px;overflow:hidden;aspect-ratio:63/88;width:132px;box-shadow:var(--card-shadow);cursor:zoom-in;display:grid;place-items:center;position:relative}
+.detail-img img{width:100%;height:100%;object-fit:cover;display:block}
+.detail-img.empty{cursor:default;box-shadow:none;font-size:12px;color:var(--muted);text-align:center;padding:8px;line-height:1.3}
+.detail-img.empty.can{cursor:pointer;border:1.5px dashed var(--line-2);background:none}
+.detail-info{display:flex;flex-direction:column;gap:8px;min-width:0}
+.detail-info .name{font-size:20px;font-weight:700}
+.detail-info .meta{font-size:14px}
+.price{display:flex;flex-direction:column;gap:3px;min-width:0}
+.sticker{font:700 24px/1.05 var(--f-num);font-variant-numeric:tabular-nums;letter-spacing:-.02em;display:flex;align-items:baseline;gap:6px}
+.sticker small{font:600 12px/1 var(--f);color:var(--muted);letter-spacing:0}
+.ask{font:700 24px/1.05 var(--f-num);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.ask-label,.deal-src{font-size:12.5px;color:var(--muted);line-height:1.35}
+.none{font-size:14px;color:var(--muted)}
+.detail-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+.detail-acts .btn{min-height:48px}
+.detail-acts .btn.wide{grid-column:1/-1}
+.shop{display:flex;flex-direction:column;background:var(--sunk);border-radius:12px;overflow:hidden}
+.shop a{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;font-size:15px;font-weight:500;color:var(--ink);text-decoration:none;min-height:48px}
+.shop a + a{border-top:.5px solid var(--line-2)}
+.shop a::after{content:"↗";color:var(--faint);font-size:14px}
+.shop a.deal,.shop a.mine{font-weight:700}
+.shop a small{color:var(--muted);font-weight:500;font-size:13px;margin-left:8px;margin-right:auto}
+.menu{display:flex;flex-direction:column;background:var(--sunk);border-radius:12px;overflow:hidden}
+.menu > button{border:0;background:none;text-align:left;padding:13px 14px;font-size:15px;font-weight:500;cursor:pointer;min-height:48px;display:flex;justify-content:space-between;align-items:center;color:var(--ink)}
+.menu > button + button,.menu > .sub + button,.menu > button + .sub{border-top:.5px solid var(--line-2)}
+.menu > button::after{content:"›";color:var(--faint);font-size:20px;line-height:1}
+.menu > button[aria-expanded=true]::after{transform:rotate(90deg)}
+.menu > button.danger{color:var(--danger)}
+.menu > button.danger::after{content:""}
+.menu .sub{padding:4px 14px 14px}
+.sec{display:flex;flex-direction:column;gap:8px;margin-top:20px}
+.sec > .sec-title{margin:0 2px}
+.detail-note{font-size:14px;color:var(--ink-2);background:var(--sunk);border-radius:10px;padding:10px 12px;line-height:1.4}
+.detail-why{font-size:14px;color:var(--ink-2);line-height:1.45;margin:0}
+.ex-to{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
 
+/* edit, collections picker, add form */
+.edit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.edit .wide,.confirm .wide,.edit .full,.confirm .full{grid-column:1/-1}
+.edit h4{grid-column:1/-1;margin:10px 0 0;font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.edit .actions,.confirm .actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.edit .actions .btn,.confirm .actions .btn{flex:1}
+.edit input:not(:focus),.edit select:not(:focus),.picker input:not(:focus){background-color:var(--surface)}
+.picker{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.picker label.opt{display:inline-flex;gap:8px;align-items:center;border-radius:999px;padding:8px 14px 8px 11px;font-size:14px;font-weight:600;cursor:pointer;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line-2)}
+.picker label.opt input{accent-color:var(--ink);width:16px;height:16px;margin:0}
+.picker label.opt:has(input:checked){background:var(--ink);color:var(--bg);box-shadow:none}
+.picker .inline-form{flex:1 1 100%}
+.add-row{display:flex;gap:8px}
+.add-row input{flex:1;min-width:0}
+.confirm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px;padding-top:16px;border-top:.5px solid var(--line-2)}
+.parsed-note{grid-column:1/-1;font-size:13px;color:var(--muted);margin:0}
+#addPanel .hint{margin-top:10px}
+
+/* account sheet */
+.acct{display:flex;flex-direction:column;gap:14px}
+.acct-who{display:flex;align-items:center;gap:12px}
+.acct-who .avatar{width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:700;font-size:18px;flex:0 0 auto}
+.acct-who div{min-width:0;display:flex;flex-direction:column;gap:2px}
+.acct-who b{overflow-wrap:anywhere}
+.acct form{display:flex;flex-direction:column;gap:10px}
+.acct .msg{font-size:14px;line-height:1.45;color:var(--ink-2);background:var(--sunk);border-radius:10px;padding:12px}
+.about{font-size:13px;color:var(--muted);line-height:1.5;display:flex;flex-direction:column;gap:8px}
+.about p{margin:0}
+
+/* toast & lightbox */
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--tab) + 14px);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:999px;font-weight:600;font-size:14px;z-index:60;max-width:calc(100% - 32px);box-shadow:0 6px 24px rgba(0,0,0,.2);animation:fade .2s}
+body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
+.toast-undo{margin-left:10px;border:0;background:none;color:inherit;font:inherit;font-weight:800;text-decoration:underline;cursor:pointer;padding:4px}
+.lightbox{position:fixed;inset:0;z-index:70;background:var(--lb);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;animation:fade .2s;
+  padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.lightbox img{max-width:min(440px,100%);max-height:76vh;width:auto;height:auto;border-radius:16px;box-shadow:0 12px 50px rgba(0,0,0,.6)}
+.lightbox .cap{color:#EDEDF0;text-align:center;font-size:14px;max-width:440px;line-height:1.45}
+.lightbox .cap b{display:block;font-size:16px;color:#fff}
+.lightbox .close{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));border:0;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;width:40px;height:40px;font-size:22px;cursor:pointer}
+
+@media (max-width:620px){
+  .wrap{gap:14px;padding-top:10px}
+  .row{grid-template-columns:48px minmax(0,1fr) auto;gap:12px;padding:10px 14px;min-height:82px}
+  .row + .row::before{left:74px}
+  .thumb{width:48px}
+  .name{font-size:15.5px}
+  .meta{font-size:13px}
+  .meta > span:nth-child(3){display:none}
+  .detail-hero{grid-template-columns:112px minmax(0,1fr);gap:14px}
+  .detail-img{width:112px}
+  .detail-info .name{font-size:18px}
+  .sticker,.ask{font-size:22px}
+}
 </style>
-
-<div class="wrap">
-  <header>
-    <div class="eyebrow">Pokémon TCG · want list</div>
-    <h1>Ashton's Want List</h1>
-    <div class="stats" id="stats"><span>Loading the list…</span></div>
-    <div class="auth" id="auth"></div>
-  </header>
-
-  <nav class="modebar" aria-label="Mode">
-    <div class="seg" role="group" aria-label="Mode" id="modeSeg">
-      <button type="button" data-mode="list" aria-pressed="true">My list</button>
-      <button type="button" data-mode="explore" aria-pressed="false">Explore</button>
-      <button type="button" data-mode="binders" aria-pressed="false">Binders</button>
+</head>
+<body>
+<header class="topbar" id="topbar">
+  <div class="topbar-in">
+    <div class="tb-title"><small>Ashton's Want List</small><h1 id="pageTitle">My list</h1></div>
+    <div class="tb-acts">
+      <button type="button" class="icon-btn primary" id="addBtn" aria-label="Add a card" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
+      <button type="button" class="acct-btn" id="acctBtn" aria-label="Account and sign in">Sign in</button>
     </div>
-  </nav>
+  </div>
+</header>
 
-  <section class="explore" id="explore" hidden></section>
-  <section class="explore" id="binders" hidden></section>
-  <div id="listMode" class="explore">
+<main class="wrap">
+  <section class="view" id="explore" hidden></section>
+  <section class="view" id="binders" hidden></section>
+  <div id="listMode" class="view">
+    <div class="stats" id="stats"><span>Loading the list…</span></div>
+    <div class="banner tap" id="readOnly" role="button" tabindex="0" hidden>You're viewing Ashton's list. Tap Sign in to make changes.</div>
 
-  <section class="panel" id="addPanel" hidden>
-    <form id="quickForm" class="add-row" autocomplete="off">
-      <input type="text" id="quick" aria-label="Add a card or paste a listing link" placeholder="Add a card, or paste a listing link">
+    <section class="collbar" aria-label="Collections">
+      <div class="colltabs" id="colltabs"></div>
+      <div class="panel collhead" id="collhead" hidden></div>
+    </section>
+
+    <div class="filters" id="filters">
+      <div class="filter-row">
+        <input type="search" id="q" placeholder="Search name, set or number" aria-label="Search" enterkeyhint="search">
+        <button type="button" class="icon-btn opt-btn" id="optBtn" aria-label="Sort and view options"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span class="dot" id="optDot" hidden></span></button>
+      </div>
+      <div class="filter-row">
+        <div class="seg" role="group" aria-label="Show">
+          <button type="button" data-status="want" aria-pressed="true">Want</button>
+          <button type="button" data-status="got" aria-pressed="false">Got</button>
+          <button type="button" data-status="all" aria-pressed="false">All</button>
+        </div>
+        <span class="count" id="count"></span>
+      </div>
+    </div>
+
+    <div class="list grid" id="list"></div>
+  </div>
+</main>
+
+<nav class="tabbar" aria-label="Sections">
+  <div class="tabs" id="modeSeg" role="group" aria-label="Mode">
+    <button type="button" data-mode="list" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="7" y="3.5" width="12" height="16" rx="2"/><path d="M4.5 7v11.5a2 2 0 0 0 2 2H15"/></svg>My list</button>
+    <button type="button" data-mode="explore" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>Explore</button>
+    <button type="button" data-mode="binders" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2.5"/><path d="M12 4v16M4 12h16"/></svg>Binders</button>
+  </div>
+</nav>
+
+<div class="bulk" id="bulk" hidden>
+  <div class="inner">
+    <div class="bulk-top">
+      <b id="bulkCount">0 selected</b>
+      <div class="bulk-btns">
+        <button class="btn small" type="button" id="bulkAll">Select all</button>
+        <button class="btn small primary" type="button" id="bulkDone">Done</button>
+      </div>
+    </div>
+    <form class="inline-form" id="bulkForm" autocomplete="off">
+      <input type="text" id="bulkColl" list="collList" placeholder="Collection name" aria-label="Collection name">
       <button class="btn primary" type="submit">Add</button>
+    </form>
+    <button class="btn small danger" type="button" id="bulkRemove" hidden>Remove from this collection</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<div class="sheet" id="sheet" hidden><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Binder editor"><div class="sheet-grip" aria-hidden="true"></div><div id="sheetBody"></div></div></div>
+
+<div class="sheet" id="detailSheet" hidden><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Card details"><div class="sheet-grip" aria-hidden="true"></div><div id="detailBody"></div></div></div>
+
+<div class="sheet" id="optSheet" hidden><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Sort and view">
+  <div class="sheet-grip" aria-hidden="true"></div>
+  <div class="sheet-head"><h3>Sort and view</h3><button class="sheet-x" type="button" data-close aria-label="Close">×</button></div>
+  <div class="sheet-form">
+    <label>Sort by
+      <select id="sort" aria-label="Sort">
+        <option value="list">Newest added</option>
+        <option value="old">Oldest added</option>
+        <option value="low">Price: low to high</option>
+        <option value="high">Price: high to low</option>
+        <option value="set">Set</option>
+        <option value="name">Name</option>
+      </select>
+    </label>
+    <label>Layout
+      <div class="seg" role="group" aria-label="Layout" id="layoutSeg">
+        <button type="button" data-layout="grid" aria-pressed="true">Grid</button>
+        <button type="button" data-layout="rows" aria-pressed="false">List</button>
+      </div>
+    </label>
+    <div class="row-btns">
+      <button type="button" class="chip-toggle" id="prioOnly" aria-pressed="false">Priority only</button>
+      <button type="button" class="chip-toggle" id="selectBtn" aria-pressed="false" hidden>Select cards</button>
+    </div>
+  </div>
+</div></div>
+
+<div class="sheet" id="addSheet" hidden><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Add a card">
+  <div class="sheet-grip" aria-hidden="true"></div>
+  <div class="sheet-head"><h3>Add a card</h3><button class="sheet-x" type="button" data-close aria-label="Close">×</button></div>
+  <section id="addPanel" hidden>
+    <form id="quickForm" class="add-row" autocomplete="off">
+      <input type="text" id="quick" aria-label="Add a card or paste a listing link" placeholder="Card name, or paste a link" enterkeyhint="go">
+      <button class="btn primary" type="submit">Next</button>
     </form>
     <p class="hint">Type it like "Umbreon ex Prismatic Evolutions 161", or paste a link from DoubleHolo, TCGplayer, eBay, Cardmarket, PriceCharting, Mercari or anywhere else. You'll check the details before it saves.</p>
     <form id="confirmForm" class="confirm" hidden>
@@ -398,70 +540,33 @@ body.sheet-open{overflow:hidden}
       <label class="wide">Set<input type="text" id="cSet" list="setList"></label>
       <label>Language<select id="cLang"><option value="EN">English</option><option value="JP">Japanese</option></select></label>
       <label>Status<select id="cStatus"><option value="want">I want it</option><option value="got">I already have it</option></select></label>
-      <label class="wide">Collection<input type="text" id="cColl" list="collList" placeholder="optional, e.g. Gengar binder"></label>
-      <label class="wide">Note<input type="text" id="cNote" placeholder="optional"></label>
-      <label class="full">Listing link<input type="url" id="cLink" placeholder="optional: a listing you're eyeing, or the card's DoubleHolo page"></label>
+      <label class="wide">Collection<input type="text" id="cColl" list="collList" placeholder="Optional, e.g. Gengar binder"></label>
+      <label class="wide">Note<input type="text" id="cNote" placeholder="Optional"></label>
+      <label class="full">Listing link<input type="url" id="cLink" placeholder="Optional: a listing you're eyeing, or the card's DoubleHolo page"></label>
       <div class="actions">
-        <button class="btn primary" type="submit">Save to list</button>
         <button class="btn" type="button" id="cCancel">Cancel</button>
+        <button class="btn primary" type="submit">Save to list</button>
       </div>
     </form>
-    <datalist id="setList"></datalist>
-    <datalist id="collList"></datalist>
   </section>
+</div></div>
 
-  <div class="banner" id="readOnly" hidden>You're viewing Ashton's list. Sign in at the top to make changes.</div>
-
-  <section class="collbar" aria-label="Collections">
-    <div class="colltabs" id="colltabs"></div>
-    <div class="panel collhead" id="collhead" hidden></div>
-  </section>
-
-  <div class="filters" id="filters">
-    <input type="search" id="q" placeholder="Search name, set or number" aria-label="Search">
-    <div class="seg" role="group" aria-label="Show">
-      <button type="button" data-status="want" aria-pressed="true">Want</button>
-      <button type="button" data-status="got" aria-pressed="false">Got</button>
-      <button type="button" data-status="all" aria-pressed="false">All</button>
-    </div>
-    <button type="button" class="chip-toggle" id="prioOnly" aria-pressed="false">★ Priority</button>
-    <select id="sort" aria-label="Sort">
-      <option value="list">Newest added</option>
-      <option value="old">Oldest added</option>
-      <option value="low">Price: low to high</option>
-      <option value="high">Price: high to low</option>
-      <option value="set">Set</option>
-      <option value="name">Name</option>
-    </select>
-    <button type="button" class="chip-toggle" id="selectBtn" aria-pressed="false" hidden>Select cards</button>
-    <span class="count" id="count"></span>
+<div class="sheet" id="acctSheet" hidden><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Account">
+  <div class="sheet-grip" aria-hidden="true"></div>
+  <div class="sheet-head"><h3 id="acctTitle">Account</h3><button class="sheet-x" type="button" data-close aria-label="Close">×</button></div>
+  <div class="acct">
+    <div id="auth"></div>
+    <h4 class="sec-title">How prices work</h4>
+    <footer class="about">
+      <p>A price marked "shipped" is the best deal found with shipping included. Other prices are the TCGplayer market price (recent sales, before shipping) on the date shown, with the cheapest current listing beside it.</p>
+      <p>"Check price" queues a card for Claude to find the cheapest seller including shipping. The DoubleHolo link opens the card's set on DoubleHolo, or the card itself once you save its DoubleHolo link. Card images and prices from TCGplayer.</p>
+    </footer>
   </div>
+</div></div>
 
-  <div class="list" id="list">
-    <div class="panel empty-state">Your cards will appear here once the list loads.</div>
-  </div>
-  </div>
+<datalist id="setList"></datalist>
+<datalist id="collList"></datalist>
 
-  <footer>
-    Yellow stickers are the best deal found with shipping included. Other prices are the TCGplayer market price (recent sales, before shipping) on the date shown, with the cheapest current listing beside it.
-    "Check price" queues a card for Claude to find the cheapest seller including shipping. The DoubleHolo button opens the card's set on DoubleHolo, or the card itself once you save its DoubleHolo link. Card images and prices from TCGplayer.
-  </footer>
-</div>
-
-<div class="bulk" id="bulk" hidden>
-  <div class="inner">
-    <b id="bulkCount">0 selected</b>
-    <form class="inline-form" id="bulkForm" autocomplete="off">
-      <input type="text" id="bulkColl" list="collList" placeholder="Collection name" aria-label="Collection name">
-      <button class="btn primary small" type="submit">Add to collection</button>
-    </form>
-    <button class="btn small" type="button" id="bulkRemove" hidden>Remove from this collection</button>
-    <button class="btn small" type="button" id="bulkAll">Select all shown</button>
-    <button class="btn small" type="button" id="bulkDone">Done</button>
-  </div>
-</div>
-<div class="toast" id="toast" role="status" hidden></div>
-<div class="sheet" id="sheet" hidden><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Binder editor"><div class="sheet-grip" aria-hidden="true"></div><div id="sheetBody"></div></div></div>
 <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Card photo" hidden>
   <button class="close" type="button" id="lbClose" aria-label="Close">×</button>
   <img id="lbImg" alt="">
@@ -477,7 +582,8 @@ body.sheet-open{overflow:hidden}
   const $ = s => document.querySelector(s);
   const state = { cards: [], status: "want", prio: false, q: "", sort: "list", openEdit: null, openTags: null, confirmDel: null,
     coll: null, view: "list", pockets: 9, selecting: false, selected: new Set(), collMode: null, collConfirm: false,
-    mode: "list", disc: [], exColl: null, showPassed: false, exQ: "", exCap: 0, exSort: "rec", exHideAdded: true, exArtist: "", openRow: null };
+    mode: "list", disc: [], exColl: null, showPassed: false, exQ: "", exCap: 0, exSort: "rec", exHideAdded: true, exArtist: "", openRow: null,
+    layout: "grid", openPick: null, cardsLoaded: false, discLoaded: false };
   let db = null, assets = null, canWrite = true, photoFor = null, busy = false;
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 
@@ -486,6 +592,26 @@ body.sheet-open{overflow:hidden}
   const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
   const el = (tag, props = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(props)) { if (v == null || v === false) continue; if (k === "class") e.className = v; else if (k === "text") e.textContent = v; else if (k === "style") e.setAttribute("style", v); else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? "" : v); } for (const k of kids) if (k) e.append(k); return e; };
   let toastT; const toast = msg => { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); };
+  const svg = (path, extra = "") => { const s = document.createElementNS("http://www.w3.org/2000/svg", "svg"); s.setAttribute("viewBox", "0 0 24 24"); s.setAttribute("aria-hidden", "true"); s.innerHTML = path; if (extra) s.setAttribute("style", extra); return s; };
+  const STAR = '<path d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z" fill-rule="nonzero" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>';
+  const starIcon = () => { const s = svg(STAR); s.setAttribute("fill", "none"); return s; };
+  const PLUS = '<path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>';
+  const TICK = '<path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>';
+  /* Sheets other than the binder editor: open, close, backdrop tap, drag the grip down to dismiss. */
+  const overlays = ["#sheet", "#detailSheet", "#optSheet", "#addSheet", "#acctSheet", "#lightbox"];
+  const syncLock = () => document.body.classList.toggle("sheet-open", overlays.some(s => !$(s).hidden));
+  const sheetClosers = {};
+  function openPanel(id) { $(id).hidden = false; syncLock(); }
+  function closePanel(id) { if ($(id).hidden) return; if (sheetClosers[id]) sheetClosers[id](); else { $(id).hidden = true; syncLock(); } }
+  function wireSheet(id, onClose) {
+    const s = $(id), card = s.querySelector(".sheet-card");
+    sheetClosers[id] = () => { s.hidden = true; card.style.transform = ""; syncLock(); onClose && onClose(); };
+    s.addEventListener("click", e => { if (e.target === s || e.target.closest("[data-close]")) sheetClosers[id](); });
+    let y0 = null, dy = 0;
+    card.addEventListener("touchstart", e => { if (!e.target.closest(".sheet-grip,.sheet-head") || e.target.closest("button,input,select,a")) return; y0 = e.touches[0].clientY; dy = 0; card.style.transition = "none"; }, { passive: true });
+    card.addEventListener("touchmove", e => { if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0); card.style.transform = "translateY(" + dy + "px)"; }, { passive: true });
+    card.addEventListener("touchend", () => { if (y0 == null) return; y0 = null; card.style.transition = "transform .2s"; if (dy > 110) sheetClosers[id](); else card.style.transform = ""; });
+  }
   const slugify = s => String(s || "").toLowerCase().replace(/&/g, " ").replace(/[^a-z0-9]+/g, "-").replace(/-and-/g, "-").replace(/^-|-$/g, "");
   const tcgImg = (pid, big) => "https://tcgplayer-cdn.tcgplayer.com/product/" + pid + (big ? "_in_1000x1000.jpg" : "_400w.jpg");
   const imgUrl = c => (c.img && /^https?:/.test(c.img)) ? c.img : pidOf(c) ? tcgImg(pidOf(c)) : null;
@@ -677,7 +803,7 @@ body.sheet-open{overflow:hidden}
   }
   function stopSelecting() { state.selecting = false; state.selected = new Set(); render(); }
   function toggleSel(c) { state.selected.has(c.id) ? state.selected.delete(c.id) : state.selected.add(c.id); render(); }
-  $("#selectBtn").addEventListener("click", () => state.selecting ? stopSelecting() : startSelecting());
+  $("#selectBtn").addEventListener("click", () => { closePanel("#optSheet"); state.selecting ? stopSelecting() : startSelecting(); });
   $("#bulkDone").addEventListener("click", stopSelecting);
   $("#bulkAll").addEventListener("click", () => { for (const c of visible()) state.selected.add(c.id); render(); });
   $("#bulkForm").addEventListener("submit", e => {
@@ -718,6 +844,7 @@ body.sheet-open{overflow:hidden}
   }
 
   function renderStats() {
+    if (!state.cardsLoaded) return;
     const want = state.cards.filter(c => !isGot(c));
     const total = want.reduce((s, c) => s + (priceOf(c) ?? 0), 0);
     const deals = want.filter(c => c.deal && c.deal.total != null).length;
@@ -751,65 +878,175 @@ body.sheet-open{overflow:hidden}
     return box;
   }
 
+  function cardImg(c, cls) {
+    const src = imgUrl(c);
+    if (!src) return el("span", { class: "noimg", text: c.name });
+    const img = el("img", { src, alt: "", loading: "lazy", decoding: "async", class: cls || null });
+    img.addEventListener("error", () => { img.replaceWith(el("span", { class: "noimg", text: c.name })); }, { once: true });
+    return img;
+  }
   function thumb(c) {
     const src = imgUrl(c);
+    const inner = src ? cardImg(c) : document.createTextNode("No photo");
     if (state.selecting) {
       const on = state.selected.has(c.id);
-      const b = el("button", { class: "thumb pick" + (src ? "" : " empty"), type: "button", "aria-pressed": String(on), "aria-label": (on ? "Unselect " : "Select ") + c.name, onclick: () => toggleSel(c) },
-        src ? el("img", { src, alt: "", loading: "lazy", decoding: "async" }) : document.createTextNode("No photo"), el("span", { class: "check" + (on ? " on" : ""), text: on ? "✓" : "" }));
-      return b;
+      return el("button", { class: "thumb pick" + (src ? "" : " empty"), type: "button", "aria-pressed": String(on), "aria-label": (on ? "Unselect " : "Select ") + c.name, onclick: () => toggleSel(c) },
+        inner, el("span", { class: "check" + (on ? " on" : ""), text: on ? "✓" : "" }));
     }
-    if (src) {
-      const img = el("img", { src, alt: c.name + " card", loading: "lazy", decoding: "async" });
-      img.addEventListener("error", () => { const b = img.parentElement; if (b) { b.classList.add("empty"); b.textContent = "Photo unavailable"; } }, { once: true });
-      return el("button", { class: "thumb", type: "button", "aria-label": "Show " + c.name + " larger", onclick: () => openLightbox(c) }, img);
-    }
-    if (canWrite && assets) return el("button", { class: "thumb empty can", type: "button", text: "+ Add photo", onclick: () => pickPhoto(c) });
-    return el("div", { class: "thumb empty", text: "No photo yet" });
+    return el("div", { class: "thumb" + (src ? "" : " empty") }, inner);
+  }
+  /* Compact price for rows and tiles; the full breakdown lives in the card sheet. */
+  function shortPrice(c) {
+    if (isGot(c)) return null;
+    if (c.deal && c.deal.total != null) return { amt: fmt$(c.deal.total), deal: true, label: "shipped" };
+    const p = priceOf(c);
+    if (p != null) return { amt: fmt$(p), label: tcgMarket(c) != null || (c.ask && c.ask.kind === "market") ? "market" : "ask" };
+    return { amt: null, label: c.checkRequested ? "Price coming" : "No listings" };
   }
 
   function row(c) {
-    const got = isGot(c);
-    const open = [state.openRow, state.openEdit, state.openTags, state.confirmDel].includes(c.id);
-    const r = el("article", { class: "row" + (got ? " got" : "") + (state.selected.has(c.id) ? " sel" : "") + (open ? " open" : "") });
-    const name = el("div", { class: "name" },
-      el("button", { class: "star", type: "button", "aria-pressed": String(!!c.priority), "aria-label": "Priority", title: canWrite ? "Mark as priority" : "Priority", disabled: !canWrite, text: "★", onclick: () => save(c, { priority: !c.priority }) }),
-      document.createTextNode(c.name));
+    const got = isGot(c), sp = shortPrice(c);
+    const r = el("article", { class: "row" + (got ? " got" : "") + (state.selected.has(c.id) ? " sel" : "") });
+    const name = el("div", { class: "name" }, document.createTextNode(c.name));
     if (c.variant) name.append(el("span", { class: "tag", text: c.variant }));
-    if (c.lang === "JP") name.append(el("span", { class: "tag jp", text: "Japanese" }));
-    const meta = el("div", { class: "meta" }, el("span", { text: c.set || "Set unknown" }), c.number ? el("span", { class: "num mono", text: "#" + c.number }) : el("span", { text: "number not shown" }), el("span", { text: "added " + fmtDate(c.addedAt) }));
+    if (c.lang === "JP") name.append(el("span", { class: "tag", text: "Japanese" }));
+    const meta = el("div", { class: "meta" }, el("span", { text: c.set || "Set unknown" }), c.number ? el("span", { class: "num", text: "#" + c.number }) : null, el("span", { text: "added " + fmtDate(c.addedAt) }));
     const who = el("div", { class: "who" }, name, meta);
     const flags = el("div", { class: "flags" });
-    if (c.checkRequested && !got) flags.append(el("span", { class: "flag queued", text: "Price check queued" }));
-    if (got) flags.append(el("span", { class: "flag got", text: "Got it" }));
+    if (got) flags.append(el("span", { class: "flag", text: "Got it" }));
+    else if (c.checkRequested) flags.append(el("span", { class: "flag", text: "Price check queued" }));
     for (const n of collsOf(c)) flags.append(el("button", { class: "collchip", type: "button", text: n, title: "Show " + n, onclick: () => setColl(n) }));
     if (flags.childNodes.length) who.append(flags);
-    if (c.note) who.append(el("div", { class: "note", text: c.note }));
-    r.append(thumb(c), who, priceBlock(c));
-    if (state.selecting) { r.addEventListener("click", e => { if (!e.target.closest("button,a,input,label")) toggleSel(c); }); return r; }
+    const right = el("div", { class: "rprice" });
+    if (sp) right.append(sp.amt ? el("span", { class: "amt" + (sp.deal ? " deal" : ""), text: sp.amt }) : null, el("small", { text: sp.label }));
+    if (canWrite && !state.selecting) right.prepend(el("button", { class: "star", type: "button", "aria-pressed": String(!!c.priority), "aria-label": "Priority", title: "Mark as priority", onclick: () => save(c, { priority: !c.priority }) }, starIcon()));
+    else if (c.priority) right.prepend(el("span", { class: "prio-mark", "aria-label": "Priority" }, svg(STAR)));
+    r.append(thumb(c), who, right);
+    r.addEventListener("click", e => { if (e.target.closest("button,a,input,label")) return; state.selecting ? toggleSel(c) : openCard(c); });
+    return r;
+  }
 
-    const toggleRow = () => { if (open) { state.openRow = null; state.openEdit = state.openTags = state.confirmDel = null; } else state.openRow = c.id; render(); };
-    r.append(el("button", { class: "more-toggle", type: "button", "aria-expanded": String(open), "aria-label": (open ? "Hide" : "Show") + " shops and options for " + c.name, text: open ? "▴" : "▾", onclick: toggleRow }));
-    r.addEventListener("click", e => { if (matchMedia("(max-width:620px)").matches && !e.target.closest("button,a,input,select,label,form,.shop,.acts,.picker,.edit")) toggleRow(); });
-    const shop = el("div", { class: "shop" });
-    if (c.deal && c.deal.url) shop.append(el("a", { class: "deal", href: c.deal.url, target: "_blank", rel: "noopener", text: "Buy the deal" }));
-    if (c.listing && c.listing.url) shop.append(el("a", { class: "mine", href: c.listing.url, target: "_blank", rel: "noopener", text: "Your " + (c.listing.site || "listing") + " link" }));
-    for (const [label, href, title] of markets(c)) shop.append(el("a", { href, target: "_blank", rel: "noopener", text: label, title }));
-    r.append(shop);
+  function tile(c) {
+    const got = isGot(c), sp = shortPrice(c), on = state.selected.has(c.id);
+    const t = el("article", { class: "tile" + (got ? " got" : "") + (on ? " sel" : ""), role: "button", tabindex: "0",
+      "aria-label": c.name + (c.set ? ", " + c.set : "") + (got ? ", got it" : sp && sp.amt ? ", " + sp.amt : "") + (state.selecting ? (on ? ", selected" : ", not selected") : "") });
+    const fig = el("div", { class: "tile-img" }, cardImg(c));
+    if (got) fig.append(el("span", { class: "tile-badge have", text: "Got it" }));
+    else if (sp && sp.amt) fig.append(el("span", { class: "tile-badge" + (sp.deal ? " deal" : ""), text: sp.amt }));
+    if (c.priority) fig.append(el("span", { class: "tile-star", "aria-hidden": "true" }, svg(STAR)));
+    if (state.selecting) fig.append(el("span", { class: "check" + (on ? " on" : ""), text: on ? "✓" : "" }));
+    t.append(fig, el("div", { class: "tile-name", text: c.name }), el("div", { class: "tile-sub", text: [c.lang === "JP" ? "JP" : "", c.set, c.number ? "#" + c.number : ""].filter(Boolean).join(" · ") }));
+    const act = () => state.selecting ? toggleSel(c) : openCard(c);
+    t.addEventListener("click", act);
+    t.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); act(); } });
+    return t;
+  }
+
+  /* ---------- card detail sheet ---------- */
+  function openCard(c) { state.openRow = c.id; state.openPick = null; state.openEdit = state.openTags = state.confirmDel = null; openPanel("#detailSheet"); drawDetail(); $("#detailSheet .sheet-card").scrollTop = 0; }
+  function openPick(s) { state.openPick = s.id; state.openRow = null; openPanel("#detailSheet"); drawDetail(); $("#detailSheet .sheet-card").scrollTop = 0; }
+  function closeDetail() { state.openRow = state.openPick = null; state.openEdit = state.openTags = state.confirmDel = null; }
+  function drawDetail() {
+    const box = $("#detailBody"); if ($("#detailSheet").hidden) return;
+    if (state.openPick) return drawPickDetail(box);
+    const c = state.cards.find(x => x.id === state.openRow);
+    if (!c) { closePanel("#detailSheet"); return; }
+    const got = isGot(c), keep = $("#detailSheet .sheet-card").scrollTop;
+    box.textContent = "";
+    box.append(el("div", { class: "sheet-head" }, el("h3", { text: got ? "In your collection" : "On your want list" }), el("button", { class: "sheet-x", type: "button", "aria-label": "Close", text: "×", "data-close": true })));
+    const src = imgUrl(c);
+    let fig;
+    if (src) { fig = el("button", { class: "detail-img", type: "button", "aria-label": "Show " + c.name + " larger", onclick: () => openLightbox(c) }, cardImg(c)); }
+    else if (canWrite && assets) fig = el("button", { class: "detail-img empty can", type: "button", text: "+ Add photo", onclick: () => pickPhoto(c) });
+    else fig = el("div", { class: "detail-img empty", text: "No photo yet" });
+    const name = el("div", { class: "name" }, document.createTextNode(c.name));
+    if (c.variant) name.append(el("span", { class: "tag", text: c.variant }));
+    if (c.lang === "JP") name.append(el("span", { class: "tag", text: "Japanese" }));
+    const info = el("div", { class: "detail-info" }, name,
+      el("div", { class: "meta" }, el("span", { text: c.set || "Set unknown" }), c.number ? el("span", { class: "num", text: "#" + c.number }) : el("span", { text: "number not shown" })),
+      el("div", { class: "meta" }, el("span", { text: "Added " + fmtDate(c.addedAt) })));
+    const flags = el("div", { class: "flags" });
+    if (c.checkRequested && !got) flags.append(el("span", { class: "flag", text: "Price check queued" }));
+    if (c.priority) flags.append(el("span", { class: "flag", text: "★ Priority" }));
+    for (const n of collsOf(c)) flags.append(el("button", { class: "collchip", type: "button", text: n, title: "Show " + n, onclick: () => { closePanel("#detailSheet"); setColl(n); } }));
+    if (flags.childNodes.length) info.append(flags);
+    if (!got) info.append(priceBlock(c));
+    box.append(el("div", { class: "detail-hero" }, fig, info));
+    if (c.note) box.append(el("div", { class: "detail-note", style: "margin-top:14px", text: c.note }));
 
     if (canWrite) {
-      const acts = el("div", { class: "acts" });
-      if (!got) acts.append(el("button", { class: "linkbtn", type: "button", text: c.checkRequested ? "Cancel price check" : "Check price", onclick: () => save(c, { checkRequested: !c.checkRequested }, c.checkRequested ? "Price check cancelled" : "Queued for a price check") }));
-      acts.append(el("button", { class: "linkbtn", type: "button", text: got ? "Move back to want" : "Got it", onclick: () => save(c, { status: got ? "want" : "got" }, got ? "Moved back to want" : "Marked as got") }));
-      acts.append(el("button", { class: "linkbtn", type: "button", text: state.openTags === c.id ? "Close collections" : "Collections", onclick: () => { state.openTags = state.openTags === c.id ? null : c.id; state.openEdit = null; render(); } }));
-      acts.append(el("button", { class: "linkbtn", type: "button", text: state.openEdit === c.id ? "Close" : "Edit", onclick: () => { state.openEdit = state.openEdit === c.id ? null : c.id; state.openTags = null; state.confirmDel = null; render(); } }));
-      if (state.confirmDel === c.id) acts.append(el("button", { class: "linkbtn danger", type: "button", text: "Yes, remove", onclick: () => remove(c) }), el("button", { class: "linkbtn", type: "button", text: "Keep", onclick: () => { state.confirmDel = null; render(); } }));
-      else acts.append(el("button", { class: "linkbtn danger", type: "button", text: "Remove", onclick: () => { state.confirmDel = c.id; render(); } }));
-      r.append(acts);
+      const acts = el("div", { class: "detail-acts" },
+        el("button", { class: "btn" + (got ? "" : " primary"), type: "button", text: got ? "Move back to want" : "Got it", onclick: () => save(c, { status: got ? "want" : "got" }, got ? "Moved back to want" : "Marked as got") }),
+        el("button", { class: "btn", type: "button", "aria-pressed": String(!!c.priority) }, starIcon(), document.createTextNode(c.priority ? "Priority" : "Mark priority")));
+      acts.lastChild.addEventListener("click", () => save(c, { priority: !c.priority }));
+      if (c.priority) acts.lastChild.querySelector("svg").style.fill = "currentColor";
+      acts.lastChild.querySelector("svg").style.cssText += ";width:18px;height:18px";
+      if (!got) acts.append(el("button", { class: "btn wide", type: "button", text: c.checkRequested ? "Cancel price check" : "Check price", onclick: () => save(c, { checkRequested: !c.checkRequested }, c.checkRequested ? "Price check cancelled" : "Queued for a price check") }));
+      box.append(acts);
     }
-    if (state.openTags === c.id && canWrite) r.append(tagPicker(c));
-    if (state.openEdit === c.id && canWrite) r.append(editForm(c));
-    return r;
+
+    const shop = el("div", { class: "shop" });
+    if (c.deal && c.deal.url) shop.append(el("a", { class: "deal", href: c.deal.url, target: "_blank", rel: "noopener" }, document.createTextNode("Buy the deal"), el("small", { text: fmt$(c.deal.total) + " shipped" })));
+    if (c.listing && c.listing.url) shop.append(el("a", { class: "mine", href: c.listing.url, target: "_blank", rel: "noopener", text: "Your " + (c.listing.site || "listing") + " link" }));
+    for (const [label, href, title] of markets(c)) shop.append(el("a", { href, target: "_blank", rel: "noopener", title }, document.createTextNode(label), title ? el("small", { text: title.replace(/^Open this /, "").replace(/ on DoubleHolo$/, "") }) : null));
+    box.append(el("div", { class: "sec" }, el("h4", { class: "sec-title", text: "Shop" }), shop));
+
+    if (canWrite) {
+      const menu = el("div", { class: "menu" });
+      const tagsOpen = state.openTags === c.id, editOpen = state.openEdit === c.id;
+      menu.append(el("button", { type: "button", "aria-expanded": String(tagsOpen), text: "Collections", onclick: () => { state.openTags = tagsOpen ? null : c.id; state.openEdit = null; drawDetail(); } }));
+      if (tagsOpen) menu.append(el("div", { class: "sub" }, tagPicker(c)));
+      menu.append(el("button", { type: "button", "aria-expanded": String(editOpen), text: "Edit details", onclick: () => { state.openEdit = editOpen ? null : c.id; state.openTags = null; state.confirmDel = null; drawDetail(); } }));
+      if (editOpen) menu.append(el("div", { class: "sub" }, editForm(c)));
+      if (assets) menu.append(el("button", { type: "button", text: c.img && /^https?:/.test(c.img) ? "Replace photo" : "Add your own photo", onclick: () => pickPhoto(c) }));
+      if (state.confirmDel === c.id) menu.append(el("div", { class: "sub", style: "padding-top:14px" }, el("p", { class: "hint", style: "margin-bottom:10px", text: "Remove " + c.name + " from the list? This can't be undone." }),
+        el("div", { class: "row-btns" }, el("button", { class: "btn", type: "button", text: "Keep", onclick: () => { state.confirmDel = null; drawDetail(); } }), el("button", { class: "btn danger", type: "button", text: "Yes, remove", onclick: () => remove(c) }))));
+      else menu.append(el("button", { class: "danger", type: "button", text: "Remove from list", onclick: () => { state.confirmDel = c.id; state.openEdit = state.openTags = null; drawDetail(); } }));
+      box.append(el("div", { class: "sec" }, el("h4", { class: "sec-title", text: "Manage" }), menu));
+    }
+    $("#detailSheet .sheet-card").scrollTop = keep;
+  }
+
+  function drawPickDetail(box) {
+    const s = state.disc.find(x => x.id === state.openPick);
+    if (!s) { closePanel("#detailSheet"); return; }
+    const keep = $("#detailSheet .sheet-card").scrollTop;
+    const status = s.status || "new", already = s.status === "added" || s.status === "owned" || onList(s);
+    box.textContent = "";
+    box.append(el("div", { class: "sheet-head" }, el("h3", { text: s.coll === WILD ? "Wildcard pick" : "Pick for " + s.coll }), el("button", { class: "sheet-x", type: "button", "aria-label": "Close", text: "×", "data-close": true })));
+    const src = s.tcgProduct ? tcgImg(s.tcgProduct) : null;
+    const lb = () => openLightbox({ name: s.name, set: s.set, number: s.number, img: s.img, variant: "", status: "want", ask: s.market != null ? { kind: "market", amount: s.market } : null, tcg: s.tcgProduct ? { productId: s.tcgProduct } : null });
+    const fig = src ? el("button", { class: "detail-img", type: "button", "aria-label": "Show " + s.name + " larger", onclick: lb }, el("img", { src, alt: s.name + " card", decoding: "async" })) : el("div", { class: "detail-img empty", text: "No photo" });
+    const art = el("div", { class: "meta" });
+    if (s.rarity) art.append(el("span", { text: s.rarity }));
+    if (s.illustrator) art.append(el("span", {}, document.createTextNode("art by "), el("button", { class: "artist", type: "button", text: s.illustrator, title: "More picks by " + s.illustrator, onclick: () => { state.exArtist = s.illustrator; state.exColl = "__all"; closePanel("#detailSheet"); renderExplore(); window.scrollTo({ top: 0, behavior: "smooth" }); } })));
+    const info = el("div", { class: "detail-info" }, el("div", { class: "name", text: s.name }),
+      el("div", { class: "meta" }, el("span", { text: s.set }), el("span", { class: "num", text: "#" + s.number })), art,
+      s.market != null ? el("div", { class: "price" }, el("div", { class: "ask", text: "~" + fmt$(s.market) }), el("div", { class: "ask-label", text: "TCGplayer market, before shipping" + (s.priceAsOf ? " · " + fmtDate(s.priceAsOf) : "") }))
+        : el("div", { class: "none", text: "No market price yet" }));
+    box.append(el("div", { class: "detail-hero" }, fig, info));
+    const why = (s.reason || "").replace(" · " + s.rarity, "");
+    if (why) box.append(el("p", { class: "detail-why", style: "margin-top:14px", text: why }));
+    if (already) box.append(el("div", { class: "detail-note", style: "margin-top:16px", text: status === "owned" ? "✓ You have it" : "✓ On your list" }));
+    else if (canWrite) {
+      const collNames = allColls().map(([n]) => n), wild = s.coll === WILD;
+      const names = wild ? ["", ...collNames] : collNames.includes(s.coll) ? collNames : [s.coll, ...collNames];
+      const pick = el("select", { "aria-label": "Collection for " + s.name });
+      for (const n of names) { const o = el("option", { value: n, text: n || "No collection" }); if (n === (wild ? "" : s.coll)) o.selected = true; pick.append(o); }
+      box.append(el("div", { class: "sec" }, el("label", { class: "ex-to" }, el("span", { text: "Add to" }), pick),
+        el("div", { class: "detail-acts", style: "margin-top:4px" },
+          el("button", { class: "btn primary wide", type: "button", text: "Want it", onclick: e => addFromDisc(s, e.currentTarget, "want", pick.value) }),
+          el("button", { class: "btn", type: "button", text: "I have it", onclick: e => addFromDisc(s, e.currentTarget, "got", pick.value) }),
+          status === "passed"
+            ? el("button", { class: "btn", type: "button", text: "Bring back", onclick: () => setDisc(s, "new") })
+            : el("button", { class: "btn", type: "button", text: "Not for me", onclick: () => setDisc(s, "passed") }))));
+    }
+    const shop = el("div", { class: "shop" },
+      el("a", { href: tcgLink(s), target: "_blank", rel: "noopener", text: "TCGplayer" }),
+      el("a", { href: "https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(s.name + " " + s.set + " " + s.number + " pokemon") + "&LH_BIN=1&_sop=15", target: "_blank", rel: "noopener", text: "eBay" }),
+      el("a", { href: "https://doubleholo.com/marketplace?sets=" + encodeURIComponent("Pokemon " + s.set), target: "_blank", rel: "noopener", text: "DoubleHolo" }));
+    box.append(el("div", { class: "sec" }, el("h4", { class: "sec-title", text: "Shop" }), shop));
+    $("#detailSheet .sheet-card").scrollTop = keep;
   }
 
   function tagPicker(c) {
@@ -915,8 +1152,9 @@ body.sheet-open{overflow:hidden}
   function tcgLink(s) { return s.tcgProduct ? "https://www.tcgplayer.com/product/" + s.tcgProduct : "https://www.tcgplayer.com/search/pokemon/product?q=" + encodeURIComponent(s.name + " " + s.number); }
   function renderExplore() {
     const box = $("#explore"); box.textContent = "";
+    if (!state.discLoaded && db) { box.append(skeletonGrid("ex-grid", 6)); return; }
     const colls = exColls();
-    if (!colls.length) { box.append(el("div", { class: "panel empty-state", text: "No suggestions yet. Ask Claude in chat to find cards for your collections." })); return; }
+    if (!colls.length) { box.append(el("div", { class: "empty-state", text: "No suggestions yet. Ask Claude in chat to find cards for your collections." })); return; }
     const ALL = "__all";
     if (!state.exColl || (state.exColl !== ALL && !colls.some(([n]) => n === state.exColl))) state.exColl = (colls.find(([n]) => n === state.coll) || colls[0])[0];
     const isAll = state.exColl === ALL;
@@ -943,7 +1181,7 @@ body.sheet-open{overflow:hidden}
     const intro = el("div", { class: "ex-intro" }, el("h2", { text: isAll ? "All picks" : state.exColl }),
       el("p", { text: (isAll ? "Every suggestion across your collections." : state.exColl === WILD ? "Fun cards under $50 that don't belong in any of your binders. Add them loose, or start a new collection." : "Cards that aren't on your list yet, picked to match this collection.") + " Prices are TCGplayer market before shipping" + (all.find(s => s.priceAsOf) ? ", as of " + fmtDate(all.map(s => s.priceAsOf).filter(Boolean).sort().pop()) : "") + "." }));
     box.append(intro);
-    const tools = el("div", { class: "ex-tools" });
+    const tools = el("div", { class: "scroller" });
     const search = el("input", { type: "search", id: "exQ", placeholder: "Search picks, sets or artists", "aria-label": "Search picks", value: state.exQ });
     search.addEventListener("input", () => { state.exQ = search.value; renderExplore(); const i = $("#exQ"); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } });
     const cap = el("select", { "aria-label": "Price limit" });
@@ -952,51 +1190,41 @@ body.sheet-open{overflow:hidden}
     const sort = el("select", { "aria-label": "Sort picks" });
     for (const [v, t] of [["rec", "Best match"], ["low", "Price: low to high"], ["high", "Price: high to low"]]) { const o = el("option", { value: v, text: t }); if (state.exSort === v) o.selected = true; sort.append(o); }
     sort.addEventListener("change", () => { state.exSort = sort.value; renderExplore(); });
-    tools.append(search, cap, sort);
+    tools.append(cap, sort);
     if (added) tools.append(el("button", { class: "chip-toggle", type: "button", "aria-pressed": String(!state.exHideAdded), text: state.exHideAdded ? "Show " + added + " already added" : "Hide added", onclick: () => { state.exHideAdded = !state.exHideAdded; renderExplore(); } }));
     if (passed) tools.append(el("button", { class: "chip-toggle", type: "button", "aria-pressed": String(state.showPassed), text: state.showPassed ? "Hide passed" : "Show " + passed + " passed", onclick: () => { state.showPassed = !state.showPassed; renderExplore(); } }));
     if (state.exArtist) tools.append(el("button", { class: "chip-toggle", type: "button", "aria-pressed": "true", text: "Art by " + state.exArtist + " ×", title: "Clear artist filter", onclick: () => { state.exArtist = ""; renderExplore(); } }));
-    box.append(tools);
+    box.append(el("div", { class: "ex-tools" }, search, tools));
     const grid = el("div", { class: "ex-grid" });
     let sepDone = false;
     for (const s of shown) {
       if (!sepDone && !isAll && state.exSort === "rec" && latest > 1 && (s.batch ?? 1) < latest) { sepDone = true; grid.append(el("div", { class: "ex-sep", text: "Earlier picks" })); }
       const status = s.status || "new", already = isAdded(s);
-      const card = el("article", { class: "ex-card" + (status === "passed" ? " dim" : "") });
+      const card = el("article", { class: "ex-card" + (status === "passed" ? " dim" : ""), role: "button", tabindex: "0", "aria-label": s.name + ", " + s.set + (s.market != null ? ", about " + fmt$(s.market) : "") });
       const src = s.tcgProduct ? tcgImg(s.tcgProduct) : null;
-      if (src) card.append(el("button", { class: "ex-img", type: "button", "aria-label": "Show " + s.name + " larger", onclick: () => openLightbox({ name: s.name, set: s.set, number: s.number, img: s.img, variant: "", status: "want", ask: s.market != null ? { kind: "market", amount: s.market } : null }) }, el("img", { src, alt: s.name + " card", loading: "lazy", decoding: "async" })));
-      const artMeta = el("div", { class: "ex-meta" }, document.createTextNode(s.rarity || ""));
-      if (s.illustrator) { if (s.rarity) artMeta.append(document.createTextNode(" · ")); artMeta.append(document.createTextNode("art by "), el("button", { class: "artist", type: "button", text: s.illustrator, title: "More picks by " + s.illustrator, onclick: () => { state.exArtist = s.illustrator; state.exColl = ALL; renderExplore(); window.scrollTo({ top: 0, behavior: "smooth" }); } })); }
-      const body = el("div", { class: "ex-body" },
-        isAll ? el("div", { class: "ex-coll", text: s.coll }) : null,
-        el("div", { class: "ex-name", text: s.name }),
-        el("div", { class: "ex-meta", text: s.set + " · #" + s.number }),
-        artMeta,
-        el("div", { class: "ex-why", text: (s.reason || "").replace(" · " + s.rarity, "") }),
-        s.market != null ? el("div", { class: "ex-price" }, document.createTextNode("~" + fmt$(s.market) + " "), el("small", { text: "market" })) : el("div", { class: "ex-meta", text: "No market price yet" }),
-        el("div", { class: "ex-links" },
-          el("a", { href: tcgLink(s), target: "_blank", rel: "noopener", text: "TCGplayer" }),
-          el("a", { href: "https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(s.name + " " + s.set + " " + s.number + " pokemon") + "&LH_BIN=1&_sop=15", target: "_blank", rel: "noopener", text: "eBay" }),
-          el("a", { href: "https://doubleholo.com/marketplace?sets=" + encodeURIComponent("Pokemon " + s.set), target: "_blank", rel: "noopener", text: "DoubleHolo" })));
-      const acts = el("div", { class: "ex-acts" });
-      if (already) acts.append(el("span", { class: "ex-added", text: status === "owned" ? "✓ You have it" : "✓ On your list" }));
-      else if (canWrite) {
-        const wild = s.coll === WILD;
-        const names = wild ? ["", ...collNames] : collNames.includes(s.coll) ? collNames : [s.coll, ...collNames];
-        const pick = el("select", { "aria-label": "Collection for " + s.name });
-        for (const n of names) { const o = el("option", { value: n, text: n || "No collection" }); if (n === (wild ? "" : s.coll)) o.selected = true; pick.append(o); }
-        acts.append(el("label", { class: "ex-to" }, el("span", { text: "Add to" }), pick));
-        acts.append(el("button", { class: "btn primary small", type: "button", text: "Want it", onclick: e => addFromDisc(s, e.currentTarget, "want", pick.value) }));
-        acts.append(el("button", { class: "btn small", type: "button", text: "I have it", onclick: e => addFromDisc(s, e.currentTarget, "got", pick.value) }));
-        acts.append(status === "passed"
-          ? el("button", { class: "btn small", type: "button", text: "Bring back", onclick: () => setDisc(s, "new") })
-          : el("button", { class: "btn small", type: "button", text: "Not for me", onclick: () => setDisc(s, "passed") }));
+      const fig = el("div", { class: "tile-img" });
+      if (src) { const img = el("img", { src, alt: "", loading: "lazy", decoding: "async" }); img.addEventListener("error", () => img.replaceWith(el("span", { class: "noimg", text: s.name })), { once: true }); fig.append(img); }
+      else fig.append(el("span", { class: "noimg", text: s.name }));
+      card.append(fig);
+      if (isAll) card.append(el("div", { class: "ex-coll", text: s.coll }));
+      card.append(el("div", { class: "ex-name", text: s.name }), el("div", { class: "ex-meta", text: s.set + " · #" + s.number }));
+      const line = el("div", { class: "ex-line" }, s.market != null ? el("span", { class: "ex-price", text: "~" + fmt$(s.market) }) : el("span", { class: "ex-meta", text: "No price yet" }));
+      if (already) line.append(el("span", { class: "ex-added", text: status === "owned" ? "✓ Have it" : "✓ On list" }));
+      else if (canWrite && status !== "passed") {
+        const wild = s.coll === WILD, coll = wild ? "" : s.coll;
+        const quick = el("button", { class: "ex-quick", type: "button", "aria-label": "Want " + s.name + (coll ? ", add to " + coll : ""), title: "Want it" + (coll ? " (adds to " + coll + ")" : "") }, svg(PLUS));
+        quick.addEventListener("click", e => { e.stopPropagation(); quick.classList.add("done"); quick.replaceChildren(svg(TICK)); addFromDisc(s, quick, "want", coll).then(ok => { if (!ok) { quick.classList.remove("done"); quick.replaceChildren(svg(PLUS)); } }); });
+        line.append(quick);
       }
-      body.append(acts); card.append(body); grid.append(card);
+      card.append(line);
+      card.addEventListener("click", () => openPick(s));
+      card.addEventListener("keydown", e => { if (e.target === card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openPick(s); } });
+      grid.append(card);
     }
-    if (!shown.length) grid.append(el("div", { class: "panel empty-state", text: (q || state.exCap || state.exArtist) ? "No picks match these filters." : "You've been through every pick here. Ask Claude in chat for more." }));
+    if (!shown.length) grid.append(el("div", { class: "empty-state", text: (q || state.exCap || state.exArtist) ? "No picks match these filters." : "You've been through every pick here. Ask Claude in chat for more." }));
     box.append(grid);
     box.append(el("p", { class: "hint", text: "Want fresh picks, or picks for a new collection? Ask Claude in chat to refresh Explore." }));
+    if (state.openPick) drawDetail();
   }
   async function setDisc(s, status) {
     if (!db) return;
@@ -1005,7 +1233,7 @@ body.sheet-open{overflow:hidden}
     catch (e) { s.status = prev; renderExplore(); toast("Couldn't save that. Try again."); }
   }
   async function addFromDisc(s, btn, want = "want", coll = s.coll) {
-    if (!db || busy) return;
+    if (!db || busy) return false;
     if (btn) btn.disabled = true;
     const got = want === "got";
     let id = docId([s.name, s.set, s.number].join(" "));
@@ -1025,9 +1253,10 @@ body.sheet-open{overflow:hidden}
       }
       await db.collection("discover").doc(s.id).update({ status: got ? "owned" : "added" });
       toast(coll ? (got ? "Marked " + s.name + " as owned in " : "Added " + s.name + " to ") + coll : (got ? "Marked " + s.name + " as owned" : "Added " + s.name + " to your list"));
-    } catch (e) { if (btn) btn.disabled = false; toast("Couldn't add it. Try again."); }
+      return true;
+    } catch (e) { if (btn) btn.disabled = false; toast("Couldn't add it. Try again."); return false; }
   }
-  $("#modeSeg").addEventListener("click", e => { const b = e.target.closest("button[data-mode]"); if (!b) return; state.mode = b.dataset.mode; if (state.mode !== "list" && state.selecting) stopSelecting(); store.set("wl-mode", state.mode); render(); });
+  $("#modeSeg").addEventListener("click", e => { const b = e.target.closest("button[data-mode]"); if (!b) return; const same = state.mode === b.dataset.mode; state.mode = b.dataset.mode; if (state.mode !== "list" && state.selecting) stopSelecting(); store.set("wl-mode", state.mode); render(); window.scrollTo({ top: 0, behavior: same ? "smooth" : "auto" }); });
 
   function syncStatusButtons() { document.querySelectorAll(".seg[aria-label=Show] button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.status === state.status))); }
 
@@ -1035,25 +1264,38 @@ body.sheet-open{overflow:hidden}
     renderStats();
     const ex = state.mode === "explore", bm = state.mode === "binders";
     document.querySelectorAll("#modeSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === state.mode)));
-    $("#explore").hidden = !ex; $("#binders").hidden = !bm; $("#listMode").hidden = ex || bm; document.querySelector("footer").hidden = bm;
+    $("#pageTitle").textContent = ex ? "Explore" : bm ? "Binders" : state.coll ? state.coll : "My list";
+    $("#addBtn").hidden = !canWrite || ex || bm || !db;
+    document.body.classList.toggle("selecting", state.selecting && !ex && !bm);
+    $("#explore").hidden = !ex; $("#binders").hidden = !bm; $("#listMode").hidden = ex || bm;
+    if (!$("#detailSheet").hidden && state.openRow && state.openEdit !== state.openRow) drawDetail();
     if (ex) { $("#bulk").hidden = true; renderExplore(); return; }
     if (bm) { $("#bulk").hidden = true; renderBinders(); return; }
     renderColls();
     const list = $("#list"); list.textContent = "";
     const binder = state.coll && state.view === "binder" && !state.selecting;
     $("#filters").hidden = binder;
-    $("#selectBtn").hidden = !canWrite; $("#selectBtn").setAttribute("aria-pressed", String(state.selecting));
+    $("#selectBtn").hidden = !canWrite; $("#selectBtn").setAttribute("aria-pressed", String(state.selecting)); $("#selectBtn").textContent = state.selecting ? "Stop selecting" : "Select cards";
+    $("#optDot").hidden = !(state.prio || state.sort !== "list");
+    document.querySelectorAll("#layoutSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.layout === state.layout)));
     $("#bulk").hidden = !state.selecting;
     $("#bulkCount").textContent = state.selected.size + " selected";
     $("#bulkRemove").hidden = !state.coll || $("#bulkColl").value.trim() !== state.coll;
-    if (binder) { renderBinder(list); }
+    if (binder) { list.className = "list"; renderBinder(list); }
+    else if (!state.cardsLoaded && db) { list.className = "list"; list.append(skeletonGrid("list grid", 9)); }
     else {
       const rows = visible();
+      list.className = "list " + (rows.length ? state.layout : "");
       $("#count").textContent = rows.length + (rows.length === 1 ? " card" : " cards");
-      if (!rows.length) list.append(el("div", { class: "panel empty-state", text: state.cards.length ? (state.coll ? "No cards in " + state.coll + " match these filters. Try Show: All." : "No cards match these filters.") : "No cards yet. Add your first one with the box above." }));
-      else for (const c of rows) list.append(row(c));
+      if (!rows.length) list.append(el("div", { class: "empty-state", text: state.cards.length ? (state.coll ? "No cards in " + state.coll + " match these filters. Try All." : "No cards match these filters.") : canWrite ? "No cards yet. Tap + to add your first one." : "No cards on the list yet." }));
+      else for (const c of rows) list.append(state.layout === "rows" ? row(c) : tile(c));
     }
     const dl = $("#setList"); dl.textContent = ""; for (const s of knownSets().sort()) dl.append(el("option", { value: s }));
+  }
+  function skeletonGrid(cls, n) {
+    const g = el("div", { class: cls, "aria-busy": "true", "aria-label": "Loading" });
+    for (let i = 0; i < n; i++) g.append(el("div", { class: "skel-tile" }, el("div", { class: "skel" }), el("div", { class: "skel skel-line", style: "width:80%" }), el("div", { class: "skel skel-line", style: "width:55%" })));
+    return g;
   }
 
   /* ---------- lightbox ---------- */
@@ -1063,12 +1305,14 @@ body.sheet-open{overflow:hidden}
     $("#lbImg").src = (imgUrl(c) || "").replace("_400w.jpg", "_in_1000x1000.jpg"); $("#lbImg").alt = c.name + " card";
     const cap = $("#lbCap"); cap.textContent = "";
     cap.append(el("b", { text: c.name + (c.variant ? " · " + c.variant : "") }), document.createTextNode([c.lang === "JP" ? "Japanese" : "", c.set, c.number ? "#" + c.number : "", isGot(c) ? "Collected" : priceOf(c) != null ? fmt$(priceOf(c)) : ""].filter(Boolean).join(" · ")));
-    $("#lightbox").hidden = false; $("#lbClose").focus();
+    $("#lightbox").hidden = false; syncLock(); $("#lbClose").focus();
   }
-  function closeLightbox() { $("#lightbox").hidden = true; $("#lbImg").removeAttribute("src"); lastFocus?.focus?.(); }
+  function closeLightbox() { $("#lightbox").hidden = true; syncLock(); $("#lbImg").removeAttribute("src"); lastFocus?.focus?.(); }
   $("#lbClose").addEventListener("click", closeLightbox);
   $("#lightbox").addEventListener("click", e => { if (e.target.id === "lightbox") closeLightbox(); });
-  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#lightbox").hidden) closeLightbox(); });
+  document.addEventListener("keydown", e => { if (e.key !== "Escape") return;
+    if (!$("#lightbox").hidden) { closeLightbox(); return; }
+    for (const id of ["#detailSheet", "#optSheet", "#addSheet", "#acctSheet"]) if (!$(id).hidden) { closePanel(id); return; } });
 
   /* ---------- photos ---------- */
   function pickPhoto(c) { photoFor = c; $("#photoInput").value = ""; $("#photoInput").click(); }
@@ -1135,7 +1379,7 @@ body.sheet-open{overflow:hidden}
     let id = docId([c.name, c.set, c.number, c.variant].join(" "));
     if (state.cards.some(x => x.id === id)) id += "-" + Date.now().toString(36);
     try {
-      await db.collection("cards").doc(id).set(c); $("#confirmForm").hidden = true; $("#quick").value = "";
+      await db.collection("cards").doc(id).set(c); $("#confirmForm").hidden = true; $("#quick").value = ""; closePanel("#addSheet");
       toast("Added " + c.name + (coll ? " to " + coll : "") + (got ? "" : " · queued for a price check"));
     } catch (err) { toast(err && err.code === "quota_exceeded" ? "The list is full. Remove a few cards first." : "Couldn't add it. Try again."); }
   });
@@ -1146,7 +1390,9 @@ body.sheet-open{overflow:hidden}
   document.querySelectorAll(".seg[aria-label=Show] button").forEach(b => b.addEventListener("click", () => { state.status = b.dataset.status; syncStatusButtons(); render(); }));
   $("#prioOnly").addEventListener("click", e => { state.prio = !state.prio; e.currentTarget.setAttribute("aria-pressed", String(state.prio)); render(); });
   $("#bulkColl").addEventListener("input", () => { $("#bulkRemove").hidden = !state.coll || $("#bulkColl").value.trim() !== state.coll; });
+  document.querySelectorAll("#layoutSeg button").forEach(b => b.addEventListener("click", () => { state.layout = b.dataset.layout; store.set("wl-layout", state.layout); render(); }));
   { const s = store.get("wl-sort"); if (s) { state.sort = s; $("#sort").value = s; }
+    if (store.get("wl-layout") === "rows") state.layout = "rows";
     const c = store.get("wl-coll"); if (c) state.coll = c;
     const v = store.get("wl-view"); if (v === "binder") state.view = v;
     const p = +store.get("wl-pockets"); if ([4, 9, 12].includes(p)) state.pockets = p;
@@ -1176,7 +1422,7 @@ body.sheet-open{overflow:hidden}
   }
   fetch("prices.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => { if (j && j.items) { prices = j; applyPrices(); render(); } }).catch(() => {});
 
-  function applyWriteMode() { $("#addPanel").hidden = !canWrite; $("#readOnly").hidden = canWrite; render(); }
+  function applyWriteMode() { $("#addPanel").hidden = !canWrite; $("#readOnly").hidden = canWrite; if (!canWrite) closePanel("#addSheet"); renderAuth(); render(); }
 
   /* Signed-out visitors can't read the live database, so they get the snapshot published with the page. */
   async function loadSnapshot() {
@@ -1198,7 +1444,7 @@ body.sheet-open{overflow:hidden}
   }
 
   /* ---------- Binders: arrange pages from your cards or any card ---------- */
-  const B = { list: [], cur: null, local: false, sheet: null, moving: null, catalog: null, catLoading: null, page: 0 };
+  const B = { list: [], cur: null, local: false, sheet: null, moving: null, catalog: null, catLoading: null, page: 0, loaded: false };
   const LKEY = "wl-binders-local";
   const bid = () => "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   const webImg = pid => tcgImg(pid);
@@ -1257,8 +1503,9 @@ body.sheet-open{overflow:hidden}
     tabs.append(el("button", { class: "colltab new", type: "button", text: "+ New binder", onclick: () => openSheet("new") }));
     box.append(tabs);
     const b = curBinder();
+    if (!b && !B.loaded && !B.local && db) { box.append(skeletonGrid("ex-grid", 4)); return; }
     if (!b) {
-      box.append(el("div", { class: "panel empty-state" },
+      box.append(el("div", { class: "empty-state" },
         el("p", { style: "margin:0 0 12px", text: "Lay out binder pages before you buy. Tap a pocket, pick a card from your list or any card that exists, and move things around until the page looks right." }),
         el("button", { class: "btn primary", type: "button", text: "Make your first binder", onclick: () => openSheet("new") })));
       return;
@@ -1318,10 +1565,10 @@ body.sheet-open{overflow:hidden}
   const canEditBinders = () => B.local || !!db;
 
   /* bottom sheet */
-  function closeSheet() { $("#sheet").hidden = true; $("#sheetBody").textContent = ""; document.body.classList.remove("sheet-open"); B.sheet = null; }
+  function closeSheet() { $("#sheet").hidden = true; $("#sheetBody").textContent = ""; syncLock(); B.sheet = null; }
   function openSheet(kind, idx) {
     B.sheet = { kind, idx, tab: B.sheet && B.sheet.tab || "ours", q: "", jp: false, show: "all", coll: "" };
-    $("#sheet").hidden = false; document.body.classList.add("sheet-open");
+    $("#sheet").hidden = false; syncLock();
     drawSheet();
   }
   function sheetHead(title) {
@@ -1487,23 +1734,59 @@ body.sheet-open{overflow:hidden}
   }
 
   /* ---------- sign-in (Supabase magic link) ---------- */
+  /* A home-screen app on iPhone keeps its own storage, and email links open in Safari. So besides tapping the link,
+     the link can be copied from the email and pasted here, which signs in this app directly. */
   async function renderAuth() {
-    const box = $("#auth"); box.textContent = ""; const sb = window.WL && WL.sb; if (!sb) return;
+    const box = $("#auth"); box.textContent = ""; const sb = window.WL && WL.sb;
+    const btn = $("#acctBtn");
+    if (!sb) { btn.hidden = true; return; }
     const { data } = await sb.auth.getSession(); const u = data.session && data.session.user;
+    box.textContent = "";
     if (u) {
-      box.append(el("span", { text: "Signed in as " + u.email }),
-        el("button", { class: "linkbtn", type: "button", text: "Sign out", onclick: async () => { await sb.auth.signOut(); location.reload(); } }));
+      const initial = (u.email || "?").trim()[0].toUpperCase();
+      btn.textContent = initial; btn.classList.add("avatar"); btn.setAttribute("aria-label", "Account, signed in as " + u.email);
+      $("#acctTitle").textContent = "Account";
+      box.append(el("div", { class: "acct" },
+        el("div", { class: "acct-who" }, el("span", { class: "avatar", text: initial, "aria-hidden": "true" }),
+          el("div", {}, el("b", { text: u.email }), el("span", { class: "hint", text: canWrite ? "You can edit the list." : "This account can view the list but not change it." }))),
+        el("button", { class: "btn", type: "button", text: "Sign out", onclick: async () => { await sb.auth.signOut(); location.reload(); } })));
       return;
     }
+    btn.textContent = "Sign in"; btn.classList.remove("avatar"); btn.setAttribute("aria-label", "Sign in to edit");
+    $("#acctTitle").textContent = "Sign in to edit";
+    const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
     const f = el("form", { autocomplete: "on" },
-      el("input", { type: "email", id: "authEmail", required: true, placeholder: "Your email", "aria-label": "Email to sign in", autocomplete: "email" }),
-      el("button", { class: "btn small", type: "submit", text: "Email me a sign-in link" }));
+      el("p", { class: "hint", text: "Anyone can view the list. Editors sign in with an email link, no password." }),
+      el("input", { type: "email", id: "authEmail", required: true, placeholder: "Your email", "aria-label": "Email to sign in", autocomplete: "email", inputmode: "email", enterkeyhint: "send" }),
+      el("button", { class: "btn primary", type: "submit", text: "Email me a sign-in link" }));
+    const paste = pasteForm(sb, standalone);
     f.addEventListener("submit", async e => { e.preventDefault();
-      const email = $("#authEmail").value.trim();
+      const email = $("#authEmail").value.trim(); const sub = f.querySelector("button"); sub.disabled = true; sub.textContent = "Sending…";
       const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
-      box.textContent = ""; box.append(el("span", { text: error ? "Couldn't send the link: " + error.message : "Check " + email + " for a sign-in link. Open it on this device." })); });
-    const open = el("button", { class: "linkbtn", type: "button", text: "Sign in to edit", onclick: () => { box.textContent = ""; box.append(f); $("#authEmail").focus(); } });
-    box.append(open);
+      f.replaceWith(el("div", { class: "msg", text: error ? "Couldn't send the link: " + error.message
+        : "Check " + email + " for a sign-in link." + (standalone ? " Since you're in the home-screen app, don't tap the link: press and hold it, tap Copy Link, then paste it below." : " Open it on this device.") }));
+      paste.hidden = false; });
+    paste.hidden = !standalone;
+    box.append(f, paste);
+    if (!standalone) box.append(el("button", { class: "linkbtn", type: "button", style: "margin-top:10px", text: "Got a link already? Paste it", onclick: e => { paste.hidden = false; e.currentTarget.remove(); paste.querySelector("input").focus(); } }));
+  }
+  function pasteForm(sb, standalone) {
+    const inp = el("input", { type: "url", placeholder: "Paste the sign-in link", "aria-label": "Sign-in link from the email", autocomplete: "off", autocapitalize: "off", spellcheck: "false" });
+    const f = el("form", { style: "margin-top:14px" }, el("p", { class: "hint", text: standalone ? "Using the home-screen app: copy the link from the email instead of tapping it, then paste it here." : "Paste the link from the sign-in email to sign in here." }), inp, el("button", { class: "btn", type: "submit", text: "Sign in with link" }));
+    f.addEventListener("submit", async e => { e.preventDefault();
+      let u; try { u = new URL(inp.value.trim()); } catch { toast("That doesn't look like the link from the email."); return; }
+      const cfg = window.WL_CONFIG || {}; let host = ""; try { host = new URL(cfg.url).host; } catch {}
+      const token = u.searchParams.get("token") || u.searchParams.get("token_hash");
+      const type = u.searchParams.get("type") || "magiclink";
+      const access = new URLSearchParams(u.hash.slice(1));
+      const b = f.querySelector("button"); b.disabled = true; b.textContent = "Signing in…";
+      let error = null;
+      if (access.get("access_token") && access.get("refresh_token")) ({ error } = await sb.auth.setSession({ access_token: access.get("access_token"), refresh_token: access.get("refresh_token") }));
+      else if (token && u.host === host) ({ error } = await sb.auth.verifyOtp({ token_hash: token, type: type === "signup" ? "signup" : type === "invite" ? "invite" : "magiclink" }));
+      else error = { message: "That isn't the link from the sign-in email." };
+      if (error) { b.disabled = false; b.textContent = "Sign in with link"; toast(/expired|invalid/i.test(error.message) ? "That link has expired or was already used. Send a new one." : "Couldn't sign in: " + error.message); }
+    });
+    return f;
   }
   if (window.WL && WL.sb) WL.sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_IN" && !sessionStorage.getItem("wl-signed")) { sessionStorage.setItem("wl-signed", "1"); location.reload(); } if (ev === "SIGNED_OUT") sessionStorage.removeItem("wl-signed"); });
 
@@ -1520,11 +1803,22 @@ body.sheet-open{overflow:hidden}
     } catch (e) { toast("Couldn't load the saved list: " + (e.message || e)); }
   }
 
+  /* ---------- app chrome ---------- */
+  wireSheet("#detailSheet", closeDetail);
+  wireSheet("#optSheet"); wireSheet("#addSheet"); wireSheet("#acctSheet");
+  $("#addBtn").addEventListener("click", () => { openPanel("#addSheet"); if (!matchMedia("(pointer:coarse)").matches || $("#confirmForm").hidden) setTimeout(() => ($("#confirmForm").hidden ? $("#quick") : $("#cName")).focus(), 60); });
+  $("#acctBtn").addEventListener("click", () => openPanel("#acctSheet"));
+  $("#optBtn").addEventListener("click", () => openPanel("#optSheet"));
+  $("#readOnly").addEventListener("click", () => openPanel("#acctSheet"));
+  $("#readOnly").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPanel("#acctSheet"); } });
+  { const tb = $("#topbar"); const onScroll = () => tb.classList.toggle("scrolled", scrollY > 4); addEventListener("scroll", onScroll, { passive: true }); onScroll(); }
+  $("#list").className = "list"; $("#list").append(skeletonGrid("list grid", 9));
+
   /* ---------- boot ---------- */
   (async () => {
     renderAuth();
     db = await claude.use("db");
-    if (!db) { $("#stats").textContent = "Setup isn't finished yet: the database isn't connected."; return; }
+    if (!db) { $("#stats").textContent = ""; $("#stats").append(el("span", { text: "Setup isn't finished yet: the database isn't connected." })); render(); return; }
     const user = await claude.use("user");
     const w = user ? await user.can("data.write") : null;
     canWrite = w !== false;
@@ -1533,16 +1827,19 @@ body.sheet-open{overflow:hidden}
     db.collection("cards").onSnapshot(snap => {
       if (!snap.docs.length && canWrite && !seeded) { seeded = true; seedFromFile(); }
       state.cards = snap.docs.map(d => ({ id: d.id, ...structuredClone(d.data()) }));
+      state.cardsLoaded = true;
       applyPrices();
       if (!busy) render();
-    }, () => { $("#stats").textContent = "The list stopped updating. Reload the page."; });
+    }, () => { $("#stats").textContent = ""; $("#stats").append(el("span", { text: "The list stopped updating. Reload the page." })); });
     db.collection("discover").onSnapshot(snap => {
       state.disc = snap.docs.map(d => ({ id: d.id, ...structuredClone(d.data()) }));
+      state.discLoaded = true;
       applyPrices();
       if (state.mode === "explore" && !busy) render();
     }, () => {});
     startBinders(false);
     db.collection("layouts").onSnapshot(snap => {
+      B.loaded = true;
       if (B.local) return;
       B.list = snap.docs.map(d => ({ id: d.id, ...structuredClone(d.data()) })).sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
       if (store.get("wl-viewonly")) { B.cur = null; goLocal(); }
@@ -1554,4 +1851,5 @@ body.sheet-open{overflow:hidden}
 })();
 </script>
 
-</body></html>
+</body>
+</html>
