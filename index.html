@@ -269,7 +269,7 @@ button.pocket{cursor:pointer}
 .ex-to{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);margin-bottom:10px}
 .ex-to select{flex:1}
 .lv-more{width:100%;margin-top:4px}
-.ex-card.cv{content-visibility:auto;contain-intrinsic-size:auto 320px}
+.ex-card.cv{content-visibility:auto;contain-intrinsic-size:auto var(--cvh,320px)}
 .lv-foot{text-align:center;padding:8px 0}
 .ex-tools .scroller select{width:auto;min-height:36px;font-size:14px;padding-top:6px;padding-bottom:6px;background-color:var(--surface);box-shadow:inset 0 0 0 1px var(--line-2);border-radius:999px;padding-left:14px}
 .ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px 12px}
@@ -638,7 +638,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   const overlays = ["#scan", "#sheet", "#detailSheet", "#optSheet", "#addSheet", "#acctSheet", "#lightbox"];
   const syncLock = () => document.body.classList.toggle("sheet-open", overlays.some(s => !$(s).hidden));
   const sheetClosers = {};
-  function openPanel(id) { $(id).hidden = false; syncLock(); }
+  function openPanel(id) { $(id).hidden = false; syncLock(); if (id === "#detailSheet") sheetHist(true); }
   function closePanel(id) { if ($(id).hidden) return; if (sheetClosers[id]) sheetClosers[id](); else { $(id).hidden = true; syncLock(); } }
   function wireSheet(id, onClose) {
     const s = $(id), card = s.querySelector(".sheet-card");
@@ -952,7 +952,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 
   function row(c) {
     const got = isGot(c), sp = shortPrice(c);
-    const r = el("article", { class: "row" + (got ? " got" : "") + (state.selected.has(c.id) ? " sel" : "") });
+    const r = el("article", { class: "row" + (got ? " got" : "") + (state.selected.has(c.id) ? " sel" : ""), "data-sr": c.id });
     const name = el("div", { class: "name" }, document.createTextNode(c.name));
     if (c.variant) name.append(el("span", { class: "tag", text: c.variant }));
     if (c.lang === "JP") name.append(el("span", { class: "tag", text: "Japanese" }));
@@ -974,7 +974,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 
   function tile(c) {
     const got = isGot(c), sp = shortPrice(c), on = state.selected.has(c.id);
-    const t = el("article", { class: "tile" + (got ? " got" : "") + (on ? " sel" : ""), role: "button", tabindex: "0",
+    const t = el("article", { class: "tile" + (got ? " got" : "") + (on ? " sel" : ""), role: "button", tabindex: "0", "data-sr": c.id,
       "aria-label": c.name + (c.set ? ", " + c.set : "") + (got ? ", got it" : sp && sp.amt ? ", " + sp.amt : "") + (state.selecting ? (on ? ", selected" : ", not selected") : "") });
     const fig = el("div", { class: "tile-img" }, cardImg(c));
     if (got) fig.append(el("span", { class: "tile-badge have", text: "Got it" }));
@@ -1202,7 +1202,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     const ae = document.activeElement, keepQ = ae && ae.id === "lvQ" ? [ae.selectionStart, ae.selectionEnd] : null;
     box.textContent = "";
     const seg = el("div", { class: "seg ex-seg", role: "group", "aria-label": "Explore source" });
-    for (const [v, t] of [["live", "Live"], ["picks", "Picks for you"]]) seg.append(el("button", { type: "button", "aria-pressed": String(state.exTab === v), text: t, onclick: () => { if (state.exTab === v) return; state.exTab = v; store.set("wl-extab", v); renderExplore(); window.scrollTo({ top: 0 }); } }));
+    for (const [v, t] of [["live", "Live"], ["picks", "Picks for you"]]) seg.append(el("button", { type: "button", "aria-pressed": String(state.exTab === v), text: t, onclick: () => { if (state.exTab === v) return; state.exTab = v; store.set("wl-extab", v); renderExplore(); } }));
     box.append(seg);
     if (state.exTab === "live") {
       const sy = window.scrollY;
@@ -1262,7 +1262,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     for (const s of shown) {
       if (!sepDone && !isAll && state.exSort === "rec" && latest > 1 && (s.batch ?? 1) < latest) { sepDone = true; grid.append(el("div", { class: "ex-sep", text: "Earlier picks" })); }
       const status = s.status || "new", already = isAdded(s);
-      const card = el("article", { class: "ex-card" + (status === "passed" ? " dim" : ""), role: "button", tabindex: "0", "aria-label": s.name + ", " + s.set + (s.market != null ? ", about " + fmt$(s.market) : "") });
+      const card = el("article", { class: "ex-card" + (status === "passed" ? " dim" : ""), role: "button", tabindex: "0", "data-sr": "p:" + s.id, "aria-label": s.name + ", " + s.set + (s.market != null ? ", about " + fmt$(s.market) : "") });
       const src = s.tcgProduct ? tcgImg(s.tcgProduct) : (LV.data.get(s.tcgdexId) || {}).img || null;
       const fig = el("div", { class: "tile-img" });
       if (src) { const img = el("img", { src, alt: "", loading: "lazy", decoding: "async" }); img.addEventListener("error", () => img.replaceWith(el("span", { class: "noimg", text: s.name })), { once: true }); fig.append(img); }
@@ -1391,7 +1391,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   }
   function liveTile(b) {
     const d = LV.data.get(b.id);
-    const card = el("article", { class: "ex-card", role: "button", tabindex: "0", "aria-label": b.name + (d && d.set ? ", " + d.set : "") });
+    const card = el("article", { class: "ex-card", role: "button", tabindex: "0", "data-sr": b.id, "aria-label": b.name + (d && d.set ? ", " + d.set : "") });
     const fig = el("div", { class: "tile-img" });
     const setImg = src => { fig.textContent = ""; if (!src) { fig.append(el("span", { class: "noimg", text: b.name })); return; } const img = el("img", { src, alt: "", loading: "lazy", decoding: "async" }); img.addEventListener("error", () => img.replaceWith(el("span", { class: "noimg", text: b.name })), { once: true }); fig.append(img); };
     setImg(b.image ? b.image + "/low.webp" : d && d.img);
@@ -1461,7 +1461,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   }
   function catTile(i) {
     const d = catCard(i);
-    const card = el("article", { class: "ex-card cv", role: "button", tabindex: "0", "aria-label": d.name + ", " + d.set + (d.market ? ", " + fmt$(d.market) : "") });
+    const card = el("article", { class: "ex-card cv", role: "button", tabindex: "0", "data-sr": d.id, "aria-label": d.name + ", " + d.set + (d.market ? ", " + fmt$(d.market) : "") });
     const fig = el("div", { class: "tile-img" }), img = el("img", { src: d.img, alt: "", loading: "lazy", decoding: "async" });
     img.addEventListener("error", () => img.replaceWith(el("span", { class: "noimg", text: d.name })), { once: true });
     fig.append(img);
@@ -1484,6 +1484,8 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     if (LV.io) { LV.io.disconnect(); LV.io = null; }
     if (!B.catalog) { box.append(skeletonGrid("ex-grid", 6)); return; }
     const rows = allRows(), grid = el("div", { class: "ex-grid" });
+    if (LV.cvh) grid.style.setProperty("--cvh", LV.cvh + "px");
+    requestAnimationFrame(() => { const e = document.elementFromPoint(innerWidth / 2, innerHeight / 2), c = e && e.closest(".ex-card.cv"); if (c && grid.contains(c) && c.offsetHeight > 80) { LV.cvh = c.offsetHeight; grid.style.setProperty("--cvh", LV.cvh + "px"); } });
     let shown = Math.min(LV.allShown, rows.length);
     for (let k = 0; k < shown; k++) grid.append(catTile(rows[k]));
     if (!rows.length) grid.append(el("div", { class: "empty-state", text: "No cards match these filters." }));
@@ -1625,7 +1627,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
       return true;
     } catch (e) { if (btn) btn.disabled = false; toast("Couldn't add it. Try again."); return false; }
   }
-  $("#modeSeg").addEventListener("click", e => { const b = e.target.closest("button[data-mode]"); if (!b) return; const same = state.mode === b.dataset.mode; state.mode = b.dataset.mode; if (state.mode !== "list" && state.selecting) stopSelecting(); store.set("wl-mode", state.mode); render(); window.scrollTo({ top: 0, behavior: same ? "smooth" : "auto" }); });
+  $("#modeSeg").addEventListener("click", e => { const b = e.target.closest("button[data-mode]"); if (!b) return; const same = state.mode === b.dataset.mode; state.mode = b.dataset.mode; if (state.mode !== "list" && state.selecting) stopSelecting(); store.set("wl-mode", state.mode); render(); if (same) window.scrollTo({ top: 0, behavior: "smooth" }); });
 
   function syncStatusButtons() { document.querySelectorAll(".seg[aria-label=Show] button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.status === state.status))); }
 
@@ -2480,7 +2482,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   }
 
   /* ---------- app chrome ---------- */
-  wireSheet("#detailSheet", () => { closeDetail(); $("#detailBody").textContent = ""; });
+  wireSheet("#detailSheet", () => { closeDetail(); $("#detailBody").textContent = ""; sheetHist(false); });
   wireSheet("#optSheet"); wireSheet("#addSheet"); wireSheet("#acctSheet");
   $("#addBtn").addEventListener("click", () => { openPanel("#addSheet"); if (!matchMedia("(pointer:coarse)").matches || $("#confirmForm").hidden) setTimeout(() => ($("#confirmForm").hidden ? $("#quick") : $("#cName")).focus(), 60); });
   $("#acctBtn").addEventListener("click", () => openPanel("#acctSheet"));
@@ -2489,6 +2491,83 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   $("#readOnly").addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openPanel("#acctSheet"); } });
   { const tb = $("#topbar"); const onScroll = () => tb.classList.toggle("scrolled", scrollY > 4); addEventListener("scroll", onScroll, { passive: true }); onScroll(); }
   $("#list").className = "list"; $("#list").append(skeletonGrid("list grid", 9));
+
+  /* ---------- scroll restoration ----------
+     Each view (the list and each collection, each binder, Picks, the Every card feed, a set, a search) keeps its
+     own place. A re-render keeps the card that was at the top of the screen in the same spot; switching views,
+     or reopening the app within 30 minutes, returns to where you left off; the back gesture closes an open card
+     instead of leaving the page. */
+  const SR = { pos: {}, cur: null, depth: 0, pending: null, t: 0 };
+  try { if ("scrollRestoration" in history) history.scrollRestoration = "manual"; } catch {}
+  function srKey() {
+    if (state.mode === "explore") return state.exTab !== "live" ? "picks:" + (state.exColl || "") + ":" + (state.exArtist || "")
+      : "live:" + (LV.q ? "q:" + LV.q : LV.setId === ALLC ? "all" : "set:" + LV.setId);
+    if (state.mode === "binders") return "binders:" + (B.cur || "");
+    return "list:" + (state.coll || "") + ":" + (state.view || "");
+  }
+  const srRoot = () => ["#explore", "#binders", "#listMode"].map(s => $(s)).find(x => x && !x.hidden);
+  function srAnchor(root) {
+    const items = root ? root.querySelectorAll("[data-sr]") : [];
+    if (!items.length) return null;
+    const top = Math.max(0, $("#topbar").getBoundingClientRect().bottom);
+    let lo = 0, hi = items.length - 1, hit = -1;
+    while (lo <= hi) { const m = (lo + hi) >> 1; if (items[m].getBoundingClientRect().bottom > top) { hit = m; hi = m - 1; } else lo = m + 1; }
+    if (hit < 0) return null;
+    return { id: items[hit].dataset.sr, off: Math.round(items[hit].getBoundingClientRect().top) };
+  }
+  const srSnap = () => { const y = Math.round(window.scrollY); return { y, a: y > 0 ? srAnchor(srRoot()) : null, shown: LV.allShown }; };
+  function srGo(s) { // true once the spot is reached
+    if (!s || !s.y) { window.scrollTo(0, 0); return true; }
+    if (s.a) {
+      const root = srRoot(), e = root && [...root.querySelectorAll("[data-sr]")].find(x => x.dataset.sr === s.a.id);
+      if (e) { window.scrollTo(0, Math.max(0, window.scrollY + e.getBoundingClientRect().top - s.a.off)); return Math.abs(e.getBoundingClientRect().top - s.a.off) < 3; }
+    }
+    const max = Math.max(0, document.documentElement.scrollHeight - innerHeight);
+    window.scrollTo(0, Math.min(s.y, max));
+    return s.y <= max + 1;
+  }
+  function srWrap(fn) {
+    return function () {
+      if (SR.depth++) { try { return fn.apply(this, arguments); } finally { SR.depth--; } }
+      const before = SR.cur, snap = before ? srSnap() : null;
+      if (before) SR.pos[before] = snap;
+      try { return fn.apply(this, arguments); }
+      finally {
+        SR.depth--;
+        const k = srKey(); SR.cur = k;
+        if (SR.pending && SR.pending.k !== k) SR.pending = null;
+        if (k !== before) { const m = SR.pos[k]; SR.pending = m && m.y ? { k, m } : null; if (!m || !m.y) window.scrollTo(0, 0); }
+        if (SR.pending) { if (srGo(SR.pending.m)) SR.pending = null; }
+        else if (k === before && snap && snap.y) srGo(snap);
+      }
+    };
+  }
+  render = srWrap(render); renderExplore = srWrap(renderExplore); renderBinders = srWrap(renderBinders);
+  const srSave = () => { if (SR.cur && $("#detailSheet").hidden) SR.pos[SR.cur] = srSnap(); try { localStorage.setItem("wl-scroll", JSON.stringify({ t: Date.now(), pos: SR.pos })); } catch {} };
+  addEventListener("scroll", () => { if (SR.depth) return; clearTimeout(SR.t); SR.t = setTimeout(srSave, 250); }, { passive: true });
+  for (const ev of ["touchstart", "wheel", "keydown"]) addEventListener(ev, () => { SR.pending = null; }, { passive: true });
+  addEventListener("pagehide", srSave);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") srSave(); });
+  try {
+    const saved = JSON.parse(localStorage.getItem("wl-scroll") || "null");
+    if (saved && Date.now() - saved.t < 30 * 60 * 1000 && saved.pos) {
+      SR.pos = saved.pos;
+      const all = SR.pos["live:all"]; if (all && all.shown > LV.allShown) LV.allShown = Math.min(all.shown, 3000);
+    }
+  } catch {}
+  const SH = { pushed: false, skip: 0, popping: false };
+  function sheetHist(open) {
+    if (open) { if (!SH.pushed) { try { history.pushState({ wlSheet: 1 }, ""); SH.pushed = true; } catch {} } return; }
+    if (!SH.pushed) return;
+    SH.pushed = false;
+    if (!SH.popping) { SH.skip++; try { history.back(); } catch { SH.skip--; } }
+  }
+  addEventListener("popstate", () => {
+    if (SH.skip) { SH.skip--; return; }
+    if (!SH.pushed) return;
+    SH.pushed = false; SH.popping = true;
+    try { if (!$("#lightbox").hidden) closeLightbox(); closePanel("#detailSheet"); } finally { SH.popping = false; }
+  });
 
   /* ---------- boot ---------- */
   (async () => {
