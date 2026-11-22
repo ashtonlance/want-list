@@ -88,9 +88,10 @@
   async function readCell(cell, onStatus) {
     const w = await getWorker(onStatus);
     const flat = flatness(cell);
-    const top = wordsOf((await w.recognize(strip(cell, 0.015, 0.135), {}, { blocks: true, text: true })).data);
-    const bot = wordsOf((await w.recognize(strip(cell, 0.86, 0.995), {}, { blocks: true, text: true })).data);
-    return { top, bot, flat };
+    const topC = strip(cell, 0, 0.2, 0, 1, 2), botC = strip(cell, 0.8, 1, 0, 1, 3);
+    const top = wordsOf((await w.recognize(topC, {}, { blocks: true, text: true })).data);
+    const bot = wordsOf((await w.recognize(botC, {}, { blocks: true, text: true })).data);
+    return { top, bot, flat, topC, botC };
   }
 
   /* ---------- matching ---------- */
