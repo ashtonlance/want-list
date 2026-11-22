@@ -1436,13 +1436,17 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   function allRows() {
     const C = B.catalog, key = [LV.lang, LV.allSort, LV.cap, C.asOf].join("|");
     if (LV.allKey === key) return LV.allRows;
-    const want = LV.lang === "en" ? 0 : LV.lang === "jp" ? 1 : -1, sd = C.sets.map(x => x[2] || ""), cs = C.cards;
+    const want = LV.lang === "en" ? 0 : LV.lang === "jp" ? 1 : -1, cs = C.cards;
+    // Sets are stored newest first per language with undated promo groups at the end; a date
+    // that breaks that order is a placeholder, so treat it as undated and keep it last.
+    const sd = [], low = ["9999", "9999"];
+    C.sets.forEach((x, i) => { const d = x[2] || ""; if (d && d <= low[x[1]]) { low[x[1]] = d; sd[i] = d; } else sd[i] = ""; });
     let idx = [];
     for (let i = 0; i < cs.length; i++) { const r = cs[i]; if ((want < 0 || C.sets[r[2]][1] === want) && (!LV.cap || (r[5] > 0 && r[5] <= LV.cap))) idx.push(i); }
     const nk = new Map(); const n = i => { let v = nk.get(i); if (v === undefined) nk.set(i, v = numKey(cs[i][3])); return v; };
     if (LV.allSort === "high") idx.sort((a, b) => cs[b][5] - cs[a][5]);
     else if (LV.allSort === "low") idx.sort((a, b) => (cs[a][5] || Infinity) - (cs[b][5] || Infinity));
-    else { const dir = LV.allSort === "old" ? -1 : 1; idx.sort((a, b) => dir * sd[cs[b][2]].localeCompare(sd[cs[a][2]]) || cs[a][2] - cs[b][2] || dir * (n(b) - n(a))); }
+    else { const dir = LV.allSort === "old" ? -1 : 1; idx.sort((a, b) => { const da = sd[cs[a][2]], db = sd[cs[b][2]]; return (!da - !db) || dir * db.localeCompare(da) || cs[a][2] - cs[b][2] || dir * (n(b) - n(a)); }); }
     LV.allKey = key; LV.allRows = idx; return idx;
   }
   function catCard(i) {
@@ -1499,7 +1503,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     const all = !LV.q && LV.setId === ALLC;
     const langWord = { en: "English", jp: "Japanese", both: "English and Japanese" }[LV.lang];
     const head = el("div", { class: "ex-intro" }, el("h2", { text: LV.q ? "Results for “" + LV.q + "”" : all ? "Every card" : (LV.sets && LV.sets.find(s => s.id === LV.setId) || {}).name || "Newest cards" }),
-      el("p", { text: LV.q ? "Every printing, newest sets first. Prices are today's TCGplayer market." : all ? (B.catalog ? "All " + allRows().length.toLocaleString() + " " : "Every ") + langWord + " cards ever made" + (LV.cap ? " under " + fmt$(LV.cap) : "") + ". Keep scrolling." : "Straight from the latest card data, chase cards first. Prices are today's TCGplayer market." }));
+      el("p", { text: LV.q ? "Every printing, newest sets first. Prices are today's TCGplayer market." : all ? (B.catalog ? "All " + allRows().length.toLocaleString() + " " + langWord + " cards" : "Every " + langWord + " card") + " ever made" + (LV.cap ? " under " + fmt$(LV.cap) : "") + ". Keep scrolling." : "Straight from the latest card data, chase cards first. Prices are today's TCGplayer market." }));
     const form = el("form", { class: "lv-search", role: "search", autocomplete: "off" });
     const q = el("input", { type: "search", id: "lvQ", placeholder: "Search any card, like Gengar", "aria-label": "Search live cards", value: LV.typed ?? LV.q, enterkeyhint: "search" });
     form.append(q, el("button", { class: "btn small", type: "submit", text: "Search" }));

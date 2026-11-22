@@ -93,7 +93,10 @@ for (const g of groups) {
     rows = (oldRowsOfSet.get(oldIdx) || []).map(r => [r[0], r[1], 0, r[3], rarities.indexOf(oldCat.rarities[r[4]]), r[5]]);
   } else continue; // brand-new group whose products failed: try again tomorrow
   if (!rows.length) continue;
-  entries.push({ set: [old ? old[0] : cleanSet(g.name), g.jp, old ? old[2] : (g.publishedOn || today).slice(0, 10), g.groupId], rows, key: (g.publishedOn || "").slice(0, 10) });
+  // Undated groups (promos, POP series and the like) come back stamped with the time the
+  // feed was generated ("...T20:00:05.88Z"); real release dates are plain midnights.
+  const pub = /T00:00:00(?:\.0+)?$/.test(g.publishedOn || "") ? g.publishedOn.slice(0, 10) : "";
+  entries.push({ set: [old ? old[0] : cleanSet(g.name), g.jp, old ? old[2] : (pub || today), g.groupId], rows, key: pub });
   // Keep the old modifiedOn for a failed group so its products are fetched again next time.
   groupsOut[g.groupId] = failed.has(g.groupId) ? (oldGroups[g.groupId] || "") : g.modifiedOn;
 }
