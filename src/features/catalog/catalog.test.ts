@@ -1,0 +1,41 @@
+import { describe, expect, it } from "vitest";
+import { feedRows } from "./feed";
+import { searchCatalog } from "./search";
+import { testCatalog } from "./testCatalog";
+
+const cat = testCatalog();
+const pids = (idx: number[]) => idx.map((i) => cat.cards[i]?.pid);
+
+describe("parseCatalog", () => {
+  it("indexes cards by product id", () => {
+    expect(cat.cards).toHaveLength(5);
+    expect(cat.byPid.get(3)?.name).toBe("Gengar ex");
+  });
+});
+
+describe("feedRows", () => {
+  it("lists newest sets first, with an out-of-order date treated as undated and kept last", () => {
+    expect(pids(feedRows(cat, { lang: "en", sort: "new", cap: 0 }))).toEqual([2, 1, 3, 4]);
+  });
+  it("reverses for oldest first", () => {
+    expect(pids(feedRows(cat, { lang: "en", sort: "old", cap: 0 }))).toEqual([3, 1, 2, 4]);
+  });
+  it("filters by language and price cap", () => {
+    expect(pids(feedRows(cat, { lang: "jp", sort: "new", cap: 0 }))).toEqual([5]);
+    expect(pids(feedRows(cat, { lang: "both", sort: "high", cap: 25 }))).toEqual([1, 5, 2]);
+  });
+  it("puts unpriced cards last when sorting by price, low to high", () => {
+    expect(pids(feedRows(cat, { lang: "en", sort: "low", cap: 0 }))).toEqual([2, 1, 3, 4]);
+  });
+});
+
+describe("searchCatalog", () => {
+  it("matches every word, names starting with the first word first", () => {
+    expect(searchCatalog(cat, "gengar", false).map((c) => c.pid)).toEqual([1, 3]);
+    expect(searchCatalog(cat, "gengar 100", false).map((c) => c.pid)).toEqual([3]);
+  });
+  it("includes Japanese cards only when asked", () => {
+    expect(searchCatalog(cat, "gengar", true).map((c) => c.pid)).toContain(5);
+    expect(searchCatalog(cat, "   ", true)).toEqual([]);
+  });
+});
