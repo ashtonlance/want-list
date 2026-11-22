@@ -1,6 +1,6 @@
-# Want List
+# Poke Cards
 
-Ashton's Pokémon card want list: collections, binders with page scanning, an Explore feed of every
+Poke Cards, a Pokémon card want list: collections, binders with page scanning, an Explore feed of every
 card with live search, and daily TCGplayer prices. Installable on iPhone as a home screen app.
 
 Live at https://ashtonlance.github.io/want-list/

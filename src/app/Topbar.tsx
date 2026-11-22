@@ -31,7 +31,7 @@ export function Topbar() {
     <header className={"topbar" + (scrolled ? " scrolled" : "")}>
       <div className="topbar-in">
         <div className="tb-title">
-          <small>Ashton&apos;s Want List</small>
+          <small>Poke Cards</small>
           <h1>{title}</h1>
         </div>
         <div className="tb-acts">

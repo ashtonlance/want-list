@@ -1,8 +1,8 @@
 {
   "id": "/want-list/",
-  "name": "Want List",
-  "short_name": "Want List",
-  "description": "Ashton's card want list, collections and binders.",
+  "name": "Poke Cards",
+  "short_name": "Poke Cards",
+  "description": "Card want lists, collections and binders.",
   "start_url": "/want-list/",
   "scope": "/want-list/",
   "display": "standalone",
