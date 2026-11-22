@@ -13,6 +13,9 @@ Live at https://ashtonlance.github.io/want-list/
   and the `photos` bucket, created by `setup.sql`
 - tesseract.js, loaded only on the scan screen, reads card numbers from binder page photos
 - GitHub Pages, deployed by GitHub Actions
+- Offline: a Workbox service worker (vite-plugin-pwa) precaches the app, keeps catalog.json, prices,
+  TCGdex data and card pictures in capped caches, and the TanStack Query cache is saved to IndexedDB,
+  so the list opens instantly and works offline. New deploys show a Refresh prompt.
 
 ## Setup
 
@@ -58,7 +61,7 @@ src/
     cards/          card data, prices, quick add, card sheet
     list/           My list: collections, filters, bulk select, collection binder view
     catalog/        catalog.json and prices.json loading, feed order, search
-    explore/        Explore: every-card feed, live search, Picks
+    explore/        Explore: Browse (every card, sets, search) and For you (picks)
     binders/        Binders and their pages
     scan/           Binder page scanning (OCR matched against the catalog)
   lib/              small shared helpers (storage, stores, scroll restoration, Supabase client)

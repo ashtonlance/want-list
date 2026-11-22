@@ -1,8 +1,10 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { restoreLastSection } from "./app/sections";
+import { PERSIST_BUSTER, PERSIST_MAX_AGE, queryPersister, shouldPersistQuery } from "./data/persist";
 import { routeTree } from "./routeTree.gen";
 import "./styles/index.css";
 
@@ -12,7 +14,8 @@ restoreLastSection(import.meta.env.BASE_URL);
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { staleTime: 60_000, retry: 2, refetchOnWindowFocus: true },
+    // Kept as long as the saved copy, so what was loaded can be written back for the next visit.
+    queries: { staleTime: 60_000, gcTime: PERSIST_MAX_AGE, retry: 2, refetchOnWindowFocus: true },
   },
 });
 
@@ -35,8 +38,16 @@ if (!root) throw new Error("index.html needs a #root element");
 
 createRoot(root).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister: queryPersister,
+        maxAge: PERSIST_MAX_AGE,
+        buster: PERSIST_BUSTER,
+        dehydrateOptions: { shouldDehydrateQuery: shouldPersistQuery },
+      }}
+    >
       <RouterProvider router={router} />
-    </QueryClientProvider>
+    </PersistQueryClientProvider>
   </StrictMode>,
 );

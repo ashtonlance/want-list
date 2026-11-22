@@ -28,7 +28,7 @@ export function parsePriceFile(v: unknown): PriceFile | null {
 }
 
 async function fetchPrices(): Promise<PriceFile | null> {
-  const r = await fetch(import.meta.env.BASE_URL + "prices.json", { cache: "no-store" });
+  const r = await fetch(import.meta.env.BASE_URL + "prices.json", { cache: "no-cache" });
   return r.ok ? parsePriceFile(await r.json()) : null;
 }
 

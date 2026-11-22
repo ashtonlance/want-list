@@ -7,11 +7,11 @@ import { validateLiveSearch, validatePicksSearch } from "./search";
 import { tabSearch } from "./state";
 
 const TABS: readonly { value: ExploreTab; label: string }[] = [
-  { value: "live", label: "Live" },
-  { value: "picks", label: "Picks for you" },
+  { value: "live", label: "Browse" },
+  { value: "picks", label: "For you" },
 ];
 
-/** Explore: live card data or Claude's picks, each tab keeping its own search. */
+/** Explore: Browse (every card, sets, search) and For you (picks), each tab keeping its own search. */
 export function ExploreLayout() {
   const navigate = useNavigate();
   const { pathname, search } = useLocation();

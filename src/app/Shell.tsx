@@ -6,6 +6,7 @@ import { LightboxProvider } from "~/ui/Lightbox";
 import { ToastProvider } from "~/ui/Toast";
 import { OverlayHost } from "./OverlayHost";
 import { TabBar } from "./TabBar";
+import { UpdatePrompt } from "./UpdatePrompt";
 import { Topbar } from "./Topbar";
 import { useSectionMemory } from "./useSectionMemory";
 
@@ -34,6 +35,7 @@ function Frame() {
       <TabBar />
       <OverlayHost />
       <Datalists />
+      <UpdatePrompt />
     </>
   );
 }

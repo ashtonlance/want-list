@@ -116,3 +116,14 @@ body.selecting .toast {
   opacity: 0.3;
   cursor: default;
 }
+.update-toast {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.update-toast .toast-undo + .toast-undo {
+  margin-left: 0;
+  font-weight: 600;
+  opacity: 0.7;
+}
