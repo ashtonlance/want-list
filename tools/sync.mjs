@@ -102,6 +102,7 @@ for (const g of groups) {
 }
 // English first, then Japanese, each newest first by release date (undated sets last, as before).
 entries.sort((a, b) => a.set[1] - b.set[1] || b.key.localeCompare(a.key));
+for (const jp of [0, 1]) { const e = entries.filter(x => x.set[1] === jp); console.log(jp ? "JP" : "EN", "newest:", e.slice(0, 3).map(x => x.set[0]).join(" | "), "… last:", e.slice(-2).map(x => x.set[0]).join(" | ")); }
 const sets = [], cards = [];
 for (const { set, rows } of entries) {
   const si = sets.push(set) - 1;
