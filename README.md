@@ -68,7 +68,7 @@ public/             manifest and icons for the home screen app
 tools/sync.mjs      daily catalog and price sync
 ```
 
-Sheets (a card, a pick, sign-in, add, options) are search params on the current route, so the back
+Sheets (a card, a pick, sign-in, add, options, binder pockets) are search params on the current route, so the back
 button and swipe-back close them, and scroll position is restored when you come back to a list.
 
 ## Data files
