@@ -93,10 +93,23 @@
     const bot = wordsOf((await w.recognize(botC, {}, { blocks: true, text: true })).data);
     return { top, bot, flat, topC, botC };
   }
-  /* Second look at the name with light and dark swapped: white names on dark art read far better inverted. */
-  async function rereadTop(read) {
-    const w = await getWorker(), c = document.createElement("canvas"); c.width = read.topC.width; c.height = read.topC.height;
-    const ctx = c.getContext("2d"); ctx.filter = "invert(1)"; ctx.drawImage(read.topC, 0, 0);
+  /* Another look at the name. "white" keeps only bright, colourless pixels as black ink, which pulls white names
+     off busy full-art backgrounds. "invert" swaps light and dark. */
+  async function rereadTop(read, cell, mode) {
+    const w = await getWorker(), sc = 2.4, sw = cell.width, sh = Math.round(cell.height * 0.2);
+    const c = document.createElement("canvas"); c.width = Math.round(sw * sc); c.height = Math.round(sh * sc);
+    const ctx = c.getContext("2d"); ctx.imageSmoothingQuality = "high";
+    if (mode === "invert") { ctx.filter = "invert(1)"; ctx.drawImage(read.topC, 0, 0, c.width, c.height); }
+    else {
+      ctx.drawImage(cell, 0, 0, sw, sh, 0, 0, c.width, c.height);
+      const id = ctx.getImageData(0, 0, c.width, c.height), p = id.data, hist = new Uint32Array(256), n = p.length / 4;
+      for (let i = 0; i < p.length; i += 4) hist[Math.min(p[i], p[i + 1], p[i + 2])]++;
+      let hi = 255, acc = 0; while (hi > 0 && (acc += hist[hi]) < n * 0.03) hi--;
+      const th = Math.max(150, hi - 45);
+      for (let i = 0; i < p.length; i += 4) { const mn = Math.min(p[i], p[i + 1], p[i + 2]), mx = Math.max(p[i], p[i + 1], p[i + 2]);
+        const ink = mn >= th && mx - mn < 60; p[i] = p[i + 1] = p[i + 2] = ink ? 0 : 255; }
+      ctx.putImageData(id, 0, 0);
+    }
     return wordsOf((await w.recognize(c, {}, { blocks: true, text: true })).data);
   }
 
@@ -194,26 +207,31 @@
     let t = textsOf(read.top); const nums = numbersIn(read.bot).concat(numbersIn(read.top).filter(n => /[A-Z]/.test(n)));
     const textChars = t.all.length + read.bot.map(w => w.t).join("").replace(/\W/g, "").length;
     if (read.flat < 14 && textChars < 4) return { conf: "empty", alts: [], hint: "" };
-    let names = nameCands(idx, t, nums);
-    if (!names.length || names[0][1] < 0.8) {
-      const t2 = textsOf(await rereadTop(read)), n2 = nameCands(idx, t2, nums);
-      if (n2.length && (!names.length || n2[0][1] > names[0][1])) { names = n2; t = t2; }
+    let names = nameCands(idx, t, nums), hint = (t.bigWords || "").trim();
+    const merge = more => { const m = new Map(names); for (const [n, v] of more) m.set(n, Math.max(m.get(n) || 0, v)); names = [...m.entries()].sort((a, b) => (b[1] - a[1]) || (b[0].length - a[0].length)); };
+    for (const mode of ["white", "invert"]) {
+      if (names.length && names[0][1] >= 0.85) break;
+      const t2 = textsOf(await rereadTop(read, cell, mode)), n2 = nameCands(idx, t2, nums);
+      if (n2.length && (!names.length || n2[0][1] > names[0][1])) hint = (t2.bigWords || "").trim() || hint;
+      merge(n2);
     }
-    const hint = (t.bigWords || "").trim();
     if (!names.length) return { conf: "none", alts: [], hint, nums };
-    const topS = names[0][1], pool = [];
-    for (const [n, s] of names.slice(0, 3)) { if (s < topS - 0.15) continue; for (const e of idx.byName.get(n)) pool.push({ e, ns: s, num: nums.includes(e.nno) }); }
+    /* Shortlist printings from the likeliest names, then let the pictures decide. */
+    const pool = [], seen = new Set();
+    for (const [n, s] of names.slice(0, 6)) for (const e of idx.byName.get(n)) if (!seen.has(e.pid)) { seen.add(e.pid); pool.push({ e, ns: s, num: nums.includes(e.nno) }); }
     pool.sort((a, b) => (b.num - a.num) || (b.ns - a.ns) || (!!b.e.mine - !!a.e.mine) || (a.e.jp - b.e.jp) || (b.e.date || "").localeCompare(a.e.date || ""));
-    const look = pool.slice(0, 16), sig = pocketSig(cell);
-    const ims = await Promise.all(look.map(x => loadThumb(x.e.pid)));
-    look.forEach((x, i) => { x.img = ims[i] ? imageScore(sig, ims[i]) : 0; x.score = x.ns + (x.num ? 0.4 : 0) + 1.2 * x.img + prior(x.e); });
-    for (const x of pool.slice(16)) x.score = x.ns + (x.num ? 0.4 : 0) + prior(x.e) - 0.2;
+    const look = [], perName = new Map();
+    for (const x of pool) { const k = perName.get(x.e.sq) || 0; if (x.num || k < (x.ns === names[0][1] ? 40 : 10)) { look.push(x); perName.set(x.e.sq, k + 1); } if (look.length >= 48) break; }
+    const sig = pocketSig(cell), ims = await Promise.all(look.map(x => loadThumb(x.e.pid)));
+    look.forEach((x, i) => { x.img = ims[i] ? imageScore(sig, ims[i]) : 0; });
+    for (const x of pool) x.score = x.ns + (x.num ? 0.4 : 0) + (x.img != null ? 1.4 * x.img : -0.3) + prior(x.e);
     pool.sort((a, b) => b.score - a.score);
-    const best = pool[0], second = pool.find(x => x.e.pid !== best.e.pid);
-    const margin = second ? (best.img || 0) - (second.img || 0) : 1;
-    const conf = best.ns >= 0.8 && (best.img >= 0.55 && (margin >= 0.06 || best.num)) ? "high"
-      : best.ns >= 0.7 && best.img >= 0.45 ? "medium" : "low";
-    return { conf, alts: pool.slice(0, 8).map(x => x.e), hint, nums, img: best.img, margin };
+    const best = pool[0], second = pool.find(x => x.e.pid !== best.e.pid && x.img != null);
+    const margin = second ? (best.img || 0) - (second.img || 0) : 1, alts = pool.slice(0, 8).map(x => x.e);
+    if ((best.img || 0) < 0.4 && !best.num) return { conf: "none", alts, hint, nums, img: best.img, margin };
+    const conf = best.img >= 0.7 && (margin >= 0.06 || best.num) && best.ns >= 0.6 ? "high"
+      : best.img >= 0.55 && best.ns >= 0.6 ? "medium" : "low";
+    return { conf, alts, hint, nums, img: best.img, margin };
   }
 
   window.WLScan = { getWorker, fileToImage, toCanvas, rectify, readCell, buildIndex, matchCell, norm, normNo, CW, CH };
