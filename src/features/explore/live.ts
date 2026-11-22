@@ -44,30 +44,39 @@ const liveCardQuery = (id: string) => ({
   staleTime: HOUR,
 });
 
-/** One card's live details. Catalog ids ("cat:123") are read from the catalog instead. */
+/**
+ * One card's live details. Catalog ids ("cat:123") are read from the catalog instead.
+ * `missing` is true once the catalog has loaded without that printing.
+ */
 export function useLiveCard(id: string | null) {
   const isCat = id?.startsWith("cat:") ?? false;
   const catalog = useCatalog(isCat);
   const td = useQuery({ ...liveCardQuery(id ?? ""), enabled: id !== null && !isCat });
-  if (!isCat) return { card: td.data ?? null, failed: td.isError };
+  if (!isCat) return { card: td.data ?? null, failed: td.isError, missing: false };
   const pid = Number(id?.slice(4));
   const row = catalog.data?.byPid.get(pid);
-  return { card: row && catalog.data ? catalogLiveCard(catalog.data, row) : null, failed: catalog.isError };
+  return {
+    card: row && catalog.data ? catalogLiveCard(catalog.data, row) : null,
+    failed: catalog.isError,
+    missing: catalog.data !== undefined && !row,
+  };
 }
 
-/** Live details for many cards at once (eight requests at a time), as a map by id. */
+/** Live details for many cards at once (eight requests at a time), as a map by id, plus the ids that failed. */
 export function useLiveCards(ids: readonly string[], enabled = true) {
   return useQueries({
     queries: ids.map((id) => ({ ...liveCardQuery(id), enabled })),
     combine: (results) => {
       const map = new Map<string, LiveCard>();
+      const failed = new Set<string>();
       let settled = 0;
       results.forEach((r, i) => {
         const id = ids[i];
         if (r.data && id) map.set(id, r.data);
+        if (r.isError && id) failed.add(id);
         if (r.data || r.isError) settled++;
       });
-      return { map, settled };
+      return { map, failed, settled };
     },
   });
 }

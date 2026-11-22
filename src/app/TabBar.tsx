@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import type { ReactNode } from "react";
+import { tabSearch } from "~/features/explore/state";
 import { BinderIcon, CompassIcon, ListIcon } from "~/ui/icons";
 import { prefs, type Section } from "./prefs";
 import { explorePath, sectionOf } from "./sections";
@@ -10,8 +11,13 @@ const TABS: { section: Section; label: string; icon: ReactNode }[] = [
   { section: "binders", label: "Binders", icon: <BinderIcon /> },
 ];
 
-const pathOf = (section: Section): string =>
-  section === "list" ? "/" : section === "binders" ? "/binders" : explorePath(prefs.exploreTab.get());
+/** Where a section's tab goes. Explore returns to the search or collection it was showing. */
+function targetOf(section: Section): { to: string; search?: Record<string, string | undefined> } {
+  if (section === "list") return { to: "/" };
+  if (section === "binders") return { to: "/binders" };
+  const tab = prefs.exploreTab.get();
+  return { to: explorePath(tab), search: { ...tabSearch.get()[tab] } };
+}
 
 export function TabBar() {
   const current = sectionOf(useLocation({ select: (l) => l.pathname }));
@@ -27,7 +33,7 @@ export function TabBar() {
             onClick={() => {
               // Tapping the tab you're on goes back to the top, like any phone app.
               if (current === t.section) window.scrollTo({ top: 0, behavior: "smooth" });
-              else void navigate({ to: pathOf(t.section) });
+              else void navigate(targetOf(t.section));
             }}
           >
             {t.icon}
