@@ -1,0 +1,40 @@
+name: Daily card sync
+# Refreshes catalog.json and prices.json from TCGplayer data (via tcgcsv.com) every day.
+on:
+  schedule:
+    - cron: "30 21 * * *" # 21:30 UTC, after tcgcsv's daily update
+  workflow_dispatch:
+  push:
+    paths:
+      - tools/sync.mjs
+      - .github/workflows/sync.yml
+permissions:
+  contents: write
+concurrency:
+  group: sync
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Rebuild catalog and prices
+        run: node tools/sync.mjs
+      - name: Check the result
+        run: |
+          node -e 'const c=require("./catalog.json"),p=require("./prices.json");if(!c.cards.length||!c.sets.length)process.exit(1);console.log(c.asOf,c.sets.length,"sets",c.cards.length,"cards",Object.keys(p.items).length,"prices")'
+          git diff --stat
+      - name: Publish (main only)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git add catalog.json prices.json
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Daily card sync $(date -u +%F)"
+          git pull --rebase origin main
+          git push origin HEAD:main

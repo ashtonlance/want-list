@@ -263,6 +263,13 @@ button.pocket{cursor:pointer}
 .ex-intro h2{margin:0 0 4px;font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
 .ex-intro p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
 .ex-tools{display:flex;flex-direction:column;gap:10px}
+.ex-seg{display:flex;width:100%;max-width:340px}
+.lv-search{display:flex;gap:8px}
+.lv-search input{flex:1;min-width:0}
+.lv-trend{left:auto;right:5px}
+.ex-to{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);margin-bottom:10px}
+.ex-to select{flex:1}
+.lv-more{width:100%;margin-top:4px}
 .ex-tools .scroller select{width:auto;min-height:36px;font-size:14px;padding-top:6px;padding-bottom:6px;background-color:var(--surface);box-shadow:inset 0 0 0 1px var(--line-2);border-radius:999px;padding-left:14px}
 .ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px 12px}
 @media (max-width:620px){.ex-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px}}
@@ -358,8 +365,10 @@ button.pocket{cursor:pointer}
 @media (max-width:620px){.pick-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 
 /* card / pick detail sheet */
-.detail-hero{display:grid;grid-template-columns:132px minmax(0,1fr);gap:16px;align-items:start}
-.detail-img{border:0;padding:0;background:var(--sunk);border-radius:8px;overflow:hidden;aspect-ratio:63/88;width:132px;box-shadow:var(--card-shadow);cursor:zoom-in;display:grid;place-items:center;position:relative}
+.detail-hero{display:flex;flex-direction:column;align-items:center;gap:18px}
+.detail-hero > .detail-info{align-self:stretch}
+.detail-img{border:0;padding:0;background:var(--sunk);border-radius:14px;overflow:hidden;aspect-ratio:63/88;width:min(300px,76vw);box-shadow:0 10px 34px rgba(0,0,0,.22),var(--card-shadow);cursor:zoom-in;display:grid;place-items:center;position:relative}
+@media (min-width:700px){.detail-hero{display:grid;grid-template-columns:250px minmax(0,1fr);align-items:start;gap:22px}.detail-img{width:250px}}
 .detail-img img{width:100%;height:100%;object-fit:cover;display:block}
 .detail-img.empty{cursor:default;box-shadow:none;font-size:12px;color:var(--muted);text-align:center;padding:8px;line-height:1.3}
 .detail-img.empty.can{cursor:pointer;border:1.5px dashed var(--line-2);background:none}
@@ -612,7 +621,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   const state = { cards: [], status: "want", prio: false, q: "", sort: "list", openEdit: null, openTags: null, confirmDel: null,
     coll: null, view: "list", pockets: 9, selecting: false, selected: new Set(), collMode: null, collConfirm: false,
     mode: "list", disc: [], exColl: null, showPassed: false, exQ: "", exCap: 0, exSort: "rec", exHideAdded: true, exArtist: "", openRow: null,
-    layout: "grid", openPick: null, cardsLoaded: false, discLoaded: false };
+    layout: "grid", openPick: null, openLive: null, exTab: "live", cardsLoaded: false, discLoaded: false };
   let db = null, assets = null, canWrite = true, photoFor = null, busy = false;
   const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 
@@ -644,6 +653,15 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   const slugify = s => String(s || "").toLowerCase().replace(/&/g, " ").replace(/[^a-z0-9]+/g, "-").replace(/-and-/g, "-").replace(/^-|-$/g, "");
   const tcgImg = (pid, big) => "https://tcgplayer-cdn.tcgplayer.com/product/" + pid + (big ? "_in_1000x1000.jpg" : "_400w.jpg");
   const imgUrl = c => (c.img && /^https?:/.test(c.img)) ? c.img : pidOf(c) ? tcgImg(pidOf(c)) : null;
+  /* Card sheets open on the big photo: show the small image straight away, swap in the large one once it has loaded. */
+  const bigUrl = src => !src ? src : /_400w\.jpg$/.test(src) ? src.replace(/_400w\.jpg$/, "_in_1000x1000.jpg") : /assets\.tcgdex\.net\/.+\/low\.webp$/.test(src) ? src.replace(/low\.webp$/, "high.webp") : src;
+  function heroImg(src, name) {
+    const img = el("img", { src, alt: name + " card", decoding: "async" });
+    img.addEventListener("error", () => img.replaceWith(el("span", { class: "noimg", text: name })), { once: true });
+    const big = bigUrl(src);
+    if (big && big !== src) { const pre = new Image(); pre.onload = () => { if (img.isConnected || img.src) img.src = big; }; pre.src = big; }
+    return img;
+  }
   const isGot = c => (c.status || "want") === "got";
   const collsOf = c => Array.isArray(c.collections) ? c.collections : [];
   const cleanName = s => String(s || "").replace(/\s+/g, " ").trim().slice(0, 60);
@@ -972,11 +990,12 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   }
 
   /* ---------- card detail sheet ---------- */
-  function openCard(c) { state.openRow = c.id; state.openPick = null; state.openEdit = state.openTags = state.confirmDel = null; openPanel("#detailSheet"); drawDetail(); $("#detailSheet .sheet-card").scrollTop = 0; }
-  function openPick(s) { state.openPick = s.id; state.openRow = null; openPanel("#detailSheet"); drawDetail(); $("#detailSheet .sheet-card").scrollTop = 0; }
-  function closeDetail() { state.openRow = state.openPick = null; state.openEdit = state.openTags = state.confirmDel = null; }
+  function openCard(c) { state.openRow = c.id; state.openPick = state.openLive = null; state.openEdit = state.openTags = state.confirmDel = null; openPanel("#detailSheet"); drawDetail(); $("#detailSheet .sheet-card").scrollTop = 0; }
+  function openPick(s) { state.openPick = s.id; state.openRow = state.openLive = null; openPanel("#detailSheet"); drawDetail(); $("#detailSheet .sheet-card").scrollTop = 0; }
+  function closeDetail() { state.openRow = state.openPick = state.openLive = null; state.openEdit = state.openTags = state.confirmDel = null; }
   function drawDetail() {
     const box = $("#detailBody"); if ($("#detailSheet").hidden) return;
+    if (state.openLive) return drawLiveDetail(box);
     if (state.openPick) return drawPickDetail(box);
     const c = state.cards.find(x => x.id === state.openRow);
     if (!c) { closePanel("#detailSheet"); return; }
@@ -985,7 +1004,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     box.append(el("div", { class: "sheet-head" }, el("h3", { text: got ? "In your collection" : "On your want list" }), el("button", { class: "sheet-x", type: "button", "aria-label": "Close", text: "×", "data-close": true })));
     const src = imgUrl(c);
     let fig;
-    if (src) { fig = el("button", { class: "detail-img", type: "button", "aria-label": "Show " + c.name + " larger", onclick: () => openLightbox(c) }, cardImg(c)); }
+    if (src) { fig = el("button", { class: "detail-img", type: "button", "aria-label": "Show " + c.name + " full screen", onclick: () => openLightbox(c) }, heroImg(src, c.name)); }
     else if (canWrite && assets) fig = el("button", { class: "detail-img empty can", type: "button", text: "+ Add photo", onclick: () => pickPhoto(c) });
     else fig = el("div", { class: "detail-img empty", text: "No photo yet" });
     const name = el("div", { class: "name" }, document.createTextNode(c.name));
@@ -1045,7 +1064,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     box.append(el("div", { class: "sheet-head" }, el("h3", { text: s.coll === WILD ? "Wildcard pick" : "Pick for " + s.coll }), el("button", { class: "sheet-x", type: "button", "aria-label": "Close", text: "×", "data-close": true })));
     const src = s.tcgProduct ? tcgImg(s.tcgProduct) : null;
     const lb = () => openLightbox({ name: s.name, set: s.set, number: s.number, img: s.img, variant: "", status: "want", ask: s.market != null ? { kind: "market", amount: s.market } : null, tcg: s.tcgProduct ? { productId: s.tcgProduct } : null });
-    const fig = src ? el("button", { class: "detail-img", type: "button", "aria-label": "Show " + s.name + " larger", onclick: lb }, el("img", { src, alt: s.name + " card", decoding: "async" })) : el("div", { class: "detail-img empty", text: "No photo" });
+    const fig = src ? el("button", { class: "detail-img", type: "button", "aria-label": "Show " + s.name + " full screen", onclick: lb }, heroImg(src, s.name)) : el("div", { class: "detail-img empty", text: "No photo" });
     const art = el("div", { class: "meta" });
     if (s.rarity) art.append(el("span", { text: s.rarity }));
     if (s.illustrator) art.append(el("span", {}, document.createTextNode("art by "), el("button", { class: "artist", type: "button", text: s.illustrator, title: "More picks by " + s.illustrator, onclick: () => { state.exArtist = s.illustrator; state.exColl = "__all"; closePanel("#detailSheet"); renderExplore(); window.scrollTo({ top: 0, behavior: "smooth" }); } })));
@@ -1180,7 +1199,18 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   function onList(s) { return state.cards.some(c => c.name.toLowerCase() === s.name.toLowerCase() && (c.number || "").replace(/^0+/, "") === String(s.number).replace(/^0+/, "") && (c.set || "").toLowerCase() === s.set.toLowerCase()); }
   function tcgLink(s) { return s.tcgProduct ? "https://www.tcgplayer.com/product/" + s.tcgProduct : "https://www.tcgplayer.com/search/pokemon/product?q=" + encodeURIComponent(s.name + " " + s.number); }
   function renderExplore() {
-    const box = $("#explore"); box.textContent = "";
+    const box = $("#explore");
+    const ae = document.activeElement, keepQ = ae && ae.id === "lvQ" ? [ae.selectionStart, ae.selectionEnd] : null;
+    box.textContent = "";
+    const seg = el("div", { class: "seg ex-seg", role: "group", "aria-label": "Explore source" });
+    for (const [v, t] of [["live", "Live"], ["picks", "Picks for you"]]) seg.append(el("button", { type: "button", "aria-pressed": String(state.exTab === v), text: t, onclick: () => { if (state.exTab === v) return; state.exTab = v; store.set("wl-extab", v); renderExplore(); window.scrollTo({ top: 0 }); } }));
+    box.append(seg);
+    if (state.exTab === "live") {
+      renderLive(box);
+      if (keepQ) { const i = $("#lvQ"); if (i) { i.focus(); try { i.setSelectionRange(keepQ[0], keepQ[1]); } catch {} } }
+      if (state.openLive) drawDetail();
+      return;
+    }
     if (!state.discLoaded && db) { box.append(skeletonGrid("ex-grid", 6)); return; }
     const colls = exColls();
     if (!colls.length) { box.append(el("div", { class: "empty-state", text: "No suggestions yet. Ask Claude in chat to find cards for your collections." })); return; }
@@ -1282,6 +1312,214 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
       }
       await db.collection("discover").doc(s.id).update({ status: got ? "owned" : "added" });
       toast(coll ? (got ? "Marked " + s.name + " as owned in " : "Added " + s.name + " to ") + coll : (got ? "Marked " + s.name + " as owned" : "Added " + s.name + " to your list"));
+      return true;
+    } catch (e) { if (btn) btn.disabled = false; toast("Couldn't add it. Try again."); return false; }
+  }
+  /* ---------- live explore: cards and prices fetched from TCGdex when you look ---------- */
+  const TD = "https://api.tcgdex.net/v2/en";
+  const LV = { setsP: null, sets: null, rank: new Map(), q: "", setId: null, list: null, listKey: "", listP: null, err: "", data: new Map(), pend: new Map(), shown: 24, sort: "num", cap: 0, addTo: "", priceJob: 0 };
+  const tdSetOf = id => id.slice(0, id.lastIndexOf("-"));
+  const numKey = n => { const m = /^(\D*)(\d+)/.exec(String(n || "")); return m ? (m[1] ? 1e6 : 0) + +m[2] : 0; };
+  async function tdJson(url) { const r = await fetch(url); if (!r.ok) throw new Error("http " + r.status); return r.json(); }
+  function tdSets() {
+    if (!LV.setsP) LV.setsP = tdJson(TD + "/sets?sort:field=releaseDate&sort:order=DESC").then(a => { LV.sets = a.filter(s => s.cardCount && s.cardCount.total > 0); LV.rank = new Map(a.map((s, i) => [s.id, i])); return LV.sets; }).catch(e => { LV.setsP = null; throw e; });
+    return LV.setsP;
+  }
+  /* One card's details: picture, rarity, artist, TCGplayer price and product, Cardmarket 7 and 30 day averages for the trend. */
+  function tdNorm(j) {
+    const tp = (j.pricing && j.pricing.tcgplayer) || {}, cm = (j.pricing && j.pricing.cardmarket) || {};
+    const subs = Object.keys(tp).filter(k => tp[k] && typeof tp[k] === "object");
+    const order = ["holofoil", "normal", "unlimitedHolofoil", "unlimited", "1stEditionHolofoil", "1stEdition", "reverse-holofoil", "reverseHolofoil"];
+    const sub = order.find(k => subs.includes(k) && (tp[k].marketPrice != null || tp[k].midPrice != null)) || subs.find(k => tp[k].marketPrice != null || tp[k].midPrice != null) || subs[0];
+    const v = sub ? tp[sub] : null, vd = (j.variants_detailed || []).find(x => x.thirdParty && x.thirdParty.tcgplayer);
+    const pid = (v && v.productId) || (vd && vd.thirdParty.tcgplayer) || null;
+    const a7 = cm.avg7 || cm["avg7-holo"] || null, a30 = cm.avg30 || cm["avg30-holo"] || null;
+    return { id: j.id, name: j.name, set: j.set ? j.set.name : "", setId: j.set ? j.set.id : tdSetOf(j.id), number: j.localId, rarity: j.rarity || "", illustrator: j.illustrator || "",
+      img: j.image ? j.image + "/low.webp" : pid ? tcgImg(pid) : null, pid, market: v ? (v.marketPrice ?? v.midPrice ?? null) : null, low: v ? v.lowPrice ?? null : null,
+      sub: sub || "", upd: (tp.updated || "").slice(0, 10), a7, a30, trend: a7 && a30 && a30 >= 1 ? (a7 - a30) / a30 : null };
+  }
+  function tdCard(id) {
+    if (LV.data.has(id)) return Promise.resolve(LV.data.get(id));
+    if (!LV.pend.has(id)) LV.pend.set(id, tdJson(TD + "/cards/" + encodeURIComponent(id)).then(j => { const d = tdNorm(j); LV.data.set(id, d); LV.pend.delete(id); return d; }).catch(e => { LV.pend.delete(id); throw e; }));
+    return LV.pend.get(id);
+  }
+  /* A few at a time, so a big set doesn't flood the connection. */
+  async function tdMany(ids, onEach) {
+    let i = 0; const run = async () => { while (i < ids.length) { const id = ids[i++]; try { onEach(await tdCard(id)); } catch { onEach(null); } } };
+    await Promise.all(Array.from({ length: 8 }, run));
+  }
+  function liveLoad() {
+    const key = LV.q ? "q:" + LV.q.toLowerCase() : "set:" + (LV.setId || "");
+    if (LV.listKey === key && (LV.list || LV.listP)) return;
+    LV.listKey = key; LV.list = null; LV.err = ""; LV.shown = 24;
+    const p = LV.listP = (async () => {
+      await tdSets();
+      if (LV.q) {
+        const a = await tdJson(TD + "/cards?name=" + encodeURIComponent(LV.q));
+        return a.sort((x, y) => (LV.rank.get(tdSetOf(x.id)) ?? 9999) - (LV.rank.get(tdSetOf(y.id)) ?? 9999) || numKey(y.localId) - numKey(x.localId));
+      }
+      if (!LV.setId) LV.setId = LV.sets[0].id;
+      const st = await tdJson(TD + "/sets/" + encodeURIComponent(LV.setId));
+      return (st.cards || []).map(c => ({ ...c, id: c.id })).sort((x, y) => numKey(y.localId) - numKey(x.localId));
+    })();
+    p.then(a => { if (LV.listP !== p) return; LV.list = a; LV.listP = null; if (LV.sort !== "num") livePrices(); renderExplore(); })
+     .catch(() => { if (LV.listP !== p) return; LV.listP = null; LV.listKey = ""; LV.err = "Couldn't reach the live card data. Check your connection and try again."; renderExplore(); });
+  }
+  /* Sorting or filtering by price needs every result's price, so fetch them all (up to 250) and redraw once. */
+  function livePrices() {
+    if (!LV.list) return;
+    const job = ++LV.priceJob, ids = LV.list.slice(0, 250).map(c => c.id).filter(id => !LV.data.has(id));
+    if (!ids.length) return;
+    let n = 0; const tot = ids.length;
+    LV.progress = "Getting prices… 0 of " + tot;
+    tdMany(ids, () => { n++; if (job !== LV.priceJob) return; LV.progress = "Getting prices… " + n + " of " + tot; const p = $("#lvProg"); if (p) p.textContent = LV.progress; })
+      .then(() => { if (job !== LV.priceJob) return; LV.progress = ""; renderExplore(); });
+  }
+  function onListLive(d) {
+    const nn = s => String(s || "").replace(/^0+/, "").toLowerCase();
+    return state.cards.find(c => (d.pid && String(pidOf(c)) === String(d.pid)) || (c.name.toLowerCase() === d.name.toLowerCase() && nn(c.number) === nn(d.number) && (c.set || "").toLowerCase() === d.set.toLowerCase())) || null;
+  }
+  const trendText = t => t == null || Math.abs(t) < 0.1 ? "" : (t > 0 ? "▲ " : "▼ ") + Math.round(Math.abs(t) * 100) + "%";
+  function liveTile(b) {
+    const d = LV.data.get(b.id);
+    const card = el("article", { class: "ex-card", role: "button", tabindex: "0", "aria-label": b.name + (d && d.set ? ", " + d.set : "") });
+    const fig = el("div", { class: "tile-img" });
+    const setImg = src => { fig.textContent = ""; if (!src) { fig.append(el("span", { class: "noimg", text: b.name })); return; } const img = el("img", { src, alt: "", loading: "lazy", decoding: "async" }); img.addEventListener("error", () => img.replaceWith(el("span", { class: "noimg", text: b.name })), { once: true }); fig.append(img); };
+    setImg(b.image ? b.image + "/low.webp" : d && d.img);
+    const badge = el("span", { class: "tile-badge lv-trend", hidden: true });
+    fig.append(badge);
+    const meta = el("div", { class: "ex-meta", text: (d ? d.set + " · " : "") + "#" + b.localId });
+    const line = el("div", { class: "ex-line" }, el("span", { class: "ex-meta lv-wait", text: "…" }));
+    card.append(fig, el("div", { class: "ex-name", text: b.name }), meta, line);
+    const fill = d => {
+      if (!d) { line.replaceChildren(el("span", { class: "ex-meta", text: "No price" })); return; }
+      if (!b.image && d.img) setImg(d.img), fig.append(badge);
+      meta.textContent = d.set + " · #" + d.number;
+      const tt = trendText(d.trend); if (tt) { badge.textContent = tt; badge.hidden = false; badge.classList.toggle("down", d.trend < 0); }
+      const have = onListLive(d);
+      line.replaceChildren(d.market != null ? el("span", { class: "ex-price", text: fmt$(d.market) }) : el("span", { class: "ex-meta", text: "No price yet" }));
+      if (have) line.append(el("span", { class: "ex-added", text: isGot(have) ? "✓ Have it" : "✓ On list" }));
+      else if (canWrite) {
+        const quick = el("button", { class: "ex-quick", type: "button", "aria-label": "Want " + d.name + (LV.addTo ? ", add to " + LV.addTo : ""), title: "Want it" + (LV.addTo ? " (adds to " + LV.addTo + ")" : "") }, svg(PLUS));
+        quick.addEventListener("click", e => { e.stopPropagation(); quick.classList.add("done"); quick.replaceChildren(svg(TICK)); addFromLive(d, quick, "want", LV.addTo).then(ok => { if (!ok) { quick.classList.remove("done"); quick.replaceChildren(svg(PLUS)); } }); });
+        line.append(quick);
+      }
+    };
+    if (d) fill(d); else tdCard(b.id).then(fill, () => fill(null));
+    const open = () => { state.openLive = b.id; state.openRow = state.openPick = null; openPanel("#detailSheet"); drawDetail(); $("#detailSheet .sheet-card").scrollTop = 0; };
+    card.addEventListener("click", open);
+    card.addEventListener("keydown", e => { if (e.target === card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open(); } });
+    return card;
+  }
+  function renderLive(box) {
+    liveLoad();
+    const head = el("div", { class: "ex-intro" }, el("h2", { text: LV.q ? "Results for “" + LV.q + "”" : (LV.sets && LV.sets.find(s => s.id === LV.setId) || {}).name || "Newest cards" }),
+      el("p", { text: LV.q ? "Every printing, newest sets first. Prices are today's TCGplayer market." : "Straight from the latest card data, chase cards first. Prices are today's TCGplayer market." }));
+    const form = el("form", { class: "lv-search", role: "search", autocomplete: "off" });
+    const q = el("input", { type: "search", id: "lvQ", placeholder: "Search any card, like Gengar", "aria-label": "Search live cards", value: LV.typed ?? LV.q, enterkeyhint: "search" });
+    form.append(q, el("button", { class: "btn small", type: "submit", text: "Search" }));
+    let deb; const go = () => { const v = q.value.trim(); if (v === LV.q || (v && v.length < 2)) return; LV.q = v; liveLoad(); renderExplore(); };
+    form.addEventListener("submit", e => { e.preventDefault(); clearTimeout(deb); q.blur(); go(); });
+    q.addEventListener("input", () => { LV.typed = q.value; clearTimeout(deb); deb = setTimeout(() => { if (!q.value.trim() || q.value.trim().length >= 3) go(); }, 650); });
+    const sets = el("div", { class: "colltabs" });
+    if (LV.sets) for (const s of LV.sets.slice(0, 10)) sets.append(el("button", { class: "colltab", type: "button", "aria-pressed": String(!LV.q && LV.setId === s.id), onclick: () => { LV.q = ""; LV.typed = null; LV.setId = s.id; liveLoad(); renderExplore(); window.scrollTo({ top: 0 }); } }, el("b", { text: s.name })));
+    const tools = el("div", { class: "scroller" });
+    const sort = el("select", { "aria-label": "Sort live cards" });
+    for (const [v, t] of [["num", LV.q ? "Newest first" : "Chase cards first"], ["high", "Price: high to low"], ["low", "Price: low to high"], ["up", "Trending up"]]) { const o = el("option", { value: v, text: t }); if (LV.sort === v) o.selected = true; sort.append(o); }
+    sort.addEventListener("change", () => { LV.sort = sort.value; if (LV.sort !== "num") livePrices(); renderExplore(); });
+    const cap = el("select", { "aria-label": "Price limit" });
+    for (const [v, t] of [[0, "Any price"], [5, "Under $5"], [25, "Under $25"], [100, "Under $100"]]) { const o = el("option", { value: String(v), text: t }); if (LV.cap === v) o.selected = true; cap.append(o); }
+    cap.addEventListener("change", () => { LV.cap = +cap.value; if (LV.cap) livePrices(); renderExplore(); });
+    tools.append(sort, cap);
+    if (canWrite) {
+      const to = el("select", { "aria-label": "Collection for added cards" });
+      for (const n of ["", ...allColls().map(([n]) => n)]) { const o = el("option", { value: n, text: n ? "Add to " + n : "Add with no collection" }); if (LV.addTo === n) o.selected = true; to.append(o); }
+      to.addEventListener("change", () => { LV.addTo = to.value; renderExplore(); });
+      tools.append(to);
+    }
+    box.append(head, el("div", { class: "ex-tools" }, form, sets, tools));
+    if (LV.err) { box.append(el("div", { class: "empty-state" }, document.createTextNode(LV.err + " "), el("button", { class: "btn small", type: "button", text: "Try again", onclick: () => { LV.err = ""; liveLoad(); renderExplore(); } }))); return; }
+    if (!LV.list) { box.append(skeletonGrid("ex-grid", 6)); return; }
+    let rows = LV.list;
+    const priced = LV.sort !== "num" || LV.cap;
+    if (priced && LV.progress) box.append(el("p", { class: "hint", id: "lvProg", text: LV.progress }));
+    if (LV.cap) rows = rows.filter(b => { const d = LV.data.get(b.id); return d && d.market != null && d.market <= LV.cap; });
+    if (LV.sort === "high") rows = [...rows].sort((a, b) => ((LV.data.get(b.id) || {}).market ?? -1) - ((LV.data.get(a.id) || {}).market ?? -1));
+    if (LV.sort === "low") rows = [...rows].sort((a, b) => ((LV.data.get(a.id) || {}).market ?? Infinity) - ((LV.data.get(b.id) || {}).market ?? Infinity));
+    if (LV.sort === "up") rows = rows.filter(b => (LV.data.get(b.id) || {}).trend > 0.1 || !LV.data.has(b.id) && LV.progress).sort((a, b) => ((LV.data.get(b.id) || {}).trend ?? -9) - ((LV.data.get(a.id) || {}).trend ?? -9));
+    const grid = el("div", { class: "ex-grid" });
+    for (const b of rows.slice(0, LV.shown)) grid.append(liveTile(b));
+    if (!rows.length) grid.append(el("div", { class: "empty-state", text: LV.progress ? "Getting prices…" : LV.q ? "No cards found for “" + LV.q + "”. Check the spelling, or try just the Pokémon's name." : "No cards match these filters." }));
+    box.append(grid);
+    if (rows.length > LV.shown) box.append(el("button", { class: "btn wide lv-more", type: "button", text: "Show more (" + (rows.length - LV.shown) + " left)", onclick: () => { LV.shown += 24; renderExplore(); } }));
+    box.append(el("p", { class: "hint", text: "Live card data from TCGdex, refreshed daily. Prices are TCGplayer market before shipping; trends compare Cardmarket's 7 and 30 day averages." }));
+  }
+  function drawLiveDetail(box) {
+    const id = state.openLive, d = LV.data.get(id);
+    box.textContent = "";
+    box.append(el("div", { class: "sheet-head" }, el("h3", { text: "Live card" }), el("button", { class: "sheet-x", type: "button", "aria-label": "Close", text: "×", "data-close": true })));
+    if (!d) {
+      box.append(el("div", { class: "detail-hero" }, el("div", { class: "detail-img skel" }), el("div", { class: "detail-info" }, el("div", { class: "skel skel-line", style: "width:60%" }), el("div", { class: "skel skel-line", style: "width:40%" }))));
+      tdCard(id).then(() => { if (state.openLive === id) drawDetail(); }, () => { if (state.openLive === id) { box.append(el("p", { class: "hint", text: "Couldn't load this card. Try again in a moment." })); } });
+      return;
+    }
+    const keep = $("#detailSheet .sheet-card").scrollTop;
+    const big = d.img;
+    const lbCard = { name: d.name, set: d.set, number: d.number, img: bigUrl(big) || (d.pid ? tcgImg(d.pid, true) : null), variant: "", status: "want", ask: d.market != null ? { kind: "market", amount: d.market } : null };
+    const fig = big ? el("button", { class: "detail-img", type: "button", "aria-label": "Show " + d.name + " full screen", onclick: () => openLightbox(lbCard) }, heroImg(big, d.name)) : el("div", { class: "detail-img empty", text: "No photo" });
+    const art = el("div", { class: "meta" });
+    if (d.rarity) art.append(el("span", { text: d.rarity }));
+    if (d.illustrator) art.append(el("span", { text: "art by " + d.illustrator }));
+    const price = d.market != null
+      ? el("div", { class: "price" }, el("div", { class: "ask", text: fmt$(d.market) }), el("div", { class: "ask-label", text: "TCGplayer market" + (d.low != null ? ", listings from " + fmt$(d.low) : "") + (d.upd ? " · " + fmtDate(d.upd) : "") }))
+      : el("div", { class: "none", text: "No TCGplayer price yet" });
+    const info = el("div", { class: "detail-info" }, el("div", { class: "name", text: d.name }), el("div", { class: "meta" }, el("span", { text: d.set }), el("span", { class: "num", text: "#" + d.number })), art, price);
+    if (d.a7 && d.a30) info.append(el("div", { class: "ask-label", text: (trendText(d.trend) ? trendText(d.trend) + " · " : "") + "Cardmarket 7-day average €" + d.a7.toFixed(2) + ", 30-day €" + d.a30.toFixed(2) }));
+    box.append(el("div", { class: "detail-hero" }, fig, info));
+    const have = onListLive(d);
+    if (have) box.append(el("div", { class: "detail-note", style: "margin-top:16px", text: isGot(have) ? "✓ You have it" : "✓ On your list" }));
+    else if (canWrite) {
+      const pick = el("select", { "aria-label": "Collection for " + d.name });
+      for (const n of ["", ...allColls().map(([n]) => n)]) { const o = el("option", { value: n, text: n || "No collection" }); if (n === LV.addTo) o.selected = true; pick.append(o); }
+      box.append(el("div", { class: "sec" }, el("label", { class: "ex-to" }, el("span", { text: "Add to" }), pick),
+        el("div", { class: "detail-acts", style: "margin-top:4px" },
+          el("button", { class: "btn primary", type: "button", text: "Want it", onclick: e => addFromLive(d, e.currentTarget, "want", pick.value).then(ok => ok && drawDetail()) }),
+          el("button", { class: "btn", type: "button", text: "I have it", onclick: e => addFromLive(d, e.currentTarget, "got", pick.value).then(ok => ok && drawDetail()) }))));
+    }
+    const shop = el("div", { class: "shop" },
+      el("a", { href: d.pid ? "https://www.tcgplayer.com/product/" + d.pid : "https://www.tcgplayer.com/search/pokemon/product?q=" + encodeURIComponent(d.name + " " + d.number), target: "_blank", rel: "noopener", text: "TCGplayer" }),
+      el("a", { href: "https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(d.name + " " + d.set + " " + d.number + " pokemon") + "&LH_BIN=1&_sop=15", target: "_blank", rel: "noopener", text: "eBay" }),
+      el("a", { href: "https://doubleholo.com/marketplace?sets=" + encodeURIComponent("Pokemon " + d.set), target: "_blank", rel: "noopener", text: "DoubleHolo" }));
+    box.append(el("div", { class: "sec" }, el("h4", { class: "sec-title", text: "Shop" }), shop));
+    $("#detailSheet .sheet-card").scrollTop = keep;
+  }
+  /* Adding uses the list's own set names and numbers when the daily catalog knows the card, so it matches cards added other ways. */
+  async function addFromLive(d, btn, want = "want", coll = "") {
+    if (!db || busy) return false;
+    if (btn) btn.disabled = true;
+    const got = want === "got";
+    let name = d.name, set = d.set, number = String(d.number);
+    if (d.pid) {
+      try { await Promise.race([loadCatalog(), new Promise(r => setTimeout(r, 5000))]); } catch {}
+      const r = B.catalog && B.catalog.cards.find(x => x[0] === +d.pid);
+      if (r) { name = r[1].replace(/ - \d+\/\d+$/, ""); set = B.catalog.sets[r[2]][0]; number = String(r[3]); }
+    }
+    const id = docId([name, set, number].join(" "));
+    const existing = state.cards.find(x => x.id === id) || onListLive(d);
+    try {
+      if (existing) {
+        const patch = {};
+        if (coll && !collsOf(existing).includes(coll)) Object.assign(patch, { collections: [...collsOf(existing), coll], slots: { ...(existing.slots || {}), [coll]: collCards(coll).length } });
+        if (got && existing.status !== "got") Object.assign(patch, { status: "got", checkRequested: false });
+        if (Object.keys(patch).length) await save(existing, patch, null, true);
+      } else {
+        await db.collection("cards").doc(id).set({ name, number, variant: "", set, lang: "EN", note: "", addedAt: today(),
+          ask: d.market != null ? { kind: "market", amount: d.market, source: "TCGplayer market", asOf: d.upd || today() } : { kind: "none", amount: null, source: "", asOf: "" },
+          deal: null, listing: d.pid ? { url: "https://www.tcgplayer.com/product/" + d.pid, site: "TCGplayer", addedAt: today() } : null, dhUrl: null,
+          img: d.pid ? null : bigUrl(d.img), imgSource: d.pid ? "tcgplayer" : "tcgdex", priority: false, status: got ? "got" : "want", checkRequested: !got && d.market == null, order: -Date.now(),
+          collections: coll ? [coll] : [], slots: coll ? { [coll]: collCards(coll).length } : {} });
+      }
+      toast(coll ? (got ? "Marked " + d.name + " as owned in " : "Added " + d.name + " to ") + coll : (got ? "Marked " + d.name + " as owned" : "Added " + d.name + " to your list"));
       return true;
     } catch (e) { if (btn) btn.disabled = false; toast("Couldn't add it. Try again."); return false; }
   }
@@ -1425,7 +1663,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     const c = store.get("wl-coll"); if (c) state.coll = c;
     const v = store.get("wl-view"); if (v === "binder") state.view = v;
     const p = +store.get("wl-pockets"); if ([4, 9, 12].includes(p)) state.pockets = p;
-    if (store.get("wl-mode") === "explore") state.mode = "explore"; }
+    if (store.get("wl-mode") === "explore") state.mode = "explore"; if (store.get("wl-extab") === "picks") state.exTab = "picks"; }
 
   /* Fresh prices: Claude republishes prices.json (TCGplayer data keyed by product id); it overrides the prices saved on cards and picks. */
   let prices = null;
