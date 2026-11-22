@@ -1,0 +1,1557 @@
+<!doctype html><html lang="en"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ashton's Want List</title>
+<meta name="theme-color" content="#0E1014" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ECEEF2" media="(prefers-color-scheme: light)">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='4' y='2' width='24' height='28' rx='4' fill='%232246D6'/%3E%3Crect x='8' y='6' width='16' height='12' rx='2' fill='%23FFD43B'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@112..125,600..900&family=Figtree:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: one binder column. Summary strip, quick-add, filters, collection tabs, then either card rows ("sleeves") or a binder view of 9-pocket page spreads. Price lives on a sticker. */
+:root{
+  --bg:#ECEEF2; --surface:#FFFFFF; --sunk:#F4F5F8; --ink:#14161B; --muted:#5D6371; --line:#D8DCE3;
+  --accent:#2246D6; --accent-ink:#FFFFFF; --sticker:#FFD43B; --sticker-ink:#1B1600;
+  --good:#167A3E; --good-bg:#E3F4E9; --warn:#9A4A06; --warn-bg:#FCEBD9; --danger:#B42318; --star:#E0A100;
+  --scrim:rgba(10,12,16,.82);
+  --binder:#262A33; --sleeve:#323743; --pocket:rgba(255,255,255,.07); --pocket-line:rgba(255,255,255,.16); --binder-ink:#E8EAEE; --binder-muted:#A3A9B6;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0E1014; --surface:#171A20; --sunk:#12151A; --ink:#E9EBEF; --muted:#9BA2AF; --line:#272C35;
+  --accent:#8EA2FF; --accent-ink:#0E1014; --sticker:#F2C21B; --sticker-ink:#1B1600;
+  --good:#5AD08A; --good-bg:#14301F; --warn:#F2A65A; --warn-bg:#35230F; --danger:#FF7B72; --star:#F2C21B; --scrim:rgba(0,0,0,.86);
+  --binder:#07080B; --sleeve:#1B1F27; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1014; --surface:#171A20; --sunk:#12151A; --ink:#E9EBEF; --muted:#9BA2AF; --line:#272C35;
+  --accent:#8EA2FF; --accent-ink:#0E1014; --sticker:#F2C21B; --sticker-ink:#1B1600;
+  --good:#5AD08A; --good-bg:#14301F; --warn:#F2A65A; --warn-bg:#35230F; --danger:#FF7B72; --star:#F2C21B; --scrim:rgba(0,0,0,.86);
+  --binder:#07080B; --sleeve:#1B1F27; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:15px/1.45 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 96px}
+.wrap{max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+header{display:flex;flex-direction:column;gap:10px}
+.eyebrow{font:600 12px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+h1{margin:0;font-family:var(--f-display);font-weight:850;font-stretch:125%;font-size:clamp(28px,6vw,44px);line-height:1;letter-spacing:-.01em;text-wrap:balance}
+.stats{display:flex;flex-wrap:wrap;gap:8px 22px;color:var(--muted);font-size:14px}
+.stats b{color:var(--ink);font-family:var(--f-mono);font-weight:600}
+.auth{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13.5px;color:var(--muted)}
+.auth form{display:flex;gap:8px;flex:1 1 280px}
+.auth input{flex:1;min-width:0}
+.auth .linkbtn{padding:6px 0}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.add-row{display:flex;gap:8px}
+.add-row input{flex:1;min-width:0}
+input[type=text],input[type=number],input[type=url],input[type=search],select{
+  background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:10px 12px;min-height:42px;width:100%}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 14px;min-height:42px;cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.small{min-height:34px;padding:6px 10px;font-size:13px}
+.btn.danger{color:var(--danger)}
+.hint{font-size:13px;color:var(--muted);margin:8px 2px 0}
+.parsed-note{grid-column:1/-1;font-size:13px;color:var(--muted);margin:0}
+.confirm{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:12px}
+.confirm label,.edit label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);font-weight:600;min-width:0}
+.wide{grid-column:span 2}.full{grid-column:1/-1}
+.confirm .actions,.edit .actions{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap}
+@media (max-width:620px){.confirm{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filters input[type=search]{flex:1 1 220px;width:auto}
+.filters select{width:auto;flex:0 0 auto}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:8px 12px;min-height:40px;cursor:pointer;color:var(--muted);font-weight:600}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.chip-toggle{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 12px;min-height:40px;cursor:pointer;font-weight:600;color:var(--muted)}
+.chip-toggle[aria-pressed=true]{border-color:var(--star);color:var(--ink);background:color-mix(in srgb,var(--star) 18%,var(--surface))}
+.count{font-size:13px;color:var(--muted);margin-left:auto}
+
+/* collections */
+.collbar{display:flex;flex-direction:column;gap:10px}
+.colltabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.colltab{flex:0 0 auto;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:7px 12px;cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:1px;min-width:0}
+.colltab b{font-size:14px;white-space:nowrap}
+.colltab span{font-size:11.5px;color:var(--muted);white-space:nowrap}
+.colltab[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.colltab[aria-pressed=true] span{color:inherit;opacity:.75}
+.colltab.new{border-style:dashed;color:var(--muted);justify-content:center}
+.collhead{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.collhead h2{margin:0;font-family:var(--f-display);font-stretch:112%;font-weight:800;font-size:22px;line-height:1.1}
+.progress{flex:1 1 200px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.bar{height:8px;border-radius:999px;background:var(--sunk);border:1px solid var(--line);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--good)}
+.progress small{font-size:12.5px;color:var(--muted)}
+.collops{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.inline-form{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.inline-form input{width:auto;flex:1 1 180px}
+
+.list{display:flex;flex-direction:column;gap:8px}
+.row{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;
+  display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:4px 14px;align-items:start}
+.row.got{opacity:.62}
+.row.sel{outline:2px solid var(--accent);outline-offset:-1px}
+.thumb{grid-row:span 2;width:72px;aspect-ratio:63/88;max-width:100%;border:0;padding:0;border-radius:5px;overflow:hidden;background:var(--sunk);cursor:zoom-in;
+  box-shadow:0 1px 0 var(--line),0 2px 6px rgba(0,0,0,.12);display:grid;place-items:center;position:relative}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb.empty{cursor:default;border:1px dashed var(--line);box-shadow:none;font-size:11px;color:var(--muted);text-align:center;line-height:1.2;padding:4px}
+.thumb.empty.can{cursor:pointer}
+.thumb.pick{cursor:pointer}
+.check{position:absolute;top:4px;left:4px;width:22px;height:22px;border-radius:6px;background:var(--surface);border:2px solid var(--accent);display:grid;place-items:center;font-size:14px;font-weight:800;color:var(--accent-ink)}
+.check.on{background:var(--accent)}
+.who{min-width:0;display:flex;flex-direction:column;gap:3px}
+.name{font-weight:700;font-size:16px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.star{border:0;background:none;cursor:pointer;font-size:18px;line-height:1;padding:0 2px;color:var(--line)}
+.star[aria-pressed=true]{color:var(--star)}
+.star:disabled{cursor:default}
+.tag{font:600 11px/1 var(--f-body);letter-spacing:.04em;text-transform:uppercase;border:1px solid var(--line);border-radius:5px;padding:3px 5px;color:var(--muted)}
+.tag.jp{border-color:var(--danger);color:var(--danger)}
+.meta{color:var(--muted);font-size:13.5px;display:flex;flex-wrap:wrap;gap:2px 10px}
+.meta .num{color:var(--ink)}
+.flags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.flag{font-size:12px;font-weight:600;border-radius:999px;padding:2px 9px}
+.flag.queued{background:var(--warn-bg);color:var(--warn)}
+.flag.got{background:var(--good-bg);color:var(--good)}
+.collchip{font-size:12px;font-weight:600;border-radius:6px;padding:2px 8px;border:1px solid var(--accent);color:var(--accent);background:none;cursor:pointer}
+.note{font-size:13px;color:var(--muted);font-style:italic}
+
+.price{display:flex;flex-direction:column;align-items:flex-end;gap:4px;text-align:right;min-width:0}
+.sticker{background:var(--sticker);color:var(--sticker-ink);font:700 16px/1 var(--f-mono);padding:7px 9px 6px;border-radius:6px 6px 6px 14px;transform:rotate(-1.5deg);white-space:nowrap}
+.sticker small{font:600 10px/1 var(--f-body);letter-spacing:.06em;text-transform:uppercase;display:block;margin-top:3px;opacity:.8}
+.ask{font:600 15px/1.1 var(--f-mono)}
+.ask-label{font-size:11.5px;color:var(--muted)}
+.none{font-size:13px;color:var(--muted)}
+.deal-src{font-size:12px;color:var(--muted);max-width:220px}
+
+.shop{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.shop a{font-size:12.5px;font-weight:600;color:var(--ink);text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--sunk);white-space:nowrap}
+.shop a:hover{border-color:var(--accent);color:var(--accent)}
+.shop a.mine{border-color:var(--accent);color:var(--accent);background:var(--surface)}
+.shop a.deal{background:var(--sticker);color:var(--sticker-ink);border-color:var(--sticker)}
+.acts{grid-column:2/-1;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center}
+.linkbtn{border:0;background:none;padding:4px 0;cursor:pointer;color:var(--muted);font-weight:600;font-size:13.5px}
+.linkbtn:hover{color:var(--ink)}
+.linkbtn.danger{color:var(--danger)}
+
+.edit,.picker{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;border-top:1px dashed var(--line);margin-top:10px;padding-top:12px}
+.picker{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.picker label.opt{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:5px 12px 5px 9px;font-size:13.5px;font-weight:600;cursor:pointer;background:var(--sunk)}
+.picker label.opt:has(input:checked){border-color:var(--accent);color:var(--accent);background:var(--surface)}
+.picker .inline-form{flex:1 1 260px}
+.edit h4{grid-column:1/-1;margin:4px 0 0;font:700 12px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+@media (max-width:620px){
+  .edit{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .row{grid-template-columns:58px minmax(0,1fr);gap:4px 12px}
+  .thumb{width:58px;grid-row:span 2}
+  .price{grid-column:2;align-items:center;text-align:left;flex-direction:row;flex-wrap:wrap;gap:6px 10px}
+  .shop,.acts{grid-column:1/-1}
+}
+
+/* binder view */
+.binder{display:flex;flex-direction:column;gap:16px}
+.spread{background:var(--binder);border-radius:14px;padding:14px;display:grid;grid-template-columns:1fr 1fr;gap:14px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+.page{background:var(--sleeve);border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.page-label{font:600 11px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--binder-muted)}
+.pockets{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:7px}
+.pocket{display:block;width:100%;max-width:100%;aspect-ratio:63/88;border-radius:5px;background:var(--pocket);border:1px solid var(--pocket-line);position:relative;overflow:hidden;padding:0;min-width:0}
+button.pocket{cursor:zoom-in}
+.pocket img{width:100%;height:100%;object-fit:cover;display:block}
+.pocket.need img{filter:grayscale(1);opacity:.38}
+.pocket .lbl{position:absolute;left:4px;right:4px;bottom:4px;font:600 10.5px/1.2 var(--f-body);color:var(--binder-ink);background:rgba(0,0,0,.66);border-radius:4px;padding:3px 4px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pocket .lbl.need{background:var(--sticker);color:var(--sticker-ink)}
+.pocket .noimg{position:absolute;inset:0;display:grid;place-items:center;padding:6px;text-align:center;font-size:11px;color:var(--binder-muted)}
+.pocket-wrap{position:relative;min-width:0}
+.mv{position:absolute;top:4px;right:4px;display:flex;gap:3px;z-index:2}
+.mv button{width:24px;height:24px;border-radius:6px;border:0;background:rgba(0,0,0,.7);color:#fff;font-size:12px;cursor:pointer;line-height:1}
+.mv button:disabled{opacity:.3;cursor:default}
+.binder-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+@media (max-width:700px){.spread{grid-template-columns:1fr;padding:10px}}
+
+.bulk{position:fixed;left:0;right:0;bottom:0;z-index:25;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.12);
+  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.bulk .inner{max-width:960px;margin:0 auto;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.bulk b{font-size:14px}
+.bulk input{width:auto;flex:1 1 180px}
+
+/* explore */
+.modebar{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.modebar .seg button{padding:9px 16px;font-size:15px}
+.explore{display:flex;flex-direction:column;gap:14px}
+.ex-intro{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline}
+.ex-intro h2{margin:0;font-family:var(--f-display);font-stretch:112%;font-weight:800;font-size:22px;line-height:1.1}
+.ex-intro p{margin:0;color:var(--muted);font-size:14px;flex:1 1 280px}
+.ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(178px,1fr));gap:12px}
+.ex-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;min-width:0}
+.ex-card.dim{opacity:.55}
+.ex-img{border:0;padding:10px 10px 0;background:none;cursor:zoom-in;display:block;width:100%}
+.ex-img img{width:100%;aspect-ratio:63/88;object-fit:cover;border-radius:6px;display:block;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.ex-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.ex-name{font-weight:700;font-size:15px;line-height:1.25}
+.ex-meta{font-size:12.5px;color:var(--muted)}
+.ex-why{font-size:12.5px;color:var(--ink);margin-top:2px}
+.ex-price{font:600 14px/1.2 var(--f-mono);margin-top:4px}
+.ex-price small{font:500 11px/1 var(--f-body);color:var(--muted)}
+.ex-links{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;margin-top:2px}
+.ex-links a{color:var(--accent);font-weight:600;text-decoration:none}
+.ex-acts{display:flex;gap:6px;margin-top:auto;padding-top:8px;flex-wrap:wrap}
+.ex-acts .btn{flex:1 1 auto}
+.ex-added{font-size:12.5px;font-weight:700;color:var(--good)}
+.ex-to{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);width:100%}
+.ex-to select{flex:1;min-width:0;font-size:13px;padding:5px 6px}
+.ex-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ex-tools input[type=search]{flex:1 1 200px;width:auto}
+.ex-tools select{width:auto}
+.ex-coll{font:600 11px/1 var(--f-body);letter-spacing:.04em;text-transform:uppercase;color:var(--accent)}
+.artist{border:0;background:none;padding:0;font:inherit;color:var(--accent);cursor:pointer;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--accent) 40%,transparent);text-underline-offset:2px}
+.ex-sep{grid-column:1/-1;font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
+.empty-state{padding:28px;text-align:center;color:var(--muted)}
+.banner{font-size:13.5px;color:var(--muted);border:1px dashed var(--line);border-radius:var(--r);padding:10px 14px}
+footer{font-size:12.5px;color:var(--muted);line-height:1.5}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:999px;font-weight:600;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+
+.lightbox{position:fixed;inset:0;z-index:40;background:var(--scrim);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  padding:calc(16px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.lightbox img{max-width:min(420px,100%);max-height:78vh;width:auto;height:auto;border-radius:14px;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.lightbox .cap{color:#F2F3F5;text-align:center;font-size:14px;max-width:420px}
+.lightbox .cap b{display:block;font-size:16px}
+.lightbox .close{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));right:max(12px,env(safe-area-inset-right,0px));border:0;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;width:42px;height:42px;font-size:22px;cursor:pointer}
+@media (prefers-reduced-motion:reduce){.sticker{transform:none}}
+
+/* ---------- binders ---------- */
+.bhead{display:flex;flex-direction:column;gap:4px}
+.bhead-top{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.bhead h2{margin:0;font-family:var(--f-display);font-stretch:112%;font-weight:800;font-size:22px;line-height:1.1;min-width:0;overflow-wrap:anywhere}
+.bsum{margin:0;color:var(--muted);font-size:13.5px}
+.bnav{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:600;font-size:14px}
+.bspread.one{grid-template-columns:1fr}
+.bpocket{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.bpocket.empty{display:grid;place-items:center;border-style:dashed;background:transparent}
+.bpocket .plus{font-size:26px;line-height:1;color:var(--binder-muted)}
+.bpocket .own-mark{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:var(--good);color:#fff;font:700 12px/20px var(--f-body);text-align:center}
+.bpocket.moving{outline:3px solid var(--accent);outline-offset:-3px}
+.bpocket.target{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 60%,transparent)}
+.movebar{position:sticky;top:64px;z-index:15;display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--accent);color:var(--accent-ink);border-radius:var(--r);padding:8px 8px 8px 14px;font-weight:600}
+.movebar .btn{background:var(--accent-ink);color:var(--accent);border-color:transparent}
+.toast-undo{margin-left:8px;border:0;background:none;color:inherit;font:inherit;font-weight:800;text-decoration:underline;cursor:pointer;padding:4px}
+.sheet{position:fixed;inset:0;z-index:45;background:rgba(10,12,16,.55);display:flex;align-items:flex-end;justify-content:center}
+.sheet-card{background:var(--surface);color:var(--ink);width:min(640px,100%);max-height:88vh;overflow:auto;overscroll-behavior:contain;border-radius:18px 18px 0 0;padding:6px 16px calc(18px + env(safe-area-inset-bottom,0px));box-shadow:0 -10px 40px rgba(0,0,0,.3)}
+@media (min-width:621px){.sheet{align-items:center}.sheet-card{border-radius:16px;max-height:84vh}}
+body.sheet-open{overflow:hidden}
+.sheet-grip{width:40px;height:5px;border-radius:3px;background:var(--line);margin:4px auto 6px}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:-6px;background:var(--surface);padding:6px 0 10px;z-index:1}
+.sheet-head h3{margin:0;font-size:18px}
+.sheet-x{border:0;background:var(--sunk);width:38px;height:38px;border-radius:999px;font-size:22px;line-height:1;cursor:pointer;color:var(--ink)}
+.sheet-form{display:flex;flex-direction:column;gap:12px}
+.sheet-form label{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:600;color:var(--muted)}
+.sheet-form h4{margin:10px 0 0;font:700 12px/1 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.sheet-form .hint{margin:0}
+.sheet-form textarea,#sheetBody textarea{width:100%;background:var(--sunk);border:1px solid var(--line);border-radius:9px;padding:10px;font:13px/1.4 var(--f-mono);color:var(--ink)}
+.row-btns{display:flex;gap:8px;flex-wrap:wrap}
+.sheet-form a.btn{display:grid;place-items:center;text-decoration:none;min-height:46px}
+.sheet-tabs{display:flex;width:100%;margin-bottom:10px}
+.sheet-tabs button{flex:1}
+#pickQ{margin-bottom:8px}
+.pick-ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.pick-ctrls select{width:auto;flex:1 1 160px}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--muted);min-height:40px}
+.pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:10px}
+.pick-grid > .hint{grid-column:1/-1}
+.pick{border:1px solid var(--line);background:var(--sunk);border-radius:10px;padding:6px;display:flex;flex-direction:column;gap:3px;text-align:left;cursor:pointer;min-width:0;color:var(--ink)}
+.pick.dim{opacity:.5}
+.pick-img{display:block;aspect-ratio:63/88;border-radius:5px;overflow:hidden;background:var(--surface);position:relative}
+.pick-img img{width:100%;height:100%;object-fit:cover;display:block}
+.pick-img .noimg,.bpocket .noimg{position:absolute;inset:0;display:grid;place-items:center;padding:6px;text-align:center;font-size:11px;font-weight:600;color:var(--muted);line-height:1.2}
+.bpocket .noimg{color:var(--binder-muted)}
+.pick-name{font-size:12.5px;font-weight:700;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-sub{font-size:11px;color:var(--muted);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-tag{font:600 11.5px/1.2 var(--f-mono)}
+.pocket-detail{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:start;margin-bottom:14px}
+.pocket-detail img{width:120px;border-radius:8px;box-shadow:0 2px 10px rgba(0,0,0,.2)}
+.pocket-detail > div:only-child{grid-column:1/-1}
+.pd-status{margin-top:8px;font-size:13.5px;font-weight:600}
+.sheet-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sheet-acts .btn{min-height:46px;text-align:center;text-decoration:none;display:grid;place-items:center;white-space:normal}
+.sheet-acts .btn.primary{grid-column:1/-1}
+@media (max-width:620px){
+  .bspread{padding:8px}
+  .bspread .pockets{gap:6px}
+  .movebar{top:58px}
+  .pick-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+}
+
+/* ---------- phone layout ---------- */
+.more-toggle{display:none}
+@media (max-width:620px){
+  body{font-size:15px;padding-block:12px 96px}
+  .wrap{gap:12px}
+  header{gap:6px}
+  h1{font-size:30px}
+  .stats{gap:4px 14px;font-size:13px}
+  .stats span:empty{display:none}
+  .modebar{position:sticky;top:0;z-index:20;margin:0 -16px;padding:8px 16px;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+  .modebar .seg{display:flex;width:100%}
+  .modebar .seg button{flex:1;padding:8px 10px;min-height:40px}
+  .panel{padding:12px}
+  #addPanel .hint{display:none}
+  #addPanel:focus-within .hint{display:block}
+  .colltabs,.filters,.collops,.ex-tools,.binder-tools{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px 2px}
+  .colltabs::-webkit-scrollbar,.filters::-webkit-scrollbar,.collops::-webkit-scrollbar,.ex-tools::-webkit-scrollbar,.binder-tools::-webkit-scrollbar{display:none}
+  .filters > *,.collops > *,.ex-tools > *{flex:0 0 auto}
+  .filters input[type=search],.ex-tools input[type=search]{flex:0 0 min(62vw,260px)}
+  .count{margin-left:0;white-space:nowrap;align-self:center}
+  .collhead{gap:8px}
+  .collhead h2{font-size:20px}
+  .progress{flex-basis:100%}
+  .inline-form input{flex:1 1 140px}
+  /* card rows: compact, details on demand */
+  .row{grid-template-columns:60px minmax(0,1fr);gap:2px 12px;padding:10px 12px}
+  .thumb{width:60px;grid-row:span 3}
+  .name{font-size:15px;gap:4px}
+  .meta{font-size:12.5px;gap:0 8px}
+  .meta span:nth-child(3){display:none}
+  .flags{gap:4px}
+  .price{grid-column:2;flex-direction:row;align-items:baseline;flex-wrap:wrap;gap:0 8px;text-align:left;margin-top:2px}
+  .price .ask{font-size:15px}
+  .price .ask-label{font-size:11.5px}
+  .sticker{font-size:14px;transform:none;padding:5px 7px 4px}
+  .deal-src{max-width:none}
+  .row{position:relative;cursor:pointer}
+  .row .name{padding-right:34px}
+  .more-toggle{display:grid;place-items:center;position:absolute;top:6px;right:6px;width:36px;height:36px;border:1px solid var(--line);background:var(--sunk);border-radius:9px;font-size:14px;color:var(--muted);cursor:pointer}
+  .row.open .more-toggle{color:var(--ink)}
+  .row:not(.open) .shop,.row:not(.open) .acts{display:none}
+  .shop,.acts{grid-column:1/-1;cursor:default}
+  .shop a{padding:8px 12px;font-size:13px}
+  .acts{gap:0 4px}
+  .linkbtn{padding:10px 8px;font-size:14px}
+  .edit{grid-template-columns:1fr 1fr}
+  .wide{grid-column:1/-1}
+  /* binder */
+  .spread{padding:8px;gap:8px;border-radius:10px}
+  .page{padding:6px;gap:6px}
+  .pockets{gap:5px}
+  .pocket .lbl{font-size:9.5px;padding:2px 3px}
+  .mv{top:2px;right:2px;gap:2px}
+  .mv button{width:22px;height:22px;font-size:10px;background:rgba(0,0,0,.55)}
+  /* explore: two-up grid */
+  .ex-intro h2{font-size:20px}
+  .ex-intro p{font-size:13px}
+  .ex-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .ex-img{padding:6px 6px 0}
+  .ex-body{padding:8px 9px 10px;gap:3px}
+  .ex-name{font-size:14px}
+  .ex-meta,.ex-why,.ex-links{font-size:12px}
+  .ex-why{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .ex-acts{gap:5px;padding-top:6px}
+  .ex-to{flex-direction:column;align-items:stretch;gap:2px;font-size:11px}
+  .ex-to select{min-height:36px;font-size:12.5px}
+  .ex-acts .btn{flex:1 1 calc(50% - 3px);min-height:38px;padding:6px 4px;font-size:12.5px}
+  .ex-acts .btn:last-child:nth-child(odd){flex-basis:100%}
+  footer{font-size:12px}
+  .toast{bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+  .bulk .inner{gap:6px}
+  .bulk .inner > b{flex-basis:100%}
+}
+
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pokémon TCG · want list</div>
+    <h1>Ashton's Want List</h1>
+    <div class="stats" id="stats"><span>Loading the list…</span></div>
+    <div class="auth" id="auth"></div>
+  </header>
+
+  <nav class="modebar" aria-label="Mode">
+    <div class="seg" role="group" aria-label="Mode" id="modeSeg">
+      <button type="button" data-mode="list" aria-pressed="true">My list</button>
+      <button type="button" data-mode="explore" aria-pressed="false">Explore</button>
+      <button type="button" data-mode="binders" aria-pressed="false">Binders</button>
+    </div>
+  </nav>
+
+  <section class="explore" id="explore" hidden></section>
+  <section class="explore" id="binders" hidden></section>
+  <div id="listMode" class="explore">
+
+  <section class="panel" id="addPanel" hidden>
+    <form id="quickForm" class="add-row" autocomplete="off">
+      <input type="text" id="quick" aria-label="Add a card or paste a listing link" placeholder="Add a card, or paste a listing link">
+      <button class="btn primary" type="submit">Add</button>
+    </form>
+    <p class="hint">Type it like "Umbreon ex Prismatic Evolutions 161", or paste a link from DoubleHolo, TCGplayer, eBay, Cardmarket, PriceCharting, Mercari or anywhere else. You'll check the details before it saves.</p>
+    <form id="confirmForm" class="confirm" hidden>
+      <p class="parsed-note" id="parsedNote"></p>
+      <label class="wide">Card name<input type="text" id="cName" required></label>
+      <label>Number<input type="text" id="cNum" placeholder="161"></label>
+      <label>Variant<input type="text" id="cVar" placeholder="Reverse Holo"></label>
+      <label class="wide">Set<input type="text" id="cSet" list="setList"></label>
+      <label>Language<select id="cLang"><option value="EN">English</option><option value="JP">Japanese</option></select></label>
+      <label>Status<select id="cStatus"><option value="want">I want it</option><option value="got">I already have it</option></select></label>
+      <label class="wide">Collection<input type="text" id="cColl" list="collList" placeholder="optional, e.g. Gengar binder"></label>
+      <label class="wide">Note<input type="text" id="cNote" placeholder="optional"></label>
+      <label class="full">Listing link<input type="url" id="cLink" placeholder="optional: a listing you're eyeing, or the card's DoubleHolo page"></label>
+      <div class="actions">
+        <button class="btn primary" type="submit">Save to list</button>
+        <button class="btn" type="button" id="cCancel">Cancel</button>
+      </div>
+    </form>
+    <datalist id="setList"></datalist>
+    <datalist id="collList"></datalist>
+  </section>
+
+  <div class="banner" id="readOnly" hidden>You're viewing Ashton's list. Sign in at the top to make changes.</div>
+
+  <section class="collbar" aria-label="Collections">
+    <div class="colltabs" id="colltabs"></div>
+    <div class="panel collhead" id="collhead" hidden></div>
+  </section>
+
+  <div class="filters" id="filters">
+    <input type="search" id="q" placeholder="Search name, set or number" aria-label="Search">
+    <div class="seg" role="group" aria-label="Show">
+      <button type="button" data-status="want" aria-pressed="true">Want</button>
+      <button type="button" data-status="got" aria-pressed="false">Got</button>
+      <button type="button" data-status="all" aria-pressed="false">All</button>
+    </div>
+    <button type="button" class="chip-toggle" id="prioOnly" aria-pressed="false">★ Priority</button>
+    <select id="sort" aria-label="Sort">
+      <option value="list">Newest added</option>
+      <option value="old">Oldest added</option>
+      <option value="low">Price: low to high</option>
+      <option value="high">Price: high to low</option>
+      <option value="set">Set</option>
+      <option value="name">Name</option>
+    </select>
+    <button type="button" class="chip-toggle" id="selectBtn" aria-pressed="false" hidden>Select cards</button>
+    <span class="count" id="count"></span>
+  </div>
+
+  <div class="list" id="list">
+    <div class="panel empty-state">Your cards will appear here once the list loads.</div>
+  </div>
+  </div>
+
+  <footer>
+    Yellow stickers are the best deal found with shipping included. Other prices are the TCGplayer market price (recent sales, before shipping) on the date shown, with the cheapest current listing beside it.
+    "Check price" queues a card for Claude to find the cheapest seller including shipping. The DoubleHolo button opens the card's set on DoubleHolo, or the card itself once you save its DoubleHolo link. Card images and prices from TCGplayer.
+  </footer>
+</div>
+
+<div class="bulk" id="bulk" hidden>
+  <div class="inner">
+    <b id="bulkCount">0 selected</b>
+    <form class="inline-form" id="bulkForm" autocomplete="off">
+      <input type="text" id="bulkColl" list="collList" placeholder="Collection name" aria-label="Collection name">
+      <button class="btn primary small" type="submit">Add to collection</button>
+    </form>
+    <button class="btn small" type="button" id="bulkRemove" hidden>Remove from this collection</button>
+    <button class="btn small" type="button" id="bulkAll">Select all shown</button>
+    <button class="btn small" type="button" id="bulkDone">Done</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+<div class="sheet" id="sheet" hidden><div class="sheet-card" role="dialog" aria-modal="true" aria-label="Binder editor"><div class="sheet-grip" aria-hidden="true"></div><div id="sheetBody"></div></div></div>
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Card photo" hidden>
+  <button class="close" type="button" id="lbClose" aria-label="Close">×</button>
+  <img id="lbImg" alt="">
+  <div class="cap" id="lbCap"></div>
+</div>
+<input type="file" id="photoInput" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script src="shim.js"></script>
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const state = { cards: [], status: "want", prio: false, q: "", sort: "list", openEdit: null, openTags: null, confirmDel: null,
+    coll: null, view: "list", pockets: 9, selecting: false, selected: new Set(), collMode: null, collConfirm: false,
+    mode: "list", disc: [], exColl: null, showPassed: false, exQ: "", exCap: 0, exSort: "rec", exHideAdded: true, exArtist: "", openRow: null };
+  let db = null, assets = null, canWrite = true, photoFor = null, busy = false;
+  const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+
+  const fmt$ = n => n == null || isNaN(n) ? "" : "$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtDate = s => { if (!s) return ""; const d = new Date(s + "T12:00:00"); return isNaN(d) ? s : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); };
+  const today = () => { const d = new Date(); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); };
+  const el = (tag, props = {}, ...kids) => { const e = document.createElement(tag); for (const [k, v] of Object.entries(props)) { if (v == null || v === false) continue; if (k === "class") e.className = v; else if (k === "text") e.textContent = v; else if (k === "style") e.setAttribute("style", v); else if (k.startsWith("on")) e.addEventListener(k.slice(2), v); else e.setAttribute(k, v === true ? "" : v); } for (const k of kids) if (k) e.append(k); return e; };
+  let toastT; const toast = msg => { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); };
+  const slugify = s => String(s || "").toLowerCase().replace(/&/g, " ").replace(/[^a-z0-9]+/g, "-").replace(/-and-/g, "-").replace(/^-|-$/g, "");
+  const tcgImg = (pid, big) => "https://tcgplayer-cdn.tcgplayer.com/product/" + pid + (big ? "_in_1000x1000.jpg" : "_400w.jpg");
+  const imgUrl = c => (c.img && /^https?:/.test(c.img)) ? c.img : pidOf(c) ? tcgImg(pidOf(c)) : null;
+  const isGot = c => (c.status || "want") === "got";
+  const collsOf = c => Array.isArray(c.collections) ? c.collections : [];
+  const cleanName = s => String(s || "").replace(/\s+/g, " ").trim().slice(0, 60);
+
+  const tcgMarket = c => c.tcg && c.tcg.market != null ? c.tcg.market : null;
+  const priceOf = c => c.deal && c.deal.total != null ? c.deal.total : tcgMarket(c) != null ? tcgMarket(c) : (c.ask && (c.ask.kind === "ask" || c.ask.kind === "market") ? c.ask.amount : null);
+  const queryText = c => [c.lang === "JP" ? "Japanese" : "", c.name, c.variant && /reverse|1st/i.test(c.variant) ? c.variant : "", c.set, c.number].filter(Boolean).join(" ");
+  const dhLink = c => {
+    if (c.dhUrl) return [c.dhUrl, "Open this card on DoubleHolo"];
+    if (c.set) return ["https://doubleholo.com/marketplace?sets=" + encodeURIComponent("Pokemon " + (c.lang === "JP" ? "Japanese " : "") + c.set), "Open this card's set on DoubleHolo"];
+    return ["https://doubleholo.com/pokemon/" + slugify(c.name.split(" ")[0]), "Open this Pokémon on DoubleHolo"];
+  };
+  const markets = c => {
+    const q = encodeURIComponent(queryText(c)), short = encodeURIComponent([c.name, c.number].filter(Boolean).join(" "));
+    const [dh, dhTitle] = dhLink(c);
+    return [
+      ["DoubleHolo", dh, dhTitle],
+      ["TCGplayer", c.tcg && c.tcg.productId ? "https://www.tcgplayer.com/product/" + c.tcg.productId : "https://www.tcgplayer.com/search/" + (c.lang === "JP" ? "pokemon-japan" : "pokemon") + "/product?q=" + short],
+      ["eBay", "https://www.ebay.com/sch/i.html?_nkw=" + q + "+pokemon&LH_BIN=1&_sop=15", "Buy It Now, sorted by price plus shipping"],
+      ["Cardmarket", "https://www.cardmarket.com/en/Pokemon/Products/Search?searchString=" + short],
+      ["Mercari", "https://www.mercari.com/search/?keyword=" + q + "+pokemon"],
+      ["PriceCharting", "https://www.pricecharting.com/search-products?type=prices&q=" + q],
+      ["eBay sold", "https://www.ebay.com/sch/i.html?_nkw=" + q + "+pokemon&LH_Sold=1&LH_Complete=1", "What it actually sold for"],
+    ];
+  };
+
+  /* ---------- quick-add parsing ---------- */
+  function knownSets() { return [...new Set(state.cards.map(c => c.set).filter(Boolean))].sort((a, b) => b.length - a.length); }
+  function parseQuick(text) {
+    let t = " " + text.trim().replace(/\s+/g, " ") + " ";
+    const out = { name: "", set: "", number: "", variant: "", lang: "EN" };
+    const take = (re, fn) => { const m = t.match(re); if (m) { fn(m); t = t.replace(m[0], " "); } };
+    take(/\s(japanese|jp|jpn)\s/i, () => out.lang = "JP");
+    take(/\s(reverse holo|reverse|rh)\s/i, () => out.variant = "Reverse Holo");
+    take(/\s(1st edition|1st ed|first edition)\s/i, () => out.variant = "1st Edition");
+    take(/\s#?([A-Z]{0,5}\d{1,4}[a-z]?)(\/\S+)?\s*$/i, m => out.number = m[1].toUpperCase());
+    const tslug = "-" + slugify(t) + "-";
+    for (const s of knownSets()) {
+      const ss = "-" + slugify(s) + "-"; const i = tslug.indexOf(ss);
+      if (i >= 0) { out.set = s; t = " " + (tslug.slice(0, i) + "-" + tslug.slice(i + ss.length)).replace(/-+/g, " ").trim() + " "; break; }
+    }
+    if (!out.number) take(/\s#?([A-Z]{0,5}\d{1,4}[a-z]?)\s/i, m => out.number = m[1].toUpperCase());
+    out.name = titleCase(t.trim());
+    return out;
+  }
+  function titleCase(s) {
+    if (/[A-Z]/.test(s)) return s;
+    const keep = { ex: "ex", gx: "GX", v: "V", vmax: "VMAX", vstar: "VSTAR", tag: "Tag", team: "Team", and: "&", of: "of" };
+    return s.split(" ").filter(Boolean).map(w => keep[w] ?? (w[0].toUpperCase() + w.slice(1))).join(" ");
+  }
+  const siteOf = host => [[/tcgplayer/, "TCGplayer"], [/(^|\.)ebay\./, "eBay"], [/cardmarket/, "Cardmarket"], [/pricecharting/, "PriceCharting"], [/mercari/, "Mercari"], [/doubleholo/, "DoubleHolo"], [/whatnot/, "Whatnot"], [/facebook/, "Facebook"], [/trollandtoad/, "Troll and Toad"], [/collectr/, "Collectr"]].find(([re]) => re.test(host))?.[1] || host.replace(/^www\./, "");
+  function parseLink(raw) {
+    let u; try { u = new URL(raw.trim()); } catch { return null; }
+    if (!/^https?:$/.test(u.protocol)) return null;
+    const site = siteOf(u.hostname);
+    const segs = u.pathname.split("/").filter(Boolean).map(s => { try { return decodeURIComponent(s); } catch { return s; } });
+    let words = "", setHint = "", lang = "EN", dhUrl = null;
+    if (site === "TCGplayer" && segs[0] === "product") {
+      let s = segs[2] || "";
+      if (s.startsWith("pokemon-japan-")) { lang = "JP"; s = s.slice(14); } else s = s.replace(/^pokemon-/, "");
+      s = s.replace(/^(sv|swsh|sm|xy|bw|me|m|s)(\d+[a-z]?)?(-\d+)?-(?=[a-z])/i, "");
+      s = s.replace(/-(\d{1,4})-(\d{1,4})$/, " $1");
+      words = s;
+    } else if (site === "Cardmarket") {
+      const i = segs.indexOf("Singles");
+      if (i >= 0) { setHint = segs[i + 1] || ""; words = (segs[i + 2] || "").replace(/-V\d+(?=-)/, "").replace(/-([A-Z]{2,5})(\d{1,4})$/, " $2"); }
+    } else if (site === "PriceCharting" && segs[0] === "game") {
+      let s = (segs[1] || "").replace(/^pokemon-/, "");
+      if (s.startsWith("japanese-")) { lang = "JP"; s = s.slice(9); }
+      setHint = s; words = segs[2] || "";
+    } else {
+      if (site === "DoubleHolo" && segs[0] === "card") dhUrl = u.origin + u.pathname;
+      words = segs.filter(s => /[a-z]{3,}/i.test(s) && /-/.test(s) && !/^(itm|item|product|products|p|us|en|listing)$/i.test(s)).sort((a, b) => b.length - a.length)[0] || "";
+      if (/^japanese-/i.test(words)) { lang = "JP"; words = words.slice(9); }
+    }
+    const noise = /\b(pokemon|pokémon|tcg|card|cards|sir|sar|ir|ar|nm|lp|mint|near|english|ungraded|single)\b/gi;
+    const text = [setHint, words].join(" ").replace(/[-_]+/g, " ").replace(noise, " ").replace(/\s+/g, " ").trim();
+    const p = text ? parseQuick(text) : { name: "", set: "", number: "", variant: "", lang: "EN" };
+    if (!p.set && setHint) { p.set = titleCase(setHint.replace(/[-_]+/g, " ").toLowerCase()); p.name = titleCase(words.replace(/[-_]+/g, " ").replace(/\s\d+$/, "").trim().toLowerCase()); }
+    if (lang === "JP") p.lang = "JP";
+    p.listing = dhUrl ? null : { url: u.href, site, addedAt: today() };
+    p.dhUrl = dhUrl;
+    p.site = site;
+    p.found = !!p.name;
+    return p;
+  }
+
+  /* ---------- collections ---------- */
+  function allColls() {
+    const m = new Map();
+    for (const c of state.cards) for (const n of collsOf(c)) { const v = m.get(n) || { total: 0, got: 0, cost: 0 }; v.total++; if (isGot(c)) v.got++; else v.cost += priceOf(c) ?? 0; m.set(n, v); }
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }
+  function collCards(name) {
+    const big = 1e9;
+    return state.cards.filter(c => collsOf(c).includes(name))
+      .sort((a, b) => ((a.slots || {})[name] ?? big) - ((b.slots || {})[name] ?? big) || (a.addedAt || "").localeCompare(b.addedAt || "") || (a.order ?? 0) - (b.order ?? 0));
+  }
+  function setColl(name) {
+    state.coll = name; state.collMode = null; state.collConfirm = false;
+    if (!name) state.view = "list";
+    store.set("wl-coll", name || ""); render();
+  }
+
+  function renderColls() {
+    const tabs = $("#colltabs"); tabs.textContent = "";
+    const colls = allColls();
+    if (state.coll && !colls.some(([n]) => n === state.coll)) state.coll = null;
+    const tab = (label, sub, pressed, onclick, cls = "") => el("button", { class: "colltab " + cls, type: "button", "aria-pressed": String(!!pressed), onclick }, el("b", { text: label }), sub ? el("span", { text: sub }) : null);
+    tabs.append(tab("All cards", state.cards.length + " cards", !state.coll, () => setColl(null)));
+    for (const [n, v] of colls) tabs.append(tab(n, v.got + " of " + v.total + " collected", state.coll === n, () => setColl(n)));
+    if (canWrite) tabs.append(tab("+ New collection", "", false, () => { state.coll = null; state.view = "list"; render(); state.collMode = "new"; renderHead(); $("#collNewName")?.focus(); }, "new"));
+    const dl = $("#collList"); dl.textContent = ""; for (const [n] of colls) dl.append(el("option", { value: n }));
+    renderHead();
+  }
+
+  function renderHead() {
+    const h = $("#collhead"); h.textContent = "";
+    if (state.collMode === "new" && !state.coll) {
+      h.hidden = false;
+      const f = el("form", { class: "inline-form", autocomplete: "off" },
+        el("input", { type: "text", id: "collNewName", placeholder: "Name it, e.g. Gengar binder or Kanto starters", "aria-label": "New collection name" }),
+        el("button", { class: "btn primary small", type: "submit", text: "Create and pick cards" }),
+        el("button", { class: "btn small", type: "button", text: "Cancel", onclick: () => { state.collMode = null; renderHead(); } }));
+      f.addEventListener("submit", e => { e.preventDefault(); const n = cleanName($("#collNewName").value); if (!n) return; state.collMode = null; startSelecting(n); toast("Tap cards to add them to " + n); });
+      h.append(el("p", { class: "hint", style: "margin:0;flex-basis:100%", text: "A collection is any group you're working on: a binder spread, a Pokémon, an artist. After naming it, tap the cards that belong, then Add to collection." }), f);
+      return;
+    }
+    if (!state.coll) { h.hidden = true; return; }
+    h.hidden = false;
+    const cards = collCards(state.coll), got = cards.filter(isGot).length;
+    const cost = cards.filter(c => !isGot(c)).reduce((s, c) => s + (priceOf(c) ?? 0), 0);
+    const missingPrice = cards.filter(c => !isGot(c) && priceOf(c) == null).length;
+    const pct = cards.length ? Math.round(got / cards.length * 100) : 0;
+    h.append(el("h2", { text: state.coll }),
+      el("div", { class: "progress" }, el("div", { class: "bar", role: "img", "aria-label": pct + "% collected" }, el("i", { style: "width:" + pct + "%" })),
+        el("small", { text: got + " of " + cards.length + " collected · " + fmt$(cost) + " to finish" + (missingPrice ? " (" + missingPrice + " without a price yet)" : "") })));
+    const view = el("div", { class: "seg", role: "group", "aria-label": "View" });
+    for (const [v, t] of [["list", "List"], ["binder", "Binder"]]) view.append(el("button", { type: "button", "aria-pressed": String(state.view === v), text: t, onclick: () => { state.view = v; store.set("wl-view", v); render(); } }));
+    const ops = el("div", { class: "collops" }, view);
+    if (state.view === "binder") {
+      const ps = el("select", { "aria-label": "Pockets per page", style: "width:auto" });
+      for (const n of [4, 9, 12]) { const o = el("option", { value: String(n), text: n + "-pocket pages" }); if (state.pockets === n) o.selected = true; ps.append(o); }
+      ps.addEventListener("change", () => { state.pockets = +ps.value; store.set("wl-pockets", ps.value); render(); });
+      ops.append(ps);
+    }
+    if (canWrite) {
+      if (state.collMode === "rename") {
+        const f = el("form", { class: "inline-form" }, el("input", { type: "text", id: "collRename", value: state.coll, "aria-label": "New name" }), el("button", { class: "btn primary small", type: "submit", text: "Rename" }), el("button", { class: "btn small", type: "button", text: "Cancel", onclick: () => { state.collMode = null; renderHead(); } }));
+        f.addEventListener("submit", e => { e.preventDefault(); renameColl(state.coll, cleanName($("#collRename").value)); });
+        ops.append(f);
+      } else {
+        ops.append(el("button", { class: "btn small", type: "button", text: "Add cards", onclick: () => startSelecting(state.coll) }),
+          el("button", { class: "btn small", type: "button", text: "Rename", onclick: () => { state.collMode = "rename"; renderHead(); $("#collRename")?.focus(); } }));
+        if (state.collConfirm) ops.append(el("button", { class: "btn small danger", type: "button", text: "Yes, delete collection", onclick: () => deleteColl(state.coll) }), el("button", { class: "btn small", type: "button", text: "Keep it", onclick: () => { state.collConfirm = false; renderHead(); } }));
+        else ops.append(el("button", { class: "btn small danger", type: "button", text: "Delete collection", title: "Removes the tag. Your cards stay on the list.", onclick: () => { state.collConfirm = true; renderHead(); } }));
+      }
+    }
+    h.append(ops);
+  }
+
+  async function writeMany(pairs, msg) {
+    if (busy) return; busy = true;
+    let ok = 0;
+    for (const [c, patch] of pairs) { if (await save(c, patch, null, true)) ok++; }
+    busy = false; render();
+    if (msg) toast(ok === pairs.length ? msg : "Saved " + ok + " of " + pairs.length + ". Try again for the rest.");
+  }
+  function renameColl(from, to) {
+    if (!to || to === from) { state.collMode = null; renderHead(); return; }
+    const pairs = collCards(from).map(c => { const slots = { ...(c.slots || {}) }; if (from in slots) { slots[to] = slots[from]; delete slots[from]; } return [c, { collections: [...new Set(collsOf(c).map(n => n === from ? to : n))], slots }]; });
+    state.coll = to; state.collMode = null; store.set("wl-coll", to);
+    writeMany(pairs, "Renamed to " + to);
+  }
+  function deleteColl(name) {
+    const pairs = collCards(name).map(c => { const slots = { ...(c.slots || {}) }; delete slots[name]; return [c, { collections: collsOf(c).filter(n => n !== name), slots }]; });
+    state.coll = null; state.view = "list"; state.collConfirm = false; store.set("wl-coll", "");
+    writeMany(pairs, "Deleted " + name + ". The cards are still on your list.");
+  }
+
+  /* ---------- selecting ---------- */
+  function startSelecting(prefill) {
+    state.selecting = true; state.selected = new Set(); state.view = "list";
+    if (prefill && state.coll === prefill) { state.status = "all"; syncStatusButtons(); }
+    $("#bulkColl").value = prefill || state.coll || ""; render();
+  }
+  function stopSelecting() { state.selecting = false; state.selected = new Set(); render(); }
+  function toggleSel(c) { state.selected.has(c.id) ? state.selected.delete(c.id) : state.selected.add(c.id); render(); }
+  $("#selectBtn").addEventListener("click", () => state.selecting ? stopSelecting() : startSelecting());
+  $("#bulkDone").addEventListener("click", stopSelecting);
+  $("#bulkAll").addEventListener("click", () => { for (const c of visible()) state.selected.add(c.id); render(); });
+  $("#bulkForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const n = cleanName($("#bulkColl").value);
+    if (!n) { $("#bulkColl").focus(); toast("Name the collection first"); return; }
+    const picked = state.cards.filter(c => state.selected.has(c.id) && !collsOf(c).includes(n));
+    if (!picked.length) { toast(state.selected.size ? "Those cards are already in " + n : "Tap some cards first"); return; }
+    const start = collCards(n).length;
+    const pairs = picked.map((c, i) => [c, { collections: [...collsOf(c), n], slots: { ...(c.slots || {}), [n]: start + i } }]);
+    state.selecting = false; state.selected = new Set(); state.coll = n; store.set("wl-coll", n);
+    writeMany(pairs, "Added " + pairs.length + (pairs.length === 1 ? " card" : " cards") + " to " + n);
+  });
+  $("#bulkRemove").addEventListener("click", () => {
+    const n = state.coll; if (!n) return;
+    const pairs = state.cards.filter(c => state.selected.has(c.id) && collsOf(c).includes(n)).map(c => { const slots = { ...(c.slots || {}) }; delete slots[n]; return [c, { collections: collsOf(c).filter(x => x !== n), slots }]; });
+    if (!pairs.length) { toast("Tap some cards first"); return; }
+    state.selecting = false; state.selected = new Set();
+    writeMany(pairs, "Removed " + pairs.length + " from " + n);
+  });
+
+  /* ---------- list rendering ---------- */
+  function visible() {
+    const q = state.q.trim().toLowerCase();
+    let rows = state.cards.filter(c => state.status === "all" || (c.status || "want") === state.status);
+    if (state.coll && !(state.selecting && $("#bulkColl").value.trim() === state.coll)) rows = rows.filter(c => collsOf(c).includes(state.coll));
+    if (state.prio) rows = rows.filter(c => c.priority);
+    if (q) rows = rows.filter(c => [c.name, c.set, c.number, c.variant, c.note, c.lang === "JP" ? "japanese" : "", ...collsOf(c)].join(" ").toLowerCase().includes(q));
+    const by = {
+      list: (a, b) => (b.addedAt || "").localeCompare(a.addedAt || "") || (a.order ?? 1e9) - (b.order ?? 1e9),
+      old: (a, b) => (a.addedAt || "").localeCompare(b.addedAt || "") || (b.order ?? 0) - (a.order ?? 0),
+      low: (a, b) => (priceOf(a) ?? Infinity) - (priceOf(b) ?? Infinity),
+      high: (a, b) => (priceOf(b) ?? -1) - (priceOf(a) ?? -1),
+      set: (a, b) => (a.set || "").localeCompare(b.set || "") || (parseInt(a.number) || 0) - (parseInt(b.number) || 0),
+      name: (a, b) => a.name.localeCompare(b.name),
+    }[state.sort] || (() => 0);
+    return rows.sort(by);
+  }
+
+  function renderStats() {
+    const want = state.cards.filter(c => !isGot(c));
+    const total = want.reduce((s, c) => s + (priceOf(c) ?? 0), 0);
+    const deals = want.filter(c => c.deal && c.deal.total != null).length;
+    const s = $("#stats"); s.textContent = "";
+    const item = (b, rest) => el("span", {}, el("b", { text: b }), document.createTextNode(" " + rest));
+    s.append(item(String(want.length), "cards wanted"), item(fmt$(total), "to buy them all"),
+      ...(deals ? [item(String(deals), "with shipping-included deals")] : []), item(String(allColls().length), "collections"));
+  }
+
+  function priceBlock(c) {
+    const box = el("div", { class: "price" });
+    if (c.deal && c.deal.total != null) {
+      box.append(el("div", { class: "sticker", title: "Best total found, shipping included" }, document.createTextNode(fmt$(c.deal.total)), el("small", { text: "shipped" })));
+      const parts = [c.deal.site, c.deal.seller, c.deal.condition].filter(Boolean).join(" · ");
+      const ship = c.deal.shipping != null ? (c.deal.shipping === 0 ? "free shipping" : fmt$(c.deal.price) + " + " + fmt$(c.deal.shipping) + " ship") : "";
+      box.append(el("div", { class: "deal-src", text: [parts, ship, c.deal.checkedAt ? "checked " + fmtDate(c.deal.checkedAt) : ""].filter(Boolean).join(" · ") }));
+    } else if (tcgMarket(c) != null) {
+      box.append(el("div", { class: "ask mono", text: fmt$(c.tcg.market) }), el("div", { class: "ask-label", text: "TCGplayer market" + (c.tcg.asOf ? " · " + fmtDate(c.tcg.asOf) : "") }));
+      const extra = [c.tcg.low != null ? "listings from " + fmt$(c.tcg.low) : "",
+        c.ask && c.ask.kind === "ask" && c.ask.amount != null ? "DoubleHolo ask " + fmt$(c.ask.amount) + (c.ask.asOf ? " (" + fmtDate(c.ask.asOf) + ")" : "") : ""].filter(Boolean).join(" · ");
+      if (extra) box.append(el("div", { class: "ask-label", text: extra }));
+    } else if (c.ask && c.ask.kind === "ask" && c.ask.amount != null) {
+      box.append(el("div", { class: "ask mono", text: fmt$(c.ask.amount) }), el("div", { class: "ask-label", text: "lowest ask, before shipping" }));
+    } else if (c.ask && c.ask.kind === "market" && c.ask.amount != null) {
+      box.append(el("div", { class: "ask mono", text: fmt$(c.ask.amount) }), el("div", { class: "ask-label", text: "TCGplayer market, before shipping" }));
+    } else if (c.ask && c.ask.kind === "price" && c.ask.amount != null) {
+      box.append(el("div", { class: "ask mono", text: fmt$(c.ask.amount) }), el("div", { class: "ask-label", text: "last price · none listed" }));
+    } else {
+      box.append(el("div", { class: "none", text: isGot(c) ? "" : c.checkRequested ? "Price coming" : "No listings" }));
+    }
+    return box;
+  }
+
+  function thumb(c) {
+    const src = imgUrl(c);
+    if (state.selecting) {
+      const on = state.selected.has(c.id);
+      const b = el("button", { class: "thumb pick" + (src ? "" : " empty"), type: "button", "aria-pressed": String(on), "aria-label": (on ? "Unselect " : "Select ") + c.name, onclick: () => toggleSel(c) },
+        src ? el("img", { src, alt: "", loading: "lazy", decoding: "async" }) : document.createTextNode("No photo"), el("span", { class: "check" + (on ? " on" : ""), text: on ? "✓" : "" }));
+      return b;
+    }
+    if (src) {
+      const img = el("img", { src, alt: c.name + " card", loading: "lazy", decoding: "async" });
+      img.addEventListener("error", () => { const b = img.parentElement; if (b) { b.classList.add("empty"); b.textContent = "Photo unavailable"; } }, { once: true });
+      return el("button", { class: "thumb", type: "button", "aria-label": "Show " + c.name + " larger", onclick: () => openLightbox(c) }, img);
+    }
+    if (canWrite && assets) return el("button", { class: "thumb empty can", type: "button", text: "+ Add photo", onclick: () => pickPhoto(c) });
+    return el("div", { class: "thumb empty", text: "No photo yet" });
+  }
+
+  function row(c) {
+    const got = isGot(c);
+    const open = [state.openRow, state.openEdit, state.openTags, state.confirmDel].includes(c.id);
+    const r = el("article", { class: "row" + (got ? " got" : "") + (state.selected.has(c.id) ? " sel" : "") + (open ? " open" : "") });
+    const name = el("div", { class: "name" },
+      el("button", { class: "star", type: "button", "aria-pressed": String(!!c.priority), "aria-label": "Priority", title: canWrite ? "Mark as priority" : "Priority", disabled: !canWrite, text: "★", onclick: () => save(c, { priority: !c.priority }) }),
+      document.createTextNode(c.name));
+    if (c.variant) name.append(el("span", { class: "tag", text: c.variant }));
+    if (c.lang === "JP") name.append(el("span", { class: "tag jp", text: "Japanese" }));
+    const meta = el("div", { class: "meta" }, el("span", { text: c.set || "Set unknown" }), c.number ? el("span", { class: "num mono", text: "#" + c.number }) : el("span", { text: "number not shown" }), el("span", { text: "added " + fmtDate(c.addedAt) }));
+    const who = el("div", { class: "who" }, name, meta);
+    const flags = el("div", { class: "flags" });
+    if (c.checkRequested && !got) flags.append(el("span", { class: "flag queued", text: "Price check queued" }));
+    if (got) flags.append(el("span", { class: "flag got", text: "Got it" }));
+    for (const n of collsOf(c)) flags.append(el("button", { class: "collchip", type: "button", text: n, title: "Show " + n, onclick: () => setColl(n) }));
+    if (flags.childNodes.length) who.append(flags);
+    if (c.note) who.append(el("div", { class: "note", text: c.note }));
+    r.append(thumb(c), who, priceBlock(c));
+    if (state.selecting) { r.addEventListener("click", e => { if (!e.target.closest("button,a,input,label")) toggleSel(c); }); return r; }
+
+    const toggleRow = () => { if (open) { state.openRow = null; state.openEdit = state.openTags = state.confirmDel = null; } else state.openRow = c.id; render(); };
+    r.append(el("button", { class: "more-toggle", type: "button", "aria-expanded": String(open), "aria-label": (open ? "Hide" : "Show") + " shops and options for " + c.name, text: open ? "▴" : "▾", onclick: toggleRow }));
+    r.addEventListener("click", e => { if (matchMedia("(max-width:620px)").matches && !e.target.closest("button,a,input,select,label,form,.shop,.acts,.picker,.edit")) toggleRow(); });
+    const shop = el("div", { class: "shop" });
+    if (c.deal && c.deal.url) shop.append(el("a", { class: "deal", href: c.deal.url, target: "_blank", rel: "noopener", text: "Buy the deal" }));
+    if (c.listing && c.listing.url) shop.append(el("a", { class: "mine", href: c.listing.url, target: "_blank", rel: "noopener", text: "Your " + (c.listing.site || "listing") + " link" }));
+    for (const [label, href, title] of markets(c)) shop.append(el("a", { href, target: "_blank", rel: "noopener", text: label, title }));
+    r.append(shop);
+
+    if (canWrite) {
+      const acts = el("div", { class: "acts" });
+      if (!got) acts.append(el("button", { class: "linkbtn", type: "button", text: c.checkRequested ? "Cancel price check" : "Check price", onclick: () => save(c, { checkRequested: !c.checkRequested }, c.checkRequested ? "Price check cancelled" : "Queued for a price check") }));
+      acts.append(el("button", { class: "linkbtn", type: "button", text: got ? "Move back to want" : "Got it", onclick: () => save(c, { status: got ? "want" : "got" }, got ? "Moved back to want" : "Marked as got") }));
+      acts.append(el("button", { class: "linkbtn", type: "button", text: state.openTags === c.id ? "Close collections" : "Collections", onclick: () => { state.openTags = state.openTags === c.id ? null : c.id; state.openEdit = null; render(); } }));
+      acts.append(el("button", { class: "linkbtn", type: "button", text: state.openEdit === c.id ? "Close" : "Edit", onclick: () => { state.openEdit = state.openEdit === c.id ? null : c.id; state.openTags = null; state.confirmDel = null; render(); } }));
+      if (state.confirmDel === c.id) acts.append(el("button", { class: "linkbtn danger", type: "button", text: "Yes, remove", onclick: () => remove(c) }), el("button", { class: "linkbtn", type: "button", text: "Keep", onclick: () => { state.confirmDel = null; render(); } }));
+      else acts.append(el("button", { class: "linkbtn danger", type: "button", text: "Remove", onclick: () => { state.confirmDel = c.id; render(); } }));
+      r.append(acts);
+    }
+    if (state.openTags === c.id && canWrite) r.append(tagPicker(c));
+    if (state.openEdit === c.id && canWrite) r.append(editForm(c));
+    return r;
+  }
+
+  function tagPicker(c) {
+    const p = el("div", { class: "picker" });
+    const colls = allColls().map(([n]) => n);
+    for (const n of colls) {
+      const cb = el("input", { type: "checkbox" }); cb.checked = collsOf(c).includes(n);
+      cb.addEventListener("change", () => {
+        const slots = { ...(c.slots || {}) };
+        if (cb.checked) slots[n] = collCards(n).length; else delete slots[n];
+        save(c, { collections: cb.checked ? [...collsOf(c), n] : collsOf(c).filter(x => x !== n), slots }, (cb.checked ? "Added to " : "Removed from ") + n);
+      });
+      p.append(el("label", { class: "opt" }, cb, document.createTextNode(n)));
+    }
+    const f = el("form", { class: "inline-form", autocomplete: "off" }, el("input", { type: "text", id: "newTag-" + c.id, placeholder: colls.length ? "Or start a new collection" : "Name a collection, e.g. Gengar binder", "aria-label": "New collection" }), el("button", { class: "btn small", type: "submit", text: "Add" }));
+    f.addEventListener("submit", e => { e.preventDefault(); const n = cleanName(f.querySelector("input").value); if (!n || collsOf(c).includes(n)) return; save(c, { collections: [...collsOf(c), n], slots: { ...(c.slots || {}), [n]: collCards(n).length } }, "Added to " + n); });
+    p.append(f);
+    return p;
+  }
+
+  function editForm(c) {
+    const d = c.deal || {};
+    const f = el("form", { class: "edit" });
+    const fld = (label, id, val, cls, type = "text", extra = {}) => el("label", { class: cls }, document.createTextNode(label), el("input", Object.assign({ type, id: id + "-" + c.id, value: val ?? "" }, extra)));
+    const langSel = el("select", { id: "eLang-" + c.id }); for (const [v, t] of [["EN", "English"], ["JP", "Japanese"]]) { const o = el("option", { value: v, text: t }); if ((c.lang || "EN") === v) o.selected = true; langSel.append(o); }
+    f.append(
+      fld("Card name", "eName", c.name, "wide"), fld("Number", "eNum", c.number), fld("Variant", "eVar", c.variant),
+      fld("Set", "eSet", c.set, "wide", "text", { list: "setList" }),
+      el("label", {}, document.createTextNode("Language"), langSel),
+      fld("Note", "eNote", c.note),
+      fld("DoubleHolo page", "eDh", c.dhUrl, "wide", "url", { placeholder: "https://doubleholo.com/card/…" }),
+      fld("Your listing link", "eLink", c.listing?.url, "wide", "url", { placeholder: "https://" }),
+      el("h4", { text: "Best deal found (shipping included)" }),
+      fld("Site", "dSite", d.site, "", "text", { placeholder: "TCGplayer" }), fld("Seller", "dSeller", d.seller), fld("Card price", "dPrice", d.price, "", "number", { step: "0.01", min: "0", inputmode: "decimal" }), fld("Shipping", "dShip", d.shipping, "", "number", { step: "0.01", min: "0", inputmode: "decimal" }),
+      fld("Condition", "dCond", d.condition, "", "text", { placeholder: "Near Mint" }), fld("Deal link", "dUrl", d.url, "wide", "url", { placeholder: "https://" }), el("span"),
+      el("div", { class: "actions" },
+        el("button", { class: "btn primary small", type: "submit", text: "Save changes" }),
+        assets ? el("button", { class: "btn small", type: "button", text: c.img ? "Replace photo" : "Add photo", onclick: () => pickPhoto(c) }) : null,
+        el("button", { class: "btn small", type: "button", text: "Clear deal", onclick: () => save(c, { deal: null }, "Deal cleared") }))
+    );
+    f.addEventListener("submit", e => {
+      e.preventDefault();
+      const v = k => f.querySelector("#" + CSS.escape(k + "-" + c.id)).value.trim();
+      const num = k => { const x = v(k); return x === "" ? null : Math.round(parseFloat(x) * 100) / 100; };
+      const patch = { name: v("eName") || c.name, number: v("eNum").replace(/^#/, ""), variant: v("eVar"), set: v("eSet"), lang: v("eLang"), note: v("eNote"), dhUrl: v("eDh") || null };
+      const link = v("eLink");
+      if (link !== (c.listing?.url || "")) { const pl = link ? parseLink(link) : null; patch.listing = link ? { url: link, site: pl ? pl.site : "", addedAt: today() } : null; }
+      const price = num("dPrice"), ship = num("dShip");
+      if (price != null) patch.deal = { site: v("dSite"), seller: v("dSeller"), condition: v("dCond"), url: v("dUrl"), price, shipping: ship ?? 0, total: Math.round((price + (ship ?? 0)) * 100) / 100, checkedAt: today() };
+      state.openEdit = null;
+      save(c, patch, "Saved");
+    });
+    return f;
+  }
+
+  /* ---------- binder view ---------- */
+  function renderBinder(list) {
+    const cards = collCards(state.coll);
+    const per = state.pockets, cols = per === 4 ? 2 : 3;
+    const pages = Math.max(2, Math.ceil(cards.length / per) + (Math.ceil(cards.length / per) % 2));
+    const wrap = el("div", { class: "binder" });
+    if (canWrite && cards.length > 1) wrap.append(el("p", { class: "hint", style: "margin:0", text: "Use the arrows on a pocket to move a card earlier or later in the binder." }));
+    for (let s = 0; s < pages; s += 2) {
+      const spread = el("div", { class: "spread", role: "group", "aria-label": "Pages " + (s + 1) + " and " + (s + 2) });
+      for (let p = s; p < s + 2; p++) {
+        const page = el("div", { class: "page" }, el("div", { class: "page-label", text: "Page " + (p + 1) }));
+        const grid = el("div", { class: "pockets", style: "--cols:" + cols });
+        for (let k = 0; k < per; k++) {
+          const i = p * per + k, c = cards[i];
+          if (!c) { grid.append(el("div", { class: "pocket", "aria-label": "Empty pocket" })); continue; }
+          const need = !isGot(c), src = imgUrl(c);
+          const pk = el("button", { class: "pocket" + (need ? " need" : ""), type: "button", "aria-label": c.name + (need ? ", still needed" : ", collected"), title: [c.name, c.set, c.number ? "#" + c.number : ""].filter(Boolean).join(" · "), onclick: () => src && openLightbox(c) },
+            src ? el("img", { src, alt: "", loading: "lazy", decoding: "async" }) : el("span", { class: "noimg", text: c.name }),
+            need ? el("span", { class: "lbl need", text: priceOf(c) != null ? fmt$(priceOf(c)) : "Need" }) : null);
+          const cell = el("div", { class: "pocket-wrap" }, pk);
+          if (canWrite) cell.append(el("div", { class: "mv" },
+            el("button", { type: "button", "aria-label": "Move " + c.name + " earlier", text: "◀", disabled: i === 0, onclick: () => moveSlot(cards, i, -1) }),
+            el("button", { type: "button", "aria-label": "Move " + c.name + " later", text: "▶", disabled: i === cards.length - 1, onclick: () => moveSlot(cards, i, 1) })));
+          grid.append(cell);
+        }
+        page.append(grid); spread.append(page);
+      }
+      wrap.append(spread);
+    }
+    list.append(wrap);
+  }
+  function moveSlot(cards, i, dir) {
+    const n = state.coll, j = i + dir; if (j < 0 || j >= cards.length || busy) return;
+    const order = cards.slice(); [order[i], order[j]] = [order[j], order[i]];
+    const pairs = [];
+    order.forEach((c, idx) => { if ((c.slots || {})[n] !== idx) pairs.push([c, { slots: { ...(c.slots || {}), [n]: idx } }]); });
+    writeMany(pairs, null);
+  }
+
+  /* ---------- explore ---------- */
+  const WILD = "Wildcards";
+  function exColls() {
+    const order = allColls().map(([n]) => n), m = new Map();
+    for (const s of state.disc) { const v = m.get(s.coll) || { open: 0, all: 0 }; v.all++; if ((s.status || "new") === "new" && !onList(s)) v.open++; m.set(s.coll, v); }
+    return [...m.entries()].sort((a, b) => { const rank = n => n === WILD ? -1 : (order.indexOf(n) < 0 ? 999 : order.indexOf(n)); return rank(a[0]) - rank(b[0]) || a[0].localeCompare(b[0]); });
+  }
+  function onList(s) { return state.cards.some(c => c.name.toLowerCase() === s.name.toLowerCase() && (c.number || "").replace(/^0+/, "") === String(s.number).replace(/^0+/, "") && (c.set || "").toLowerCase() === s.set.toLowerCase()); }
+  function tcgLink(s) { return s.tcgProduct ? "https://www.tcgplayer.com/product/" + s.tcgProduct : "https://www.tcgplayer.com/search/pokemon/product?q=" + encodeURIComponent(s.name + " " + s.number); }
+  function renderExplore() {
+    const box = $("#explore"); box.textContent = "";
+    const colls = exColls();
+    if (!colls.length) { box.append(el("div", { class: "panel empty-state", text: "No suggestions yet. Ask Claude in chat to find cards for your collections." })); return; }
+    const ALL = "__all";
+    if (!state.exColl || (state.exColl !== ALL && !colls.some(([n]) => n === state.exColl))) state.exColl = (colls.find(([n]) => n === state.coll) || colls[0])[0];
+    const isAll = state.exColl === ALL;
+    const tabs = el("div", { class: "colltabs" });
+    const openAll = new Set(state.disc.filter(s => (s.status || "new") === "new" && !onList(s)).map(s => s.tcgdexId || s.id)).size;
+    tabs.append(el("button", { class: "colltab", type: "button", "aria-pressed": String(isAll), onclick: () => { state.exColl = ALL; renderExplore(); } }, el("b", { text: "All picks" }), el("span", { text: openAll + " open" })));
+    for (const [n, v] of colls) tabs.append(el("button", { class: "colltab", type: "button", "aria-pressed": String(state.exColl === n), onclick: () => { state.exColl = n; renderExplore(); } }, el("b", { text: n }), el("span", { text: v.open + (v.open === 1 ? " new pick" : " new picks") })));
+    box.append(tabs);
+    const isAdded = s => s.status === "added" || s.status === "owned" || onList(s);
+    let all = state.disc.filter(s => isAll || s.coll === state.exColl).sort((a, b) => (b.batch ?? 1) - (a.batch ?? 1) || (a.rank ?? 0) - (b.rank ?? 0));
+    if (isAll) { const seen = new Set(); all = all.filter(s => { const k = s.tcgdexId || s.id; if (seen.has(k)) return false; seen.add(k); return true; }); }
+    const latest = all.length ? (all[0].batch ?? 1) : 1;
+    const collNames = allColls().map(([n]) => n);
+    const q = state.exQ.trim().toLowerCase();
+    let shown = all.filter(s => (state.showPassed || (s.status || "new") !== "passed")
+      && !(state.exHideAdded && isAdded(s))
+      && (!state.exCap || (s.market != null && s.market <= state.exCap))
+      && (!state.exArtist || s.illustrator === state.exArtist)
+      && (!q || [s.name, s.set, s.number, s.illustrator, s.rarity, s.coll].join(" ").toLowerCase().includes(q)));
+    if (state.exSort === "low") shown.sort((a, b) => (a.market ?? Infinity) - (b.market ?? Infinity));
+    if (state.exSort === "high") shown.sort((a, b) => (b.market ?? -1) - (a.market ?? -1));
+    const passed = all.filter(s => s.status === "passed").length;
+    const added = all.filter(isAdded).length;
+    const intro = el("div", { class: "ex-intro" }, el("h2", { text: isAll ? "All picks" : state.exColl }),
+      el("p", { text: (isAll ? "Every suggestion across your collections." : state.exColl === WILD ? "Fun cards under $50 that don't belong in any of your binders. Add them loose, or start a new collection." : "Cards that aren't on your list yet, picked to match this collection.") + " Prices are TCGplayer market before shipping" + (all.find(s => s.priceAsOf) ? ", as of " + fmtDate(all.map(s => s.priceAsOf).filter(Boolean).sort().pop()) : "") + "." }));
+    box.append(intro);
+    const tools = el("div", { class: "ex-tools" });
+    const search = el("input", { type: "search", id: "exQ", placeholder: "Search picks, sets or artists", "aria-label": "Search picks", value: state.exQ });
+    search.addEventListener("input", () => { state.exQ = search.value; renderExplore(); const i = $("#exQ"); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } });
+    const cap = el("select", { "aria-label": "Price limit" });
+    for (const [v, t] of [[0, "Any price"], [5, "Under $5"], [25, "Under $25"], [100, "Under $100"]]) { const o = el("option", { value: String(v), text: t }); if (state.exCap === v) o.selected = true; cap.append(o); }
+    cap.addEventListener("change", () => { state.exCap = +cap.value; renderExplore(); });
+    const sort = el("select", { "aria-label": "Sort picks" });
+    for (const [v, t] of [["rec", "Best match"], ["low", "Price: low to high"], ["high", "Price: high to low"]]) { const o = el("option", { value: v, text: t }); if (state.exSort === v) o.selected = true; sort.append(o); }
+    sort.addEventListener("change", () => { state.exSort = sort.value; renderExplore(); });
+    tools.append(search, cap, sort);
+    if (added) tools.append(el("button", { class: "chip-toggle", type: "button", "aria-pressed": String(!state.exHideAdded), text: state.exHideAdded ? "Show " + added + " already added" : "Hide added", onclick: () => { state.exHideAdded = !state.exHideAdded; renderExplore(); } }));
+    if (passed) tools.append(el("button", { class: "chip-toggle", type: "button", "aria-pressed": String(state.showPassed), text: state.showPassed ? "Hide passed" : "Show " + passed + " passed", onclick: () => { state.showPassed = !state.showPassed; renderExplore(); } }));
+    if (state.exArtist) tools.append(el("button", { class: "chip-toggle", type: "button", "aria-pressed": "true", text: "Art by " + state.exArtist + " ×", title: "Clear artist filter", onclick: () => { state.exArtist = ""; renderExplore(); } }));
+    box.append(tools);
+    const grid = el("div", { class: "ex-grid" });
+    let sepDone = false;
+    for (const s of shown) {
+      if (!sepDone && !isAll && state.exSort === "rec" && latest > 1 && (s.batch ?? 1) < latest) { sepDone = true; grid.append(el("div", { class: "ex-sep", text: "Earlier picks" })); }
+      const status = s.status || "new", already = isAdded(s);
+      const card = el("article", { class: "ex-card" + (status === "passed" ? " dim" : "") });
+      const src = s.tcgProduct ? tcgImg(s.tcgProduct) : null;
+      if (src) card.append(el("button", { class: "ex-img", type: "button", "aria-label": "Show " + s.name + " larger", onclick: () => openLightbox({ name: s.name, set: s.set, number: s.number, img: s.img, variant: "", status: "want", ask: s.market != null ? { kind: "market", amount: s.market } : null }) }, el("img", { src, alt: s.name + " card", loading: "lazy", decoding: "async" })));
+      const artMeta = el("div", { class: "ex-meta" }, document.createTextNode(s.rarity || ""));
+      if (s.illustrator) { if (s.rarity) artMeta.append(document.createTextNode(" · ")); artMeta.append(document.createTextNode("art by "), el("button", { class: "artist", type: "button", text: s.illustrator, title: "More picks by " + s.illustrator, onclick: () => { state.exArtist = s.illustrator; state.exColl = ALL; renderExplore(); window.scrollTo({ top: 0, behavior: "smooth" }); } })); }
+      const body = el("div", { class: "ex-body" },
+        isAll ? el("div", { class: "ex-coll", text: s.coll }) : null,
+        el("div", { class: "ex-name", text: s.name }),
+        el("div", { class: "ex-meta", text: s.set + " · #" + s.number }),
+        artMeta,
+        el("div", { class: "ex-why", text: (s.reason || "").replace(" · " + s.rarity, "") }),
+        s.market != null ? el("div", { class: "ex-price" }, document.createTextNode("~" + fmt$(s.market) + " "), el("small", { text: "market" })) : el("div", { class: "ex-meta", text: "No market price yet" }),
+        el("div", { class: "ex-links" },
+          el("a", { href: tcgLink(s), target: "_blank", rel: "noopener", text: "TCGplayer" }),
+          el("a", { href: "https://www.ebay.com/sch/i.html?_nkw=" + encodeURIComponent(s.name + " " + s.set + " " + s.number + " pokemon") + "&LH_BIN=1&_sop=15", target: "_blank", rel: "noopener", text: "eBay" }),
+          el("a", { href: "https://doubleholo.com/marketplace?sets=" + encodeURIComponent("Pokemon " + s.set), target: "_blank", rel: "noopener", text: "DoubleHolo" })));
+      const acts = el("div", { class: "ex-acts" });
+      if (already) acts.append(el("span", { class: "ex-added", text: status === "owned" ? "✓ You have it" : "✓ On your list" }));
+      else if (canWrite) {
+        const wild = s.coll === WILD;
+        const names = wild ? ["", ...collNames] : collNames.includes(s.coll) ? collNames : [s.coll, ...collNames];
+        const pick = el("select", { "aria-label": "Collection for " + s.name });
+        for (const n of names) { const o = el("option", { value: n, text: n || "No collection" }); if (n === (wild ? "" : s.coll)) o.selected = true; pick.append(o); }
+        acts.append(el("label", { class: "ex-to" }, el("span", { text: "Add to" }), pick));
+        acts.append(el("button", { class: "btn primary small", type: "button", text: "Want it", onclick: e => addFromDisc(s, e.currentTarget, "want", pick.value) }));
+        acts.append(el("button", { class: "btn small", type: "button", text: "I have it", onclick: e => addFromDisc(s, e.currentTarget, "got", pick.value) }));
+        acts.append(status === "passed"
+          ? el("button", { class: "btn small", type: "button", text: "Bring back", onclick: () => setDisc(s, "new") })
+          : el("button", { class: "btn small", type: "button", text: "Not for me", onclick: () => setDisc(s, "passed") }));
+      }
+      body.append(acts); card.append(body); grid.append(card);
+    }
+    if (!shown.length) grid.append(el("div", { class: "panel empty-state", text: (q || state.exCap || state.exArtist) ? "No picks match these filters." : "You've been through every pick here. Ask Claude in chat for more." }));
+    box.append(grid);
+    box.append(el("p", { class: "hint", text: "Want fresh picks, or picks for a new collection? Ask Claude in chat to refresh Explore." }));
+  }
+  async function setDisc(s, status) {
+    if (!db) return;
+    const prev = s.status; s.status = status; renderExplore();
+    try { await db.collection("discover").doc(s.id).update({ status }); toast(status === "passed" ? "Passed on " + s.name : "Brought back " + s.name); }
+    catch (e) { s.status = prev; renderExplore(); toast("Couldn't save that. Try again."); }
+  }
+  async function addFromDisc(s, btn, want = "want", coll = s.coll) {
+    if (!db || busy) return;
+    if (btn) btn.disabled = true;
+    const got = want === "got";
+    let id = docId([s.name, s.set, s.number].join(" "));
+    const existing = state.cards.find(x => x.id === id);
+    try {
+      if (existing) {
+        const patch = {};
+        if (coll && !collsOf(existing).includes(coll)) Object.assign(patch, { collections: [...collsOf(existing), coll], slots: { ...(existing.slots || {}), [coll]: collCards(coll).length } });
+        if (got && existing.status !== "got") Object.assign(patch, { status: "got", checkRequested: false });
+        if (Object.keys(patch).length) await save(existing, patch, null, true);
+      } else {
+        await db.collection("cards").doc(id).set({ name: s.name, number: String(s.number), variant: "", set: s.set, lang: s.lang || "EN", note: "",
+          addedAt: today(), ask: s.market != null ? { kind: "market", amount: s.market, source: "TCGplayer market", asOf: s.priceAsOf || "" } : { kind: "none", amount: null, source: "", asOf: "" },
+          deal: null, listing: s.tcgProduct ? { url: tcgLink(s), site: "TCGplayer", addedAt: today() } : null, dhUrl: null,
+          img: s.img || null, imgSource: "tcgdex", priority: false, status: got ? "got" : "want", checkRequested: !got, order: -Date.now(),
+          collections: coll ? [coll] : [], slots: coll ? { [coll]: collCards(coll).length } : {} });
+      }
+      await db.collection("discover").doc(s.id).update({ status: got ? "owned" : "added" });
+      toast(coll ? (got ? "Marked " + s.name + " as owned in " : "Added " + s.name + " to ") + coll : (got ? "Marked " + s.name + " as owned" : "Added " + s.name + " to your list"));
+    } catch (e) { if (btn) btn.disabled = false; toast("Couldn't add it. Try again."); }
+  }
+  $("#modeSeg").addEventListener("click", e => { const b = e.target.closest("button[data-mode]"); if (!b) return; state.mode = b.dataset.mode; if (state.mode !== "list" && state.selecting) stopSelecting(); store.set("wl-mode", state.mode); render(); });
+
+  function syncStatusButtons() { document.querySelectorAll(".seg[aria-label=Show] button").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.status === state.status))); }
+
+  function render() {
+    renderStats();
+    const ex = state.mode === "explore", bm = state.mode === "binders";
+    document.querySelectorAll("#modeSeg button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === state.mode)));
+    $("#explore").hidden = !ex; $("#binders").hidden = !bm; $("#listMode").hidden = ex || bm; document.querySelector("footer").hidden = bm;
+    if (ex) { $("#bulk").hidden = true; renderExplore(); return; }
+    if (bm) { $("#bulk").hidden = true; renderBinders(); return; }
+    renderColls();
+    const list = $("#list"); list.textContent = "";
+    const binder = state.coll && state.view === "binder" && !state.selecting;
+    $("#filters").hidden = binder;
+    $("#selectBtn").hidden = !canWrite; $("#selectBtn").setAttribute("aria-pressed", String(state.selecting));
+    $("#bulk").hidden = !state.selecting;
+    $("#bulkCount").textContent = state.selected.size + " selected";
+    $("#bulkRemove").hidden = !state.coll || $("#bulkColl").value.trim() !== state.coll;
+    if (binder) { renderBinder(list); }
+    else {
+      const rows = visible();
+      $("#count").textContent = rows.length + (rows.length === 1 ? " card" : " cards");
+      if (!rows.length) list.append(el("div", { class: "panel empty-state", text: state.cards.length ? (state.coll ? "No cards in " + state.coll + " match these filters. Try Show: All." : "No cards match these filters.") : "No cards yet. Add your first one with the box above." }));
+      else for (const c of rows) list.append(row(c));
+    }
+    const dl = $("#setList"); dl.textContent = ""; for (const s of knownSets().sort()) dl.append(el("option", { value: s }));
+  }
+
+  /* ---------- lightbox ---------- */
+  let lastFocus = null;
+  function openLightbox(c) {
+    lastFocus = document.activeElement;
+    $("#lbImg").src = (imgUrl(c) || "").replace("_400w.jpg", "_in_1000x1000.jpg"); $("#lbImg").alt = c.name + " card";
+    const cap = $("#lbCap"); cap.textContent = "";
+    cap.append(el("b", { text: c.name + (c.variant ? " · " + c.variant : "") }), document.createTextNode([c.lang === "JP" ? "Japanese" : "", c.set, c.number ? "#" + c.number : "", isGot(c) ? "Collected" : priceOf(c) != null ? fmt$(priceOf(c)) : ""].filter(Boolean).join(" · ")));
+    $("#lightbox").hidden = false; $("#lbClose").focus();
+  }
+  function closeLightbox() { $("#lightbox").hidden = true; $("#lbImg").removeAttribute("src"); lastFocus?.focus?.(); }
+  $("#lbClose").addEventListener("click", closeLightbox);
+  $("#lightbox").addEventListener("click", e => { if (e.target.id === "lightbox") closeLightbox(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#lightbox").hidden) closeLightbox(); });
+
+  /* ---------- photos ---------- */
+  function pickPhoto(c) { photoFor = c; $("#photoInput").value = ""; $("#photoInput").click(); }
+  $("#photoInput").addEventListener("change", async e => {
+    const file = e.target.files && e.target.files[0]; const c = photoFor; photoFor = null;
+    if (!file || !c || !assets) return;
+    toast("Uploading photo…");
+    try { const res = await assets.upload(file); await save(c, { img: res.id, imgSource: "upload" }, "Photo added"); }
+    catch (err) { toast(err && err.code === "too_large" ? "That photo is over 20 MB. Try a smaller one." : err && err.code === "unsupported_type" ? "Use a JPEG, PNG, WebP or GIF photo." : "Couldn't upload the photo. Try again."); }
+  });
+
+  /* ---------- writes ---------- */
+  async function save(c, patch, msg, quiet) {
+    if (!db) return false;
+    const prev = { ...c };
+    Object.assign(c, patch); if (!quiet) render();
+    try {
+      const body = { ...c }; delete body.id;
+      await db.collection("cards").doc(c.id).set(body);
+      if (msg) toast(msg);
+      return true;
+    } catch (e) {
+      Object.assign(c, prev); if (!quiet) render();
+      if (e && e.code === "invalid_argument") { canWrite = false; applyWriteMode(); toast("You can view this list but not change it"); }
+      else if (!quiet) toast("Couldn't save. Check your connection and try again.");
+      return false;
+    }
+  }
+  async function remove(c) {
+    try { await db.collection("cards").doc(c.id).delete(); state.confirmDel = null; toast("Removed " + c.name); }
+    catch (e) { toast("Couldn't remove it. Try again."); }
+  }
+  const docId = s => slugify(s).slice(0, 120) || "card";
+
+  /* ---------- quick add ---------- */
+  function showConfirm(p, note) {
+    $("#cName").value = p.name || ""; $("#cNum").value = p.number || ""; $("#cVar").value = p.variant || ""; $("#cSet").value = p.set || ""; $("#cLang").value = p.lang || "EN"; $("#cNote").value = "";
+    $("#cStatus").value = "want"; $("#cColl").value = state.coll || "";
+    $("#cLink").value = p.listing ? p.listing.url : (p.dhUrl || "");
+    $("#parsedNote").textContent = note || ""; $("#parsedNote").hidden = !note;
+    $("#confirmForm").hidden = false; (p.name ? (p.set ? $("#cNum") : $("#cSet")) : $("#cName")).focus();
+  }
+  $("#quickForm").addEventListener("submit", e => {
+    e.preventDefault();
+    const text = $("#quick").value.trim(); if (!text) return;
+    if (/^https?:\/\//i.test(text)) {
+      const p = parseLink(text);
+      if (!p) { toast("That link doesn't look right. Check it and paste again."); return; }
+      showConfirm(p, p.found ? "Filled in from your " + p.site + " link. Check the details." : p.site + " links don't include the card name, so type it in. The link is saved with the card.");
+    } else showConfirm(parseQuick(text), "");
+  });
+  $("#quick").addEventListener("paste", () => setTimeout(() => { const v = $("#quick").value.trim(); if (/^https?:\/\/\S+$/i.test(v)) $("#quickForm").requestSubmit(); }, 0));
+  $("#cCancel").addEventListener("click", () => { $("#confirmForm").hidden = true; });
+  $("#confirmForm").addEventListener("submit", async e => {
+    e.preventDefault(); if (!db) return;
+    const link = $("#cLink").value.trim(); const pl = link ? parseLink(link) : null;
+    const coll = cleanName($("#cColl").value), got = $("#cStatus").value === "got";
+    const c = { name: $("#cName").value.trim(), number: $("#cNum").value.trim().replace(/^#/, ""), variant: $("#cVar").value.trim(), set: $("#cSet").value.trim(), lang: $("#cLang").value, note: $("#cNote").value.trim(),
+      addedAt: today(), ask: { kind: "none", amount: null, source: "", asOf: "" }, deal: null,
+      listing: pl && pl.listing ? pl.listing : (link && !pl?.dhUrl ? { url: link, site: "", addedAt: today() } : null), dhUrl: pl ? pl.dhUrl : null,
+      img: null, priority: false, status: got ? "got" : "want", checkRequested: !got, order: -Date.now(),
+      collections: coll ? [coll] : [], slots: coll ? { [coll]: collCards(coll).length } : {} };
+    if (!c.name) { $("#cName").focus(); return; }
+    let id = docId([c.name, c.set, c.number, c.variant].join(" "));
+    if (state.cards.some(x => x.id === id)) id += "-" + Date.now().toString(36);
+    try {
+      await db.collection("cards").doc(id).set(c); $("#confirmForm").hidden = true; $("#quick").value = "";
+      toast("Added " + c.name + (coll ? " to " + coll : "") + (got ? "" : " · queued for a price check"));
+    } catch (err) { toast(err && err.code === "quota_exceeded" ? "The list is full. Remove a few cards first." : "Couldn't add it. Try again."); }
+  });
+
+  /* ---------- filters ---------- */
+  $("#q").addEventListener("input", e => { state.q = e.target.value; render(); });
+  $("#sort").addEventListener("change", e => { state.sort = e.target.value; store.set("wl-sort", state.sort); render(); });
+  document.querySelectorAll(".seg[aria-label=Show] button").forEach(b => b.addEventListener("click", () => { state.status = b.dataset.status; syncStatusButtons(); render(); }));
+  $("#prioOnly").addEventListener("click", e => { state.prio = !state.prio; e.currentTarget.setAttribute("aria-pressed", String(state.prio)); render(); });
+  $("#bulkColl").addEventListener("input", () => { $("#bulkRemove").hidden = !state.coll || $("#bulkColl").value.trim() !== state.coll; });
+  { const s = store.get("wl-sort"); if (s) { state.sort = s; $("#sort").value = s; }
+    const c = store.get("wl-coll"); if (c) state.coll = c;
+    const v = store.get("wl-view"); if (v === "binder") state.view = v;
+    const p = +store.get("wl-pockets"); if ([4, 9, 12].includes(p)) state.pockets = p;
+    if (store.get("wl-mode") === "explore") state.mode = "explore"; }
+
+  /* Fresh prices: Claude republishes prices.json (TCGplayer data keyed by product id); it overrides the prices saved on cards and picks. */
+  let prices = null;
+  const pidOf = c => (c.tcg && c.tcg.productId) || (c.listing && /tcgplayer\.com\/product\/(\d+)/.exec(c.listing.url || "") || [])[1] || null;
+  function pickSub(subs, variant) {
+    const v = (variant || "").toLowerCase();
+    const order = v.includes("reverse") ? ["Reverse Holofoil"] : v.includes("1st") ? ["1st Edition Holofoil", "1st Edition"] : ["Holofoil", "Normal", "Unlimited Holofoil", "Unlimited"];
+    const sub = order.find(k => subs[k] && (subs[k][0] != null || subs[k][1] != null));
+    return sub ? { sub, market: subs[sub][0], low: subs[sub][1] } : null;
+  }
+  function applyPrices() {
+    if (!prices) return;
+    for (const c of state.cards) {
+      const e = prices.items[pidOf(c)]; if (!e) continue;
+      const p = pickSub(e, c.variant);
+      if (p) c.tcg = { ...p, productId: +pidOf(c), asOf: prices.asOf };
+    }
+    for (const d of state.disc) {
+      const e = prices.items[d.tcgProduct]; if (!e) continue;
+      const p = pickSub(e, "");
+      if (p && p.market != null) { d.market = p.market; d.priceAsOf = prices.asOf; }
+    }
+  }
+  fetch("prices.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => { if (j && j.items) { prices = j; applyPrices(); render(); } }).catch(() => {});
+
+  function applyWriteMode() { $("#addPanel").hidden = !canWrite; $("#readOnly").hidden = canWrite; render(); }
+
+  /* Signed-out visitors can't read the live database, so they get the snapshot published with the page. */
+  async function loadSnapshot() {
+    try {
+      const r = await fetch("snapshot.json", { cache: "no-store" });
+      if (!r.ok) throw new Error(r.status);
+      const snap = await r.json();
+      state.cards = snap.cards;
+      applyPrices();
+      startBinders(true, snap.layouts || []);
+      if (state.mode === "explore") state.mode = "list";
+      document.querySelector('#modeSeg button[data-mode="explore"]').hidden = true;
+      canWrite = false;
+      $("#readOnly").textContent = "You're viewing Ashton's list as of " + fmtDate(snap.asOf) + ". Only he can change it.";
+      applyWriteMode();
+    } catch (e) {
+      $("#stats").textContent = "Couldn't load the list. Try reloading the page.";
+    }
+  }
+
+  /* ---------- Binders: arrange pages from your cards or any card ---------- */
+  const B = { list: [], cur: null, local: false, sheet: null, moving: null, catalog: null, catLoading: null, page: 0 };
+  const LKEY = "wl-binders-local";
+  const bid = () => "b" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const webImg = pid => tcgImg(pid);
+  const cardById = id => state.cards.find(c => c.id === id);
+  function loadLocal() { try { return JSON.parse(store.get(LKEY) || "[]"); } catch { return []; } }
+  function saveLocal() { store.set(LKEY, JSON.stringify(B.list)); }
+  const curBinder = () => B.list.find(b => b.id === B.cur) || null;
+  const pagesOf = b => Math.max(1, Math.ceil(b.slots.length / b.pockets));
+  function slotInfo(s) {
+    if (!s) return null;
+    if (s.k === "c") { const c = cardById(s.id); if (!c) return { gone: true, name: "Removed card" };
+      return { name: c.name, sub: [c.set, c.number ? "#" + c.number : ""].filter(Boolean).join(" · "), img: imgUrl(c), got: isGot(c), price: isGot(c) ? null : priceOf(c), card: c }; }
+    return { name: s.n, sub: [s.s, s.no ? "#" + s.no : ""].filter(Boolean).join(" · "), img: webImg(s.pid), web: true, price: s.m || null, pid: s.pid };
+  }
+  async function persist(b, msg) {
+    b.updatedAt = new Date().toISOString();
+    if (B.local) { saveLocal(); renderBinders(); if (msg) toast(msg); return true; }
+    renderBinders();
+    try { const body = { ...b }; delete body.id; await db.collection("layouts").doc(b.id).set(body); if (msg) toast(msg); return true; }
+    catch (e) { goLocal(); toast("Saved on this device. Sign in to save to the shared binders."); return true; }
+  }
+  function withUndo(b, before, msg) {
+    persist(b);
+    const t = $("#toast"); t.textContent = msg + " ";
+    t.append(el("button", { class: "toast-undo", type: "button", text: "Undo", onclick: () => { b.slots = before; b.pockets = b.pockets; persist(b, "Undone"); } }));
+    t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 5000);
+  }
+  /* View-only viewers can't write the shared binders, so their edits switch to this device (copies of the shared ones included). */
+  function goLocal() {
+    if (B.local) return;
+    B.local = true; B.viewOnly = true; store.set("wl-viewonly", "1");
+    const mine = loadLocal(), mineIds = new Set(mine.map(b => b.id)), live = B.list.filter(b => !mineIds.has(b.id));
+    const cur = B.list.find(b => b.id === B.cur);
+    B.list = live.concat(mine.map(m => (cur && m.id === cur.id) ? cur : m));
+    if (cur && !B.list.includes(cur)) B.list.push(cur);
+    saveLocal(); renderBinders();
+  }
+  function newBinder(name, pockets = 9) {
+    const b = { id: bid(), name: name || "New binder", pockets, slots: Array(pockets * 2).fill(null), createdAt: new Date().toISOString() };
+    B.list.push(b); B.cur = b.id; B.page = 0; store.set("wl-binder", b.id);
+    persist(b, "Made " + b.name);
+  }
+
+  function renderBinders() {
+    const box = $("#binders"); if (box.hidden) return;
+    box.textContent = "";
+    if (B.local) box.append(el("div", { class: "banner", text: B.viewOnly
+      ? "You're not signed in as an editor, so binder changes save on this device. Sign in at the top to edit the shared binders, or open Binder options and tap Text it to send one."
+      : "You're not signed in, so binders you make here save on this device. To send one to Ashton, open Binder options and tap Text it." }));
+    const tabs = el("div", { class: "colltabs", role: "tablist", "aria-label": "Binders" });
+    for (const b of B.list) {
+      const filled = b.slots.filter(Boolean).length;
+      tabs.append(el("button", { class: "colltab", type: "button", "aria-pressed": String(b.id === B.cur), onclick: () => { B.cur = b.id; B.page = 0; B.moving = null; store.set("wl-binder", b.id); renderBinders(); } },
+        el("b", { text: b.name }), el("span", { text: filled + " of " + b.slots.length + " pockets" })));
+    }
+    tabs.append(el("button", { class: "colltab new", type: "button", text: "+ New binder", onclick: () => openSheet("new") }));
+    box.append(tabs);
+    const b = curBinder();
+    if (!b) {
+      box.append(el("div", { class: "panel empty-state" },
+        el("p", { style: "margin:0 0 12px", text: "Lay out binder pages before you buy. Tap a pocket, pick a card from your list or any card that exists, and move things around until the page looks right." }),
+        el("button", { class: "btn primary", type: "button", text: "Make your first binder", onclick: () => openSheet("new") })));
+      return;
+    }
+    const filled = b.slots.filter(Boolean).map(slotInfo).filter(Boolean);
+    const owned = filled.filter(i => i.got).length;
+    const cost = filled.filter(i => !i.got && i.price).reduce((s, i) => s + i.price, 0);
+    const head = el("div", { class: "panel bhead" },
+      el("div", { class: "bhead-top" }, el("h2", { text: b.name }),
+        el("button", { class: "btn small", type: "button", text: "Binder options", onclick: () => openSheet("options") })),
+      el("p", { class: "bsum", text: filled.length + " of " + b.slots.length + " pockets filled · " + owned + " owned · " + fmt$(cost) + " to finish" }));
+    box.append(head);
+    if (B.moving != null) box.append(el("div", { class: "movebar", role: "status" },
+      el("span", { text: "Tap the pocket where it should go." }), el("button", { class: "btn small", type: "button", text: "Cancel", onclick: () => { B.moving = null; renderBinders(); } })));
+    const pages = pagesOf(b), per = matchMedia("(max-width:620px)").matches ? 1 : 2;
+    B.page = Math.min(B.page, pages - 1); B.page -= B.page % per;
+    const nav = el("div", { class: "bnav" },
+      el("button", { class: "btn small", type: "button", text: "‹ Prev", disabled: B.page === 0, onclick: () => { B.page = Math.max(0, B.page - per); renderBinders(); } }),
+      el("span", { text: per === 1 ? "Page " + (B.page + 1) + " of " + pages : "Pages " + (B.page + 1) + (B.page + 1 < pages ? "–" + (B.page + 2) : "") + " of " + pages }),
+      el("button", { class: "btn small", type: "button", text: "Next ›", disabled: B.page + per >= pages, onclick: () => { B.page += per; renderBinders(); } }));
+    const spread = el("div", { class: "spread bspread" + (per === 1 ? " one" : "") });
+    const cols = b.pockets === 4 ? 2 : b.pockets === 12 ? 4 : 3;
+    for (let p = B.page; p < Math.min(pages, B.page + per); p++) {
+      const page = el("div", { class: "page" }, el("div", { class: "page-label", text: "Page " + (p + 1) }));
+      const grid = el("div", { class: "pockets", style: "--cols:" + cols });
+      for (let i = p * b.pockets; i < (p + 1) * b.pockets; i++) grid.append(pocketEl(b, i));
+      page.append(grid); spread.append(page);
+    }
+    box.append(nav, spread);
+    let x0 = null;
+    spread.addEventListener("touchstart", e => { x0 = e.touches[0].clientX; }, { passive: true });
+    spread.addEventListener("touchend", e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
+      if (Math.abs(dx) > 60) { if (dx < 0 && B.page + per < pages) B.page += per; else if (dx > 0 && B.page > 0) B.page = Math.max(0, B.page - per); else return; renderBinders(); } });
+    box.append(el("div", { class: "binder-tools" },
+      el("button", { class: "btn small", type: "button", text: "+ Add a page", onclick: () => { b.slots = b.slots.concat(Array(b.pockets).fill(null)); B.page = pagesOf(b) - 1; persist(b, "Added page " + pagesOf(b)); } }),
+      el("span", { class: "hint", style: "margin:0", text: "Tap an empty pocket to add a card. Tap a card to move, swap or remove it." })));
+  }
+
+  function pocketEl(b, i) {
+    const s = b.slots[i] || null, info = slotInfo(s);
+    const moving = B.moving === i;
+    const btn = el("button", { class: "pocket bpocket" + (info ? (info.got ? " own" : " wanted") : " empty") + (info && info.web ? " web" : "") + (moving ? " moving" : "") + (B.moving != null && !moving ? " target" : ""), type: "button",
+      "aria-label": info ? info.name + (info.got ? ", owned" : info.web ? ", not on your list" : ", wanted") : "Empty pocket " + ((i % b.pockets) + 1) + ", add a card",
+      onclick: () => {
+        if (B.moving != null) { const from = B.moving; B.moving = null; if (from === i) { renderBinders(); return; }
+          const before = b.slots.slice(); [b.slots[from], b.slots[i]] = [b.slots[i] || null, b.slots[from] || null]; withUndo(b, before, b.slots[from] ? "Swapped" : "Moved"); return; }
+        if (!canEditBinders()) { if (info && info.card) openLightbox(info.card); return; }
+        if (info) openSheet("pocket", i); else openSheet("pick", i);
+      } });
+    if (!info) { btn.append(el("span", { class: "plus", text: "+" })); return btn; }
+    if (info.img) { const img = el("img", { src: info.img, alt: "", loading: "lazy", decoding: "async" });
+      img.addEventListener("error", () => { img.remove(); btn.prepend(el("span", { class: "noimg", text: info.name })); }, { once: true }); btn.append(img); }
+    else btn.append(el("span", { class: "noimg", text: info.name }));
+    if (info.got) btn.append(el("span", { class: "own-mark", text: "✓", "aria-hidden": "true" }));
+    return btn;
+  }
+  const canEditBinders = () => B.local || !!db;
+
+  /* bottom sheet */
+  function closeSheet() { $("#sheet").hidden = true; $("#sheetBody").textContent = ""; document.body.classList.remove("sheet-open"); B.sheet = null; }
+  function openSheet(kind, idx) {
+    B.sheet = { kind, idx, tab: B.sheet && B.sheet.tab || "ours", q: "", jp: false, show: "all", coll: "" };
+    $("#sheet").hidden = false; document.body.classList.add("sheet-open");
+    drawSheet();
+  }
+  function sheetHead(title) {
+    return el("div", { class: "sheet-head" }, el("h3", { text: title }), el("button", { class: "sheet-x", type: "button", "aria-label": "Close", text: "×", onclick: closeSheet }));
+  }
+  function drawSheet() {
+    const body = $("#sheetBody"); body.textContent = "";
+    const S = B.sheet, b = curBinder();
+    if (S.kind === "new") {
+      const f = el("form", { class: "sheet-form", autocomplete: "off" },
+        el("label", {}, "Binder name", el("input", { type: "text", id: "bName", placeholder: "e.g. Gengar binder", required: true })),
+        el("label", {}, "Pockets per page", (() => { const s = el("select", { id: "bPockets" }); for (const n of [4, 9, 12]) { const o = el("option", { value: n, text: n + " pockets" }); if (n === 9) o.selected = true; s.append(o); } return s; })()),
+        el("button", { class: "btn primary", type: "submit", text: "Make binder" }));
+      f.append(el("button", { class: "btn", type: "button", text: "Import a shared code", onclick: () => { B.sheet.kind = "import"; drawSheet(); } }));
+      f.addEventListener("submit", e => { e.preventDefault(); const n = cleanName($("#bName").value), np = +$("#bPockets").value; if (!n) return; closeSheet(); newBinder(n, np); });
+      body.append(sheetHead("New binder"), f); setTimeout(() => $("#bName")?.focus(), 50); return;
+    }
+    if (S.kind === "import") {
+      const ta = el("textarea", { id: "bCode", rows: "5", placeholder: "Paste the code here" });
+      const f = el("form", { class: "sheet-form" }, el("label", {}, "Shared binder code", ta), el("button", { class: "btn primary", type: "submit", text: "Import binder" }));
+      f.addEventListener("submit", e => { e.preventDefault();
+        try { const raw = ta.value.trim().replace(/^BINDER:/, ""); const d = JSON.parse(decodeURIComponent(escape(atob(raw))));
+          if (!Array.isArray(d.slots) || ![4, 9, 12].includes(d.pockets)) throw 0;
+          const nb = { id: bid(), name: cleanName(d.name) || "Shared binder", pockets: d.pockets, slots: d.slots.map(s => s && (s.k === "c" || s.k === "w") ? s : null), createdAt: new Date().toISOString() };
+          B.list.push(nb); B.cur = nb.id; B.page = 0; closeSheet(); persist(nb, "Imported " + nb.name);
+        } catch { toast("That code didn't work. Copy the whole thing and try again."); } });
+      body.append(sheetHead("Import a binder"), f); return;
+    }
+    if (!b) { closeSheet(); return; }
+    if (S.kind === "options") {
+      const name = el("input", { type: "text", value: b.name, "aria-label": "Binder name" });
+      const ps = el("select", { "aria-label": "Pockets per page" }); for (const n of [4, 9, 12]) { const o = el("option", { value: n, text: n + " pockets per page" }); if (n === b.pockets) o.selected = true; ps.append(o); }
+      const coll = el("select", { "aria-label": "Collection to fill from" }); coll.append(el("option", { value: "", text: "Pick a collection" })); for (const [n] of allColls()) coll.append(el("option", { value: n, text: n }));
+      const code = "BINDER:" + btoa(unescape(encodeURIComponent(JSON.stringify({ name: b.name, pockets: b.pockets, slots: b.slots }))));
+      body.append(sheetHead("Binder options"),
+        el("div", { class: "sheet-form" },
+          el("label", {}, "Name", name),
+          el("label", {}, "Page size", ps),
+          el("button", { class: "btn primary", type: "button", text: "Save changes", onclick: () => {
+            const n = cleanName(name.value) || b.name, np = +ps.value; b.name = n;
+            if (np !== b.pockets) { const cards = b.slots.slice(); while (cards.length && !cards[cards.length - 1]) cards.pop(); b.pockets = np; b.slots = cards.concat(Array((np - cards.length % np) % np || (cards.length ? 0 : np)).fill(null)); if (!b.slots.length) b.slots = Array(np).fill(null); }
+            closeSheet(); persist(b, "Saved"); } }),
+          el("h4", { text: "Fill from a collection" }),
+          el("p", { class: "hint", text: "Puts that collection's cards into the empty pockets, in collection order. Cards already in this binder are skipped." }),
+          coll,
+          el("button", { class: "btn", type: "button", text: "Fill empty pockets", onclick: () => {
+            if (!coll.value) { toast("Pick a collection first"); return; }
+            const have = new Set(b.slots.filter(s => s && s.k === "c").map(s => s.id));
+            const add = collCards(coll.value).filter(c => !have.has(c.id));
+            if (!add.length) { toast("Everything in " + coll.value + " is already here"); return; }
+            const before = b.slots.slice(); let k = 0;
+            for (let i = 0; i < b.slots.length && k < add.length; i++) if (!b.slots[i]) b.slots[i] = { k: "c", id: add[k++].id };
+            while (k < add.length) { const pg = Array(b.pockets).fill(null); for (let j = 0; j < b.pockets && k < add.length; j++) pg[j] = { k: "c", id: add[k++].id }; b.slots = b.slots.concat(pg); }
+            closeSheet(); withUndo(b, before, "Added " + add.length + (add.length === 1 ? " card" : " cards")); } }),
+          el("h4", { text: "Share" }),
+          el("p", { class: "hint", text: B.local ? "Copy this code and text it to Ashton. He can import it from his binders." : "Copy this code to send the layout to someone who isn't signed in, or to keep a backup." }),
+          el("a", { class: "btn primary", href: "sms:?&body=" + encodeURIComponent("Binder layout for the want list (" + b.name + "). Open Binders, tap + New binder, then Import a shared code, and paste this:\n\n" + code), text: "Text it" }),
+          el("a", { class: "btn", href: "mailto:?subject=" + encodeURIComponent("Binder layout: " + b.name) + "&body=" + encodeURIComponent("Open Binders, tap + New binder, then Import a shared code, and paste this:\n\n" + code), text: "Email it" }),
+          el("button", { class: "btn", type: "button", text: "Copy share code", onclick: async () => { try { await navigator.clipboard.writeText(code); toast("Code copied"); } catch { const t = el("textarea", { rows: "4", readonly: true }); t.value = code; S.codeBox = true; body.append(t); t.scrollIntoView({ block: "center" }); t.select(); toast("Select the code and copy it"); } } }),
+          el("h4", { text: "Delete" }),
+          S.confirm ? el("div", { class: "row-btns" },
+            el("button", { class: "btn danger", type: "button", text: "Yes, delete " + b.name, onclick: async () => { closeSheet(); B.list = B.list.filter(x => x.id !== b.id); B.cur = B.list[0]?.id || null;
+              if (B.local) saveLocal(); else { try { await db.collection("layouts").doc(b.id).delete(); } catch { goLocal(); } } renderBinders(); toast("Deleted. Your cards are untouched."); } }),
+            el("button", { class: "btn", type: "button", text: "Keep it", onclick: () => { S.confirm = false; drawSheet(); } }))
+          : el("button", { class: "btn danger", type: "button", text: "Delete this binder", onclick: () => { S.confirm = true; drawSheet(); } })));
+      return;
+    }
+    if (S.kind === "pocket") {
+      const info = slotInfo(b.slots[S.idx]); if (!info) { closeSheet(); return; }
+      const top = el("div", { class: "pocket-detail" });
+      if (info.img) { const img = el("img", { src: info.img, alt: info.name }); img.addEventListener("error", () => img.remove(), { once: true }); top.append(img); }
+      top.append(el("div", {}, el("b", { text: info.name }), el("div", { class: "hint", style: "margin:2px 0 0", text: info.sub || "" }),
+        el("div", { class: "pd-status", text: info.got ? "In your collection" : info.web ? "Not on your list" + (info.price ? " · ~" + fmt$(info.price) + " market" : "") : "On your want list" + (info.price ? " · " + fmt$(info.price) : "") })));
+      const acts = el("div", { class: "sheet-acts" },
+        el("button", { class: "btn primary", type: "button", text: "Move or swap", onclick: () => { B.moving = S.idx; closeSheet(); renderBinders(); } }),
+        el("button", { class: "btn", type: "button", text: "Replace card", onclick: () => { S.kind = "pick"; drawSheet(); } }),
+        el("button", { class: "btn danger", type: "button", text: "Take out of pocket", onclick: () => { const before = b.slots.slice(); b.slots[S.idx] = null; closeSheet(); withUndo(b, before, "Removed " + info.name); } }));
+      if (info.web && canWrite && db) acts.append(el("button", { class: "btn", type: "button", text: "Add to my want list", onclick: () => addWebToList(b.slots[S.idx]) }));
+      if (info.web) acts.append(el("a", { class: "btn", href: "https://www.tcgplayer.com/product/" + info.pid, target: "_blank", rel: "noopener", text: "See it on TCGplayer" }));
+      body.append(sheetHead("Pocket " + ((S.idx % b.pockets) + 1) + ", page " + (Math.floor(S.idx / b.pockets) + 1)), top, acts); return;
+    }
+    // picker
+    body.append(sheetHead(b.slots[S.idx] ? "Replace card" : "Add a card"));
+    const seg = el("div", { class: "seg sheet-tabs", role: "tablist" });
+    for (const [k, t] of [["ours", "Our cards"], ["web", "Any card"]]) seg.append(el("button", { type: "button", role: "tab", "aria-pressed": String(S.tab === k), text: t, onclick: () => { S.tab = k; S.q = ""; drawSheet(); } }));
+    const q = el("input", { type: "search", id: "pickQ", value: S.q, placeholder: S.tab === "ours" ? "Search your list" : "Search any card: name, set or number", "aria-label": "Search cards", enterkeyhint: "search" });
+    const results = el("div", { class: "pick-grid", id: "pickRes" });
+    const ctrls = el("div", { class: "pick-ctrls" });
+    if (S.tab === "ours") {
+      const show = el("div", { class: "seg" }); for (const [k, t] of [["all", "All"], ["got", "Have"], ["want", "Want"]]) show.append(el("button", { type: "button", "aria-pressed": String(S.show === k), text: t, onclick: () => { S.show = k; fill(); show.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x.textContent === t))); } }));
+      const cs = el("select", { "aria-label": "Collection" }); cs.append(el("option", { value: "", text: "All collections" })); for (const [n] of allColls()) { const o = el("option", { value: n, text: n }); if (S.coll === n) o.selected = true; cs.append(o); }
+      cs.addEventListener("change", () => { S.coll = cs.value; fill(); });
+      ctrls.append(show, cs);
+    } else {
+      const jp = el("label", { class: "chk" }, el("input", { type: "checkbox" }), document.createTextNode(" Include Japanese"));
+      jp.firstChild.checked = S.jp; jp.firstChild.addEventListener("change", e => { S.jp = e.target.checked; fill(); });
+      ctrls.append(jp);
+    }
+    body.append(seg, q, ctrls, results);
+    let t; q.addEventListener("input", () => { S.q = q.value; clearTimeout(t); t = setTimeout(fill, 120); });
+    function place(slot, name) { const before = b.slots.slice(); b.slots[S.idx] = slot; closeSheet(); withUndo(b, before, "Added " + name); }
+    function fill() {
+      results.textContent = "";
+      if (S.tab === "ours") {
+        const qq = S.q.trim().toLowerCase(); const inB = new Set(b.slots.filter(s => s && s.k === "c").map(s => s.id));
+        let rows = state.cards.filter(c => (S.show === "all" || (S.show === "got") === isGot(c)) && (!S.coll || collsOf(c).includes(S.coll)) && (!qq || [c.name, c.set, c.number, ...collsOf(c)].join(" ").toLowerCase().includes(qq)));
+        rows.sort((a, b2) => (inB.has(a.id) - inB.has(b2.id)) || a.name.localeCompare(b2.name));
+        if (!rows.length) { results.append(el("p", { class: "hint", text: "No cards match. Try Any card to search everything." })); return; }
+        for (const c of rows.slice(0, 120)) results.append(pickTile(imgUrl(c), c.name, [c.set, c.number ? "#" + c.number : ""].filter(Boolean).join(" · "), isGot(c) ? "Have it" : priceOf(c) != null ? fmt$(priceOf(c)) : "Want", inB.has(c.id), () => place({ k: "c", id: c.id }, c.name)));
+        return;
+      }
+      if (!B.catalog) { results.append(el("p", { class: "hint", text: "Loading every Pokémon card…" })); loadCatalog().then(() => { if (B.sheet && B.sheet.tab === "web") fill(); }); return; }
+      const qq = S.q.trim().toLowerCase();
+      if (qq.length < 2) { results.append(el("p", { class: "hint", text: "Type a Pokémon or card name. Add a set name or number to narrow it, like \"gengar fossil\" or \"pikachu 160\"." })); return; }
+      const toks = qq.split(/\s+/), C = B.catalog, out = [];
+      for (const r of C.cards) {
+        const st = C.sets[r[2]]; if (st[1] && !S.jp) continue;
+        const hay = r[6] || (r[6] = (r[1] + " " + st[0] + " " + r[3] + " " + (st[1] ? "japanese jp" : "")).toLowerCase());
+        if (toks.every(tk => hay.includes(tk))) out.push(r);
+      }
+      const nm = toks[0];
+      out.sort((a, b2) => ((b2[1].toLowerCase().startsWith(nm)) - (a[1].toLowerCase().startsWith(nm))) || (C.sets[b2[2]][2] || "").localeCompare(C.sets[a[2]][2] || ""));
+      if (!out.length) { results.append(el("p", { class: "hint", text: "Nothing found. Check the spelling, or try fewer words." })); return; }
+      for (const r of out.slice(0, 90)) { const st = C.sets[r[2]];
+        results.append(pickTile(webImg(r[0]), r[1], (st[1] ? "Japanese · " : "") + st[0] + " · #" + r[3], r[5] ? "~" + fmt$(r[5]) : "", false,
+          () => place({ k: "w", pid: r[0], n: r[1], s: st[0], no: r[3], r: C.rarities[r[4]] || "", m: r[5] || null, jp: !!st[1] }, r[1]))); }
+      if (out.length > 90) results.append(el("p", { class: "hint", style: "grid-column:1/-1", text: "Showing 90 of " + out.length + ". Add a set name or number to narrow it." }));
+    }
+    fill();
+    if (!matchMedia("(pointer:coarse)").matches) setTimeout(() => q.focus(), 50);
+  }
+  function pickTile(src, name, sub, tag, already, onpick) {
+    const tile = el("button", { class: "pick" + (already ? " dim" : ""), type: "button", onclick: onpick, "aria-label": name + ", " + sub + (already ? ", already in this binder" : "") });
+    const fig = el("span", { class: "pick-img" });
+    if (src) { const img = el("img", { src, alt: "", loading: "lazy", decoding: "async" }); img.addEventListener("error", () => { img.remove(); fig.append(el("span", { class: "noimg", text: name })); }, { once: true }); fig.append(img); }
+    else fig.append(el("span", { class: "noimg", text: name }));
+    tile.append(fig, el("span", { class: "pick-name", text: name }), el("span", { class: "pick-sub", text: sub }), tag ? el("span", { class: "pick-tag", text: already ? "In binder" : tag }) : null);
+    return tile;
+  }
+  function loadCatalog() {
+    if (!B.catLoading) B.catLoading = fetch("catalog.json").then(r => r.json()).then(j => { B.catalog = j; }).catch(() => { B.catLoading = null; toast("Couldn't load the card catalog. Try again."); });
+    return B.catLoading;
+  }
+  async function addWebToList(s) {
+    if (!db || !canWrite) return;
+    const id = docId([s.n, s.s, s.no].join(" "));
+    if (state.cards.some(c => c.id === id)) { toast("Already on your list"); return; }
+    try {
+      await db.collection("cards").doc(id).set({ name: s.n, number: String(s.no), variant: "", set: s.s, lang: s.jp ? "JP" : "EN", note: "", addedAt: today(),
+        ask: s.m ? { kind: "market", amount: s.m, source: "TCGplayer market", asOf: "" } : { kind: "none", amount: null, source: "", asOf: "" },
+        deal: null, listing: { url: "https://www.tcgplayer.com/product/" + s.pid, site: "TCGplayer", addedAt: today() }, dhUrl: null, img: null, imgSource: "", priority: false,
+        status: "want", checkRequested: true, order: -Date.now(), collections: [], slots: {} });
+      const b = curBinder(); const i = b.slots.indexOf(s); if (i >= 0) b.slots[i] = { k: "c", id };
+      closeSheet(); persist(b, "Added " + s.n + " to your want list");
+    } catch { toast("Couldn't add it. Try again."); }
+  }
+  $("#sheet").addEventListener("click", e => { if (e.target.id === "sheet") closeSheet(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && !$("#sheet").hidden) closeSheet(); });
+  function startBinders(localOnly, seed) {
+    B.local = localOnly;
+    if (localOnly) { const mine = loadLocal(); const ids = new Set(mine.map(b => b.id)); B.list = mine.concat((seed || []).filter(b => !ids.has(b.id)).map(b => ({ ...b }))); }
+    B.cur = store.get("wl-binder"); if (!B.list.some(b => b.id === B.cur)) B.cur = B.list[0]?.id || null;
+  }
+
+  /* ---------- sign-in (Supabase magic link) ---------- */
+  async function renderAuth() {
+    const box = $("#auth"); box.textContent = ""; const sb = window.WL && WL.sb; if (!sb) return;
+    const { data } = await sb.auth.getSession(); const u = data.session && data.session.user;
+    if (u) {
+      box.append(el("span", { text: "Signed in as " + u.email }),
+        el("button", { class: "linkbtn", type: "button", text: "Sign out", onclick: async () => { await sb.auth.signOut(); location.reload(); } }));
+      return;
+    }
+    const f = el("form", { autocomplete: "on" },
+      el("input", { type: "email", id: "authEmail", required: true, placeholder: "Your email", "aria-label": "Email to sign in", autocomplete: "email" }),
+      el("button", { class: "btn small", type: "submit", text: "Email me a sign-in link" }));
+    f.addEventListener("submit", async e => { e.preventDefault();
+      const email = $("#authEmail").value.trim();
+      const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
+      box.textContent = ""; box.append(el("span", { text: error ? "Couldn't send the link: " + error.message : "Check " + email + " for a sign-in link. Open it on this device." })); });
+    const open = el("button", { class: "linkbtn", type: "button", text: "Sign in to edit", onclick: () => { box.textContent = ""; box.append(f); $("#authEmail").focus(); } });
+    box.append(open);
+  }
+  if (window.WL && WL.sb) WL.sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_IN" && !sessionStorage.getItem("wl-signed")) { sessionStorage.setItem("wl-signed", "1"); location.reload(); } if (ev === "SIGNED_OUT") sessionStorage.removeItem("wl-signed"); });
+
+  /* First sign-in on an empty database: load the list, picks and binders exported from the old page. */
+  async function seedFromFile() {
+    try {
+      const seed = await (await fetch("seed.json", { cache: "no-store" })).json();
+      toast("Moving your list over…");
+      for (const t of ["cards", "discover", "layouts"]) {
+        const rows = (seed[t] || []).map(r => ({ id: r.id, data: r.data, updated_at: new Date().toISOString() }));
+        for (let i = 0; i < rows.length; i += 200) { const { error } = await WL.sb.from(t).upsert(rows.slice(i, i + 200)); if (error) throw error; }
+      }
+      toast("Your list is moved over");
+    } catch (e) { toast("Couldn't load the saved list: " + (e.message || e)); }
+  }
+
+  /* ---------- boot ---------- */
+  (async () => {
+    renderAuth();
+    db = await claude.use("db");
+    if (!db) { $("#stats").textContent = "Setup isn't finished yet: the database isn't connected."; return; }
+    const user = await claude.use("user");
+    const w = user ? await user.can("data.write") : null;
+    canWrite = w !== false;
+    applyWriteMode();
+    let seeded = false;
+    db.collection("cards").onSnapshot(snap => {
+      if (!snap.docs.length && canWrite && !seeded) { seeded = true; seedFromFile(); }
+      state.cards = snap.docs.map(d => ({ id: d.id, ...structuredClone(d.data()) }));
+      applyPrices();
+      if (!busy) render();
+    }, () => { $("#stats").textContent = "The list stopped updating. Reload the page."; });
+    db.collection("discover").onSnapshot(snap => {
+      state.disc = snap.docs.map(d => ({ id: d.id, ...structuredClone(d.data()) }));
+      applyPrices();
+      if (state.mode === "explore" && !busy) render();
+    }, () => {});
+    startBinders(false);
+    db.collection("layouts").onSnapshot(snap => {
+      if (B.local) return;
+      B.list = snap.docs.map(d => ({ id: d.id, ...structuredClone(d.data()) })).sort((a, b) => (a.createdAt || "").localeCompare(b.createdAt || ""));
+      if (store.get("wl-viewonly")) { B.cur = null; goLocal(); }
+      if (!B.list.some(b => b.id === B.cur)) B.cur = store.get("wl-binder"); if (!B.list.some(b => b.id === B.cur)) B.cur = B.list[0]?.id || null;
+      if (state.mode === "binders" && !busy && $("#sheet").hidden) renderBinders();
+    }, () => {});
+    claude.use("assets").then(a => { assets = a; if (assets) render(); });
+  })();
+})();
+</script>
+
+</body></html>
