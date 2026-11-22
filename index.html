@@ -113,11 +113,9 @@ input[type=search]::-webkit-search-decoration{-webkit-appearance:none}
 .scroller > *{flex:0 0 auto}
 
 /* ---------- summary ---------- */
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow)}
-.stats > span{background:var(--surface);padding:12px 14px;display:flex;flex-direction:column;gap:2px;font-size:12.5px;color:var(--muted);line-height:1.25;min-width:0}
-.stats > span:only-child{grid-column:1/-1}
-.stats b{color:var(--ink);font:700 20px/1.1 var(--f-num);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
-@media (max-width:620px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stats{display:flex;flex-wrap:wrap;gap:10px 28px;padding:2px 2px 0}
+.stats > span{display:flex;flex-direction:column;gap:1px;font-size:12.5px;color:var(--muted);line-height:1.25;min-width:0}
+.stats b{color:var(--ink);font:700 22px/1.1 var(--f-num);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .banner{font-size:14px;color:var(--ink-2);background:var(--surface);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow);line-height:1.45}
 .banner.tap{cursor:pointer}
 
@@ -725,7 +723,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     if (state.coll && !colls.some(([n]) => n === state.coll)) state.coll = null;
     const tab = (label, sub, pressed, onclick, cls = "") => el("button", { class: "colltab " + cls, type: "button", "aria-pressed": String(!!pressed), onclick }, el("b", { text: label }), sub ? el("span", { text: sub }) : null);
     tabs.append(tab("All cards", state.cards.length + " cards", !state.coll, () => setColl(null)));
-    for (const [n, v] of colls) tabs.append(tab(n, v.got + " of " + v.total + " collected", state.coll === n, () => setColl(n)));
+    for (const [n, v] of colls) tabs.append(tab(n, v.got + "/" + v.total, state.coll === n, () => setColl(n)));
     if (canWrite) tabs.append(tab("+ New collection", "", false, () => { state.coll = null; state.view = "list"; render(); state.collMode = "new"; renderHead(); $("#collNewName")?.focus(); }, "new"));
     const dl = $("#collList"); dl.textContent = ""; for (const [n] of colls) dl.append(el("option", { value: n }));
     renderHead();
@@ -850,8 +848,8 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     const deals = want.filter(c => c.deal && c.deal.total != null).length;
     const s = $("#stats"); s.textContent = "";
     const item = (b, rest) => el("span", {}, el("b", { text: b }), document.createTextNode(" " + rest));
-    s.append(item(String(want.length), "cards wanted"), item(fmt$(total), "to buy them all"),
-      ...(deals ? [item(String(deals), "with shipping-included deals")] : []), item(String(allColls().length), "collections"));
+    s.append(item(String(want.length), "wanted"), item(fmt$(Math.round(total)).replace(/\.00$/, ""), "to buy them all"),
+      ...(deals ? [item(String(deals), "shipped deals")] : []), item(String(allColls().length), "collections"));
   }
 
   function priceBlock(c) {
