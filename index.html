@@ -1989,7 +1989,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     if (cur) acts.append(el("button", { class: "btn primary", type: "button", text: "Looks right", onclick: () => choose(c, cur) }));
     acts.append(el("button", { class: "btn", type: "button", text: "Empty pocket", onclick: () => choose(c, null) }));
     body.append(acts);
-    const alts = (c.m.alts || []).filter(e => !cur || e.pid !== cur.pid);
+    const alts = c.m.conf === "none" ? [] : (c.m.alts || []).filter(e => !cur || e.pid !== cur.pid);
     if (alts.length) {
       body.append(el("h4", { class: "sec-title", text: cur ? "Or one of these" : "Is it one of these?" }));
       const g = el("div", { class: "pick-grid" });
@@ -1997,7 +1997,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
       body.append(g);
     }
     body.append(el("h4", { class: "sec-title", text: "Search for it" }));
-    const q = el("input", { type: "search", value: SC.q || c.m.hint || "", placeholder: "Name, set or number", "aria-label": "Search cards", enterkeyhint: "search" });
+    const q = el("input", { type: "search", value: SC.q || (c.m.conf !== "none" && /^[a-z][a-z' .-]{3,}$/i.test(c.m.hint || "") ? c.m.hint : ""), placeholder: "Name, set or number", "aria-label": "Search cards", enterkeyhint: "search" });
     const jp = el("label", { class: "chk" }, el("input", { type: "checkbox" }), document.createTextNode(" Include Japanese"));
     const res = el("div", { class: "pick-grid" });
     body.append(q, jp, res);
