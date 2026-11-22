@@ -4,8 +4,14 @@ import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCatalog } from "~/features/catalog/catalog";
 import { FEED_ERA_OPTIONS } from "~/features/catalog/era";
-import { feedRows, type FeedLang, type FeedSort } from "~/features/catalog/feed";
-import { formatMoney } from "~/lib/format";
+import {
+  FEED_PRICE_OPTIONS,
+  feedRows,
+  priceBand,
+  type FeedLang,
+  type FeedSort,
+} from "~/features/catalog/feed";
+import { LOOK_OPTIONS, lookCards } from "~/features/catalog/looks";
 import { Select } from "~/ui/Select";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { ComingSoon } from "./ComingSoon";
@@ -31,8 +37,10 @@ const LANG_OPTIONS: readonly { value: FeedLang; label: string }[] = [
 const FEED_SORTS: readonly { value: FeedSort; label: string }[] = [
   { value: "new", label: "Newest first" },
   { value: "old", label: "Oldest first" },
+  { value: "rare", label: "Rarest first" },
   { value: "high", label: "Price: high to low" },
   { value: "low", label: "Price: low to high" },
+  { value: "name", label: "Name: A to Z" },
 ];
 
 const liveSorts = (searching: boolean): readonly { value: LiveSort; label: string }[] => [
@@ -57,14 +65,30 @@ export function LiveView() {
         ? feedRows(catalog.data, {
             lang: ui.lang,
             sort: ui.feedSort,
-            cap: ui.cap,
+            ...priceBand(ui.feedPrice),
             rarity: ui.rarity,
-            fullArt: ui.fullArt,
+            look: ui.look,
             era: ui.era,
           })
         : null,
-    [all, catalog.data, ui.lang, ui.feedSort, ui.cap, ui.rarity, ui.fullArt, ui.era],
+    [all, catalog.data, ui.lang, ui.feedSort, ui.feedPrice, ui.rarity, ui.look, ui.era],
   );
+  // How many cards in the chosen language each look has, for its chip.
+  const lookCounts = useMemo(() => {
+    const cat = catalog.data;
+    if (!all || !cat) return null;
+    const want = ui.lang === "en" ? false : ui.lang === "jp" ? true : null;
+    const inLang = (jp: boolean) => want === null || jp === want;
+    return new Map(
+      LOOK_OPTIONS.map(({ value }) => {
+        const set = lookCards(cat, value);
+        let n = 0;
+        for (const c of set ?? cat.cards) if (inLang(cat.sets[c.set]?.jp ?? false)) n++;
+        return [value, n] as const;
+      }),
+    );
+  }, [all, catalog.data, ui.lang]);
+  const filtered = ui.look !== "any" || ui.rarity !== "" || ui.feedPrice !== "any" || ui.era !== "any";
   const rarityOptions = useMemo(() => {
     const cat = catalog.data;
     if (!cat) return [{ value: "", label: "Any rarity" }];
@@ -122,7 +146,9 @@ export function LiveView() {
   const intro = q
     ? "Every printing, newest sets first. Prices are today's TCGplayer market."
     : all
-      ? `${rows ? `All ${rows.length.toLocaleString()} ${langWord} cards` : `Every ${langWord} card`} ever made${ui.cap ? ` under ${formatMoney(ui.cap)}` : ""}. Keep scrolling.`
+      ? rows
+        ? `${filtered ? "" : "All "}${rows.length.toLocaleString()} ${langWord} ${rows.length === 1 ? "card" : "cards"}${filtered ? " match" : " ever made"}. Keep scrolling.`
+        : `Every ${langWord} card ever made. Keep scrolling.`
       : "Straight from the latest card data, chase cards first. Prices are today's TCGplayer market.";
 
   const toFeedTop = () => window.scrollTo({ top: 0 });
@@ -177,6 +203,25 @@ export function LiveView() {
             <b>All sets</b>
           </button>
         </div>
+        {all ? (
+          <div className="colltabs" role="group" aria-label="Card looks">
+            {LOOK_OPTIONS.map((l) => (
+              <button
+                key={l.value}
+                className="colltab"
+                type="button"
+                aria-pressed={ui.look === l.value}
+                onClick={() => {
+                  patchLiveUi({ look: l.value });
+                  toFeedTop();
+                }}
+              >
+                <b>{l.label}</b>
+                {lookCounts ? <span>{(lookCounts.get(l.value) ?? 0).toLocaleString()}</span> : null}
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div className="scroller">
           {all ? (
             <Select
@@ -207,25 +252,26 @@ export function LiveView() {
               onChange={(sort) => patchLiveUi({ sort })}
             />
           )}
-          <Select
-            aria-label="Price limit"
-            value={ui.cap}
-            options={CAP_OPTIONS}
-            onChange={(cap) => patchLiveUi({ cap })}
-          />
+          {all ? (
+            <Select
+              aria-label="Price"
+              value={ui.feedPrice}
+              options={FEED_PRICE_OPTIONS}
+              onChange={(feedPrice) => {
+                patchLiveUi({ feedPrice });
+                toFeedTop();
+              }}
+            />
+          ) : (
+            <Select
+              aria-label="Price limit"
+              value={ui.cap}
+              options={CAP_OPTIONS}
+              onChange={(cap) => patchLiveUi({ cap })}
+            />
+          )}
           {all ? (
             <>
-              <button
-                className="chip-toggle"
-                type="button"
-                aria-pressed={ui.fullArt}
-                onClick={() => {
-                  patchLiveUi({ fullArt: !ui.fullArt });
-                  toFeedTop();
-                }}
-              >
-                Full art
-              </button>
               <Select
                 aria-label="Rarity"
                 value={ui.rarity}
@@ -244,6 +290,18 @@ export function LiveView() {
                   toFeedTop();
                 }}
               />
+              {filtered ? (
+                <button
+                  className="chip-toggle"
+                  type="button"
+                  onClick={() => {
+                    patchLiveUi({ look: "any", rarity: "", feedPrice: "any", era: "any" });
+                    toFeedTop();
+                  }}
+                >
+                  Clear filters
+                </button>
+              ) : null}
             </>
           ) : null}
           {canWrite ? (

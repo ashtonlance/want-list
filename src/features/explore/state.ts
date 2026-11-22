@@ -1,5 +1,6 @@
 import type { Era } from "~/features/catalog/era";
-import type { FeedLang, FeedSort } from "~/features/catalog/feed";
+import type { FeedLang, FeedPrice, FeedSort } from "~/features/catalog/feed";
+import type { Look } from "~/features/catalog/looks";
 import { createStore, useStore } from "~/lib/store";
 import type { LiveSearch, PicksSearch } from "./search";
 
@@ -29,9 +30,10 @@ export interface LiveUi {
   cap: PriceCap;
   /** The collection quick adds go to, or "" for none. */
   addTo: string;
-  /** "Every card" filters: a rarity name or "", full art only, and when the set came out. */
+  /** "Every card" filters: how the card looks, a rarity name or "", a price band, and when the set came out. */
+  look: Look;
   rarity: string;
-  fullArt: boolean;
+  feedPrice: FeedPrice;
   era: Era;
 }
 
@@ -41,8 +43,9 @@ export const liveUi = createStore<LiveUi>({
   lang: "en",
   cap: 0,
   addTo: "",
+  look: "any",
   rarity: "",
-  fullArt: false,
+  feedPrice: "any",
   era: "any",
 });
 export const useLiveUi = (): LiveUi => useStore(liveUi);
