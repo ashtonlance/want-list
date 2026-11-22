@@ -193,6 +193,36 @@
     return best;
   }
 
+
+  /* When no name can be read, compare the pocket's picture with the cards already on the list. */
+  const QW = 36, QH = 50;
+  function mineSigs(idx) {
+    if (!idx._mine) idx._mine = (async () => {
+      const seen = new Set(), es = [];
+      for (const list of idx.byName.values()) for (const e of list) if (e.mine && !seen.has(e.mine)) { seen.add(e.mine); es.push(e); }
+      const ims = await Promise.all(es.map(e => loadThumb(e.pid)));
+      return es.map((e, i) => ims[i] && { e, im: ims[i], sig: pixels(ims[i], 0, 0, ims[i].naturalWidth, ims[i].naturalHeight, QW, QH) }).filter(Boolean);
+    })();
+    return idx._mine;
+  }
+  function quickScore(sig, q) {
+    let best = -1;
+    for (let oy = 1; oy <= 5; oy += 2) for (let ox = 0; ox <= 4; ox += 2) {
+      let tot = 0;
+      for (let ch = 0; ch < 3; ch++) { let sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0, n = 0;
+        for (let y = 2; y < QH - 2; y++) for (let x = 2; x < QW - 2; x++) { const a = sig[((y + oy) * PW + x + ox) * 4 + ch], b = q[(y * QW + x) * 4 + ch]; sa += a; sb += b; saa += a * a; sbb += b * b; sab += a * b; n++; }
+        const va = saa - sa * sa / n, vb = sbb - sb * sb / n; tot += va > 0 && vb > 0 ? (sab - sa * sb / n) / Math.sqrt(va * vb) : 0; }
+      if (tot / 3 > best) best = tot / 3;
+    }
+    return best;
+  }
+  async function mineMatch(idx, sig) {
+    const all = await mineSigs(idx); if (!all.length) return null;
+    const top = all.map(m => ({ m, q: quickScore(sig, m.sig) })).sort((a, b) => b.q - a.q).slice(0, 5);
+    for (const t of top) t.img = imageScore(sig, t.m.im);
+    top.sort((a, b) => b.img - a.img);
+    return { alts: top.map(t => t.m.e), img: top[0].img, margin: top[0].img - (top[1] ? top[1].img : 0) };
+  }
   const prior = e => (e.mine ? 0.06 : 0) - (e.jp ? 0.05 : 0);
   function nameCands(idx, t, nums) {
     const out = new Map();
@@ -215,7 +245,9 @@
       if (n2.length && (!names.length || n2[0][1] > names[0][1])) hint = (t2.bigWords || "").trim() || hint;
       merge(n2);
     }
-    if (!names.length) return { conf: "none", alts: [], hint, nums };
+    const fromMine = async () => { const f = await mineMatch(idx, pocketSig(cell));
+      return f && f.img >= 0.7 && f.margin >= 0.08 ? { conf: "medium", alts: f.alts, hint, nums, img: f.img, margin: f.margin, via: "list" } : null; };
+    if (!names.length) return (await fromMine()) || { conf: "none", alts: [], hint, nums };
     /* Shortlist printings from the likeliest names, then let the pictures decide. */
     const pool = [], seen = new Set();
     for (const [n, s] of names.slice(0, 6)) for (const e of idx.byName.get(n)) if (!seen.has(e.pid)) { seen.add(e.pid); pool.push({ e, ns: s, num: nums.includes(e.nno) }); }
@@ -228,7 +260,7 @@
     pool.sort((a, b) => b.score - a.score);
     const best = pool[0], second = pool.find(x => x.e.pid !== best.e.pid && x.img != null);
     const margin = second ? (best.img || 0) - (second.img || 0) : 1, alts = pool.slice(0, 8).map(x => x.e);
-    if ((best.img || 0) < 0.4 && !best.num) return { conf: "none", alts, hint, nums, img: best.img, margin };
+    if ((best.img || 0) < 0.4 && !best.num) return (await fromMine()) || { conf: "none", alts, hint, nums, img: best.img, margin };
     const conf = best.img >= 0.7 && (margin >= 0.06 || best.num) && best.ns >= 0.6 ? "high"
       : best.img >= 0.55 && best.ns >= 0.6 ? "medium" : "low";
     return { conf, alts, hint, nums, img: best.img, margin };

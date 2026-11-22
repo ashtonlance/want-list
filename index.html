@@ -1764,7 +1764,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   const canScan = () => !!db && canWrite && !B.local;
   function loadScanLib() {
     if (!scanLib) scanLib = new Promise((res, rej) => { if (window.WLScan) return res(window.WLScan);
-      const s = document.createElement("script"); s.src = "scan.js?v=2"; s.onload = () => res(window.WLScan); s.onerror = () => { scanLib = null; rej(new Error("scan.js")); }; document.head.append(s); });
+      const s = document.createElement("script"); s.src = "scan.js?v=3"; s.onload = () => res(window.WLScan); s.onerror = () => { scanLib = null; rej(new Error("scan.js")); }; document.head.append(s); });
     return scanLib;
   }
   function openScan() {
@@ -1964,7 +1964,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
       el("button", { class: "btn wide", type: "button", text: "Start over", onclick: () => { SC.pages = []; SC.photos = []; SC.step = "setup"; drawScan(); } })));
   }
   function scanTile(c, idx) {
-    const btn = el("button", { class: "pocket bpocket scan-tile" + (c.state === "empty" ? " empty" : ""), type: "button", onclick: () => { SC.fix = idx; SC.q = ""; SC.step = "fix"; drawScan(); window.scrollTo(0, 0); $("#scan").scrollTop = 0; } });
+    const btn = el("button", { class: "pocket bpocket scan-tile" + (c.state === "empty" ? " empty" : ""), type: "button", onclick: () => { SC.fix = idx; SC.q = null; SC.step = "fix"; drawScan(); window.scrollTo(0, 0); $("#scan").scrollTop = 0; } });
     const label = c.state === "empty" ? "Empty pocket" : c.pick ? c.pick.name + (c.state === "check" ? ", check this" : "") : "Couldn't read, pick a card";
     btn.setAttribute("aria-label", "Pocket " + ((idx % SC.pockets) + 1) + ": " + label);
     if (c.state === "empty") { btn.append(el("span", { class: "plus", text: "Empty" })); return btn; }
@@ -1997,7 +1997,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
       body.append(g);
     }
     body.append(el("h4", { class: "sec-title", text: "Search for it" }));
-    const q = el("input", { type: "search", value: SC.q || (c.m.conf !== "none" && /^[a-z][a-z' .-]{3,}$/i.test(c.m.hint || "") ? c.m.hint : ""), placeholder: "Name, set or number", "aria-label": "Search cards", enterkeyhint: "search" });
+    const q = el("input", { type: "search", value: SC.q != null ? SC.q : cur ? cur.name : /^[a-z][a-z' .-]{3,}$/i.test(c.m.hint || "") ? c.m.hint : "", placeholder: "Name, set or number", "aria-label": "Search cards", enterkeyhint: "search" });
     const jp = el("label", { class: "chk" }, el("input", { type: "checkbox" }), document.createTextNode(" Include Japanese"));
     const res = el("div", { class: "pick-grid" });
     body.append(q, jp, res);
