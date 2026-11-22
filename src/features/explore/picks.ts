@@ -1,6 +1,4 @@
-import { useMemo } from "react";
-import { useDocsQuery } from "~/data/useDocs";
-import { usePrices, type PriceFile } from "~/features/cards/prices";
+import type { PriceFile } from "~/features/cards/prices";
 import { pickSub } from "~/features/cards/pricing";
 import type { Card } from "~/features/cards/types";
 import { today } from "~/lib/format";
@@ -32,6 +30,8 @@ export interface PickCard {
   rarity: string;
   illustrator: string;
   reason: string;
+  /** True for a refill pick worked out from the catalog and not saved yet. */
+  auto: boolean;
 }
 
 export const WILDCARDS = "Wildcards";
@@ -57,10 +57,34 @@ export function parsePick(id: string, d: JsonRecord): PickCard {
     rarity: str(d.rarity) ?? "",
     illustrator: str(d.illustrator) ?? "",
     reason: str(d.reason) ?? "",
+    auto: false,
   };
 }
 
-function withSyncedPrice(p: PickCard, prices: PriceFile | null | undefined): PickCard {
+/**
+ * The discover table patch that sets a pick's status. A refill pick isn't saved yet, so it's written
+ * whole; once saved it stays put and the refill moves on to the next card.
+ */
+export function statusPatch(p: PickCard, status: PickStatus): JsonRecord {
+  if (!p.auto) return { status };
+  return {
+    name: p.name,
+    set: p.set,
+    number: p.number,
+    lang: p.lang,
+    coll: p.coll,
+    status,
+    batch: p.batch,
+    rank: p.rank,
+    tcgProduct: p.tcgProduct,
+    market: p.market,
+    priceAsOf: p.priceAsOf,
+    rarity: p.rarity,
+    reason: p.reason,
+  };
+}
+
+export function withSyncedPrice(p: PickCard, prices: PriceFile | null | undefined): PickCard {
   const subs = prices && p.tcgProduct ? prices.items[String(p.tcgProduct)] : undefined;
   const sp = subs ? pickSub(subs, "") : null;
   return sp?.market != null && prices ? { ...p, market: sp.market, priceAsOf: prices.asOf, live: false } : p;
@@ -79,17 +103,6 @@ export function withLive(p: PickCard, d: LiveCard | undefined): PickCard {
   if (!out.rarity && d.rarity) out.rarity = d.rarity;
   if (!out.illustrator && d.illustrator) out.illustrator = d.illustrator;
   return out;
-}
-
-/** Every pick, with today's synced prices applied. */
-export function usePicks() {
-  const docs = useDocsQuery("discover");
-  const prices = usePrices();
-  const picks = useMemo(
-    () => (docs.data ?? []).map((d) => withSyncedPrice(parsePick(d.id, d.data), prices.data)),
-    [docs.data, prices.data],
-  );
-  return { picks, loaded: docs.data !== undefined };
 }
 
 const stripZeros = (s: string) => s.replace(/^0+/, "");

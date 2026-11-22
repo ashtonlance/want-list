@@ -1,7 +1,7 @@
 import { useState, type SubmitEvent } from "react";
 import { POCKETS, prefs } from "~/app/prefs";
-import { useCardWrites } from "~/features/cards/api";
-import { collectionCards, removeFromCollection, renameInCard } from "~/features/cards/collections";
+import { collectionCards } from "~/features/cards/collections";
+import { useCollectionWrites } from "~/features/cards/useCollections";
 import { isGot, priceOf } from "~/features/cards/pricing";
 import type { Card } from "~/features/cards/types";
 import { cleanName, formatMoney } from "~/lib/format";
@@ -92,7 +92,7 @@ export function CollectionHead({ cards, coll, canWrite }: Props) {
   const ui = useListUi();
   const view = useStore(prefs.view);
   const pockets = useStore(prefs.pockets);
-  const { saveMany } = useCardWrites();
+  const writes = useCollectionWrites();
 
   if (!coll) return ui.collForm === "new" ? <NewCollectionForm /> : null;
 
@@ -105,19 +105,11 @@ export function CollectionHead({ cards, coll, canWrite }: Props) {
 
   const rename = (to: string) => {
     patchListUi({ collForm: null });
-    if (!to || to === coll) return;
-    prefs.coll.set(to);
-    void saveMany(
-      inColl.map((c) => [c, renameInCard(c, coll, to)] as const),
-      `Renamed to ${to}`,
-    );
+    void writes.rename(coll, to);
   };
   const remove = () => {
     showCollection(null);
-    void saveMany(
-      inColl.map((c) => [c, removeFromCollection(c, coll)] as const),
-      `Deleted ${coll}. The cards are still on your list.`,
-    );
+    void writes.remove(coll);
   };
 
   return (

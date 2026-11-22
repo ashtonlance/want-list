@@ -2,29 +2,20 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
-import { allCollections } from "~/features/cards/collections";
 import { useAddCards, type WantOrGot } from "~/features/cards/create";
-import type { Card } from "~/features/cards/types";
-import { useDocWrite } from "~/data/useDocs";
 import { formatDate, formatMoney } from "~/lib/format";
 import { HeroImage } from "~/ui/CardImage";
 import { useLightbox } from "~/ui/Lightbox";
 import { Sheet, SheetHead } from "~/ui/Sheet";
-import { useToast } from "~/ui/Toast";
 import { useCloseWhen } from "~/ui/useCloseWhen";
 import { exploreLightbox } from "./display";
 import { useLiveCard } from "./live";
-import {
-  isPickAdded,
-  pickImage,
-  usePicks,
-  WILDCARDS,
-  withLive,
-  type PickCard,
-  type PickStatus,
-} from "./picks";
+import { isPickAdded, pickImage, WILDCARDS, withLive, type PickCard, type PickStatus } from "./picks";
 import { ALL_PICKS } from "./search";
 import { ShopLinks } from "./ShopLinks";
+import { usePickStatus } from "./usePickStatus";
+import { usePicks } from "./usePicks";
+import { useCollections } from "~/features/cards/useCollections";
 
 /** A card Claude picked: why, today's price, and adding or passing on it. */
 export function PickSheet({ id, onClose }: { id: string; onClose: () => void }) {
@@ -114,7 +105,7 @@ function PickDetail({ pick }: { pick: PickCard }) {
           {p.status === "owned" ? "✓ You have it" : "✓ On your list"}
         </div>
       ) : canWrite ? (
-        <PickActions pick={p} cards={cards} />
+        <PickActions pick={p} />
       ) : null}
       <ShopLinks name={p.name} set={p.set} number={p.number} pid={p.tcgProduct} />
     </>
@@ -122,12 +113,10 @@ function PickDetail({ pick }: { pick: PickCard }) {
 }
 
 /** Add to a collection as wanted or owned, or pass on it (and bring it back). */
-function PickActions({ pick: p, cards }: { pick: PickCard; cards: readonly Card[] }) {
+function PickActions({ pick: p }: { pick: PickCard }) {
   const { fromPick } = useAddCards();
-  const discover = useDocWrite("discover");
-  const { toast } = useToast();
   const wild = p.coll === WILDCARDS;
-  const names = allCollections(cards).map((c) => c.name);
+  const names = useCollections().collections.map((c) => c.name);
   const choices = wild ? ["", ...names] : names.includes(p.coll) ? names : [p.coll, ...names];
   const [coll, setColl] = useState(wild ? "" : p.coll);
   const [busy, setBusy] = useState(false);
@@ -138,14 +127,8 @@ function PickActions({ pick: p, cards }: { pick: PickCard; cards: readonly Card[
     if (!(await fromPick(p, want, coll))) setBusy(false);
   };
 
-  const setStatus = async (status: PickStatus) => {
-    try {
-      await discover.mutateAsync({ kind: "merge", id: p.id, patch: { status } });
-      toast(status === "passed" ? `Passed on ${p.name}` : `Brought back ${p.name}`);
-    } catch {
-      toast("Couldn't save that. Try again.");
-    }
-  };
+  const saveStatus = usePickStatus();
+  const setStatus = (status: PickStatus) => saveStatus(p, status);
 
   return (
     <div className="sec">

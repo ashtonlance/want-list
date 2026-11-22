@@ -3,7 +3,9 @@ import { AccountSheet } from "~/features/auth/AccountSheet";
 import { CardSheet } from "~/features/cards/CardSheet";
 import { LiveSheet } from "~/features/explore/LiveSheet";
 import { PickSheet } from "~/features/explore/PickSheet";
+import { SetsSheet } from "~/features/explore/SetsSheet";
 import { AddSheet } from "~/features/list/AddSheet";
+import { CollectionsSheet } from "~/features/list/CollectionsSheet";
 import { OptionsSheet } from "~/features/list/OptionsSheet";
 import { useOverlayNav } from "./overlayNav";
 
@@ -19,6 +21,8 @@ export function OverlayHost() {
       {search.panel === "account" ? <AccountSheet onClose={close} /> : null}
       {search.panel === "add" ? <AddSheet onClose={close} /> : null}
       {search.panel === "options" ? <OptionsSheet onClose={close} /> : null}
+      {search.panel === "collections" ? <CollectionsSheet onClose={close} /> : null}
+      {search.panel === "sets" ? <SetsSheet onClose={close} /> : null}
     </>
   );
 }

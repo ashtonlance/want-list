@@ -1,18 +1,20 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
-import { useCards } from "~/features/cards/api";
-import { allCollections } from "~/features/cards/collections";
 import { useCatalog } from "~/features/catalog/catalog";
+import { FEED_ERA_OPTIONS } from "~/features/catalog/era";
 import { feedRows, type FeedLang, type FeedSort } from "~/features/catalog/feed";
 import { formatMoney } from "~/lib/format";
 import { Select } from "~/ui/Select";
 import { SkeletonGrid } from "~/ui/Skeleton";
+import { ComingSoon } from "./ComingSoon";
 import { EveryCardFeed } from "./EveryCardFeed";
 import { LoadError } from "./ExCard";
 import { useTdSets } from "./live";
 import { LiveResults } from "./LiveResults";
 import { CAP_OPTIONS, patchLiveUi, useLiveUi, type LiveSort } from "./state";
+import { useCollections } from "~/features/cards/useCollections";
 
 const DEBOUNCE_MS = 650;
 /** How many of the newest sets get a chip. */
@@ -46,14 +48,35 @@ export function LiveView() {
   const all = !q && !set;
   const ui = useLiveUi();
   const { canWrite } = useAuth();
-  const { cards } = useCards();
+  const { open } = useOverlayNav();
   const sets = useTdSets();
   const catalog = useCatalog(all);
   const rows = useMemo(
     () =>
-      all && catalog.data ? feedRows(catalog.data, { lang: ui.lang, sort: ui.feedSort, cap: ui.cap }) : null,
-    [all, catalog.data, ui.lang, ui.feedSort, ui.cap],
+      all && catalog.data
+        ? feedRows(catalog.data, {
+            lang: ui.lang,
+            sort: ui.feedSort,
+            cap: ui.cap,
+            rarity: ui.rarity,
+            fullArt: ui.fullArt,
+            era: ui.era,
+          })
+        : null,
+    [all, catalog.data, ui.lang, ui.feedSort, ui.cap, ui.rarity, ui.fullArt, ui.era],
   );
+  const rarityOptions = useMemo(() => {
+    const cat = catalog.data;
+    if (!cat) return [{ value: "", label: "Any rarity" }];
+    const counts = new Map<number, number>();
+    for (const c of cat.cards) counts.set(c.rarity, (counts.get(c.rarity) ?? 0) + 1);
+    const names = [...counts.entries()]
+      .map(([i, n]) => [cat.rarities[i] ?? "", n] as const)
+      .filter(([name]) => name)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([name]) => ({ value: name, label: name }));
+    return [{ value: "", label: "Any rarity" }, ...names];
+  }, [catalog.data]);
 
   // What's typed follows the address when it changes elsewhere (a chip, the back button), but a search
   // that has just gone through keeps exactly what was typed.
@@ -87,6 +110,13 @@ export function LiveView() {
   };
 
   const setName = sets.data?.sets.find((s) => s.id === set)?.name;
+  // The newest sets get chips; an older set picked from All sets gets one too while it's showing.
+  const chipSets = useMemo(() => {
+    const list = sets.data?.sets ?? [];
+    const newest = list.slice(0, SET_CHIPS);
+    const picked = set && !newest.some((s) => s.id === set) ? list.find((s) => s.id === set) : undefined;
+    return picked ? [...newest, picked] : newest;
+  }, [sets.data, set]);
   const langWord = LANG_WORD[ui.lang];
   const title = q ? `Results for “${q}”` : all ? "Every card" : setName || "Newest cards";
   const intro = q
@@ -96,7 +126,7 @@ export function LiveView() {
       : "Straight from the latest card data, chase cards first. Prices are today's TCGplayer market.";
 
   const toFeedTop = () => window.scrollTo({ top: 0 });
-  const collections = allCollections(cards);
+  const { collections } = useCollections();
 
   return (
     <>
@@ -132,7 +162,7 @@ export function LiveView() {
           <button className="colltab" type="button" aria-pressed={all} onClick={() => showSet("")}>
             <b>Every card</b>
           </button>
-          {sets.data?.sets.slice(0, SET_CHIPS).map((s) => (
+          {chipSets.map((s) => (
             <button
               key={s.id}
               className="colltab"
@@ -143,6 +173,9 @@ export function LiveView() {
               <b>{s.name}</b>
             </button>
           ))}
+          <button className="colltab new" type="button" onClick={() => open({ panel: "sets" })}>
+            <b>All sets</b>
+          </button>
         </div>
         <div className="scroller">
           {all ? (
@@ -180,6 +213,39 @@ export function LiveView() {
             options={CAP_OPTIONS}
             onChange={(cap) => patchLiveUi({ cap })}
           />
+          {all ? (
+            <>
+              <button
+                className="chip-toggle"
+                type="button"
+                aria-pressed={ui.fullArt}
+                onClick={() => {
+                  patchLiveUi({ fullArt: !ui.fullArt });
+                  toFeedTop();
+                }}
+              >
+                Full art
+              </button>
+              <Select
+                aria-label="Rarity"
+                value={ui.rarity}
+                options={rarityOptions}
+                onChange={(rarity) => {
+                  patchLiveUi({ rarity });
+                  toFeedTop();
+                }}
+              />
+              <Select
+                aria-label="Set released"
+                value={ui.era}
+                options={FEED_ERA_OPTIONS}
+                onChange={(era) => {
+                  patchLiveUi({ era });
+                  toFeedTop();
+                }}
+              />
+            </>
+          ) : null}
           {canWrite ? (
             <Select
               aria-label="Collection for added cards"
@@ -201,7 +267,10 @@ export function LiveView() {
           onRetry={() => void catalog.refetch()}
         />
       ) : rows && catalog.data ? (
-        <EveryCardFeed cat={catalog.data} rows={rows} lang={ui.lang} />
+        <>
+          <ComingSoon cat={catalog.data} rows={rows} lang={ui.lang} showing={ui.era === "soon"} />
+          <EveryCardFeed cat={catalog.data} rows={rows} lang={ui.lang} />
+        </>
       ) : (
         <SkeletonGrid className="ex-grid" count={6} />
       )}

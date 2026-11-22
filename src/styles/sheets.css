@@ -118,3 +118,104 @@
 .sheet-form a.btn {
   min-height: 46px;
 }
+
+/* Collections sheet */
+.coll-manage {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.coll-manage li {
+  border-top: 1px solid var(--line);
+  padding: 8px 0;
+}
+.coll-manage li:last-child {
+  border-bottom: 1px solid var(--line);
+}
+.cm-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cm-name {
+  flex: 1 1 140px;
+  min-width: 0;
+  text-align: left;
+  border: 0;
+  background: none;
+  padding: 4px 0;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.cm-name b {
+  display: block;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cm-name small {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+.cm-ask {
+  flex: 1 1 160px;
+  font-size: 14px;
+}
+.cm-acts {
+  display: flex;
+  gap: 4px;
+}
+.cm-acts button {
+  border: 0;
+  border-radius: 999px;
+  background: var(--sunk);
+  color: var(--ink);
+  font: 600 13px/1 inherit;
+  padding: 8px 11px;
+  min-width: 34px;
+  cursor: pointer;
+}
+.cm-acts button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.cm-acts .danger {
+  color: var(--danger);
+}
+
+.set-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.set-list li + li {
+  border-top: 1px solid var(--line);
+}
+.set-list button {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 12px 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.set-list b {
+  font-weight: 600;
+  min-width: 0;
+}
+.set-list small {
+  color: var(--muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+}

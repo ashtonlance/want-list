@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCardWrites } from "./api";
-import { addToCollection, allCollections, collectionCards, removeFromCollection } from "./collections";
+import { addToCollection, collectionCards, removeFromCollection } from "./collections";
+import { useCollections } from "./useCollections";
 import { cleanName } from "~/lib/format";
 import type { Card } from "./types";
 
@@ -8,7 +9,7 @@ import type { Card } from "./types";
 export function TagPicker({ card: c, cards }: { card: Card; cards: readonly Card[] }) {
   const { save } = useCardWrites();
   const [name, setName] = useState("");
-  const colls = allCollections(cards).map((x) => x.name);
+  const colls = useCollections().collections.map((x) => x.name);
   const add = (n: string) =>
     void save(c, addToCollection(c, n, collectionCards(cards, n).length), `Added to ${n}`);
   return (

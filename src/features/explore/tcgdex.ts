@@ -27,6 +27,8 @@ export interface LiveCard {
 export interface TdSet {
   id: string;
   name: string;
+  /** Cards in the set, secret rares included. */
+  count: number;
 }
 
 /** A card as TCGdex lists it in search results and sets, before its details load. */
@@ -118,11 +120,14 @@ export async function fetchTdSets(): Promise<TdSets> {
   const all = Array.isArray(raw) ? raw.filter(isRecord) : [];
   const rank = new Map(all.map((s, i) => [str(s.id) ?? "", i]));
   const sets = all
-    .filter((s) => {
-      const count = isRecord(s.cardCount) ? (num(s.cardCount.total) ?? 0) : 0;
-      return count > 0 && !isPocket(str(s.id) ?? "", str(s.logo));
-    })
-    .map((s) => ({ id: str(s.id) ?? "", name: str(s.name) ?? "" }));
+    .map((s) => ({
+      id: str(s.id) ?? "",
+      name: str(s.name) ?? "",
+      count: isRecord(s.cardCount) ? (num(s.cardCount.total) ?? 0) : 0,
+      logo: str(s.logo),
+    }))
+    .filter((s) => s.count > 0 && !isPocket(s.id, s.logo))
+    .map(({ id, name, count }) => ({ id, name, count }));
   return { sets, rank };
 }
 

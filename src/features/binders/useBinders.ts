@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import { WriteError } from "~/data/docs";
 import { useDocsQuery, useDocWrite } from "~/data/useDocs";
 import { useAuth } from "~/features/auth/AuthProvider";
+import { isMetaDoc } from "~/features/cards/useCollections";
 import { isRecord } from "~/lib/json";
 import { createPersistedStore, useStore } from "~/lib/store";
 import { useToast } from "~/ui/Toast";
@@ -64,7 +65,11 @@ export function useBinders(): BindersApi {
   }, [canWrite, flagged]);
 
   const shared = useMemo(
-    () => (docs.data ?? []).map((d) => parseBinder(d.id, d.data)).sort(byCreated),
+    () =>
+      (docs.data ?? [])
+        .filter((d) => !isMetaDoc(d.id))
+        .map((d) => parseBinder(d.id, d.data))
+        .sort(byCreated),
     [docs.data],
   );
   const binders = useMemo(() => (local ? merged(shared, mine) : shared), [local, shared, mine]);

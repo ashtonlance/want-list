@@ -9,9 +9,13 @@ export interface CollectionSummary {
   cost: number;
 }
 
-/** Every collection used by any card, by name. */
-export function allCollections(cards: readonly Card[]): CollectionSummary[] {
+/**
+ * Every collection: the saved ones in their saved order (empty ones too), then any other collection a
+ * card is in, by name.
+ */
+export function allCollections(cards: readonly Card[], saved: readonly string[] = []): CollectionSummary[] {
   const m = new Map<string, CollectionSummary>();
+  for (const name of saved) m.set(name, { name, total: 0, got: 0, cost: 0 });
   for (const c of cards) {
     for (const name of c.collections) {
       const v = m.get(name) ?? { name, total: 0, got: 0, cost: 0 };
@@ -21,7 +25,11 @@ export function allCollections(cards: readonly Card[]): CollectionSummary[] {
       m.set(name, v);
     }
   }
-  return [...m.values()].sort((a, b) => a.name.localeCompare(b.name));
+  const rank = (n: string) => {
+    const i = saved.indexOf(n);
+    return i < 0 ? Infinity : i;
+  };
+  return [...m.values()].sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name));
 }
 
 /** A collection's cards in binder order. */

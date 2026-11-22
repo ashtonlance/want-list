@@ -1,4 +1,5 @@
-import type { CSSProperties } from "react";
+import { useCallback, useMemo, type CSSProperties } from "react";
+import { useOverlayNav } from "~/app/overlayNav";
 import type { Pockets } from "~/app/prefs";
 import { useCardWrites } from "~/features/cards/api";
 import { collectionCards, moveInCollection } from "~/features/cards/collections";
@@ -8,7 +9,7 @@ import { isGot, priceOf } from "~/features/cards/pricing";
 import type { Card } from "~/features/cards/types";
 import { formatMoney } from "~/lib/format";
 import { CardImage } from "~/ui/CardImage";
-import { useLightbox } from "~/ui/Lightbox";
+import { usePhotoGrid } from "~/ui/Lightbox";
 
 interface Props {
   cards: readonly Card[];
@@ -19,9 +20,17 @@ interface Props {
 
 /** A collection laid out as binder spreads, in collection order. */
 export function CollectionBinder({ cards, coll, pockets, canWrite }: Props) {
-  const ordered = collectionCards(cards, coll);
+  const ordered = useMemo(() => collectionCards(cards, coll), [cards, coll]);
   const { saveMany } = useCardWrites();
-  const showPhoto = useLightbox();
+  const { open } = useOverlayNav();
+  const toPhoto = useCallback(
+    (c: Card) => {
+      const src = cardImageSrc(c);
+      return src ? { ...lightboxItem(c, src), onDetails: () => open({ card: c.id }) } : null;
+    },
+    [open],
+  );
+  const photoOf = usePhotoGrid(ordered, toPhoto);
   const cols = pockets === 4 ? 2 : 3;
   const filled = Math.ceil(ordered.length / pockets);
   const pages = Math.max(2, filled + (filled % 2));
@@ -41,7 +50,9 @@ export function CollectionBinder({ cards, coll, pockets, canWrite }: Props) {
           aria-label={c.name + (need ? ", still needed" : ", collected")}
           title={[c.name, c.set, c.number ? `#${c.number}` : ""].filter(Boolean).join(" · ")}
           onClick={() => {
-            if (src) showPhoto(lightboxItem(c, src));
+            const show = photoOf(c);
+            if (show) show();
+            else open({ card: c.id });
           }}
         >
           <CardImage src={src} name={c.name} />

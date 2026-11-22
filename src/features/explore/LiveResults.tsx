@@ -1,11 +1,13 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
 import { useAddCards } from "~/features/cards/create";
 import { isGot } from "~/features/cards/pricing";
 import { savedRowCount, useScrollRestoration } from "~/lib/scroll";
+import { usePhotoGrid } from "~/ui/Lightbox";
 import { SkeletonGrid } from "~/ui/Skeleton";
+import { exploreLightbox } from "./display";
 import { AddedMark, ExCard, LoadError, PriceTag, QuickWant } from "./ExCard";
 import { useLiveCards, useTdList, useTdSets } from "./live";
 import { listLookup } from "./onList";
@@ -47,6 +49,17 @@ export function LiveResults({ q, set }: { q: string; set: string }) {
   const { canWrite } = useAuth();
   const { fromLive } = useAddCards();
   const { open } = useOverlayNav();
+  const toPhoto = useCallback(
+    (b: TdBrief) => {
+      const d = tiles.map.get(b.id);
+      const src = b.image ? `${b.image}/low.webp` : d?.img;
+      if (!src) return null;
+      const about = d ?? { name: b.name, set: "", number: b.localId, market: null };
+      return { ...exploreLightbox(about, src), onDetails: () => open({ live: b.id }) };
+    },
+    [tiles.map, open],
+  );
+  const photoOf = usePhotoGrid(visible, toPhoto);
 
   if (sets.isError || list.isError)
     return (
@@ -81,6 +94,7 @@ export function LiveResults({ q, set }: { q: string; set: string }) {
               name={b.name}
               meta={d ? `${d.set} · #${d.number}` : `#${b.localId}`}
               onOpen={() => open({ live: b.id })}
+              onPhoto={photoOf(b)}
               line={
                 d ? (
                   <>

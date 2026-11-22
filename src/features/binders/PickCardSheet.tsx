@@ -8,7 +8,6 @@ import {
   type CatalogCard,
 } from "~/features/catalog/catalog";
 import { searchCatalog } from "~/features/catalog/search";
-import { allCollections } from "~/features/cards/collections";
 import { cardImageSrc } from "~/features/cards/image";
 import { isGot, priceOf } from "~/features/cards/pricing";
 import type { Card } from "~/features/cards/types";
@@ -20,6 +19,7 @@ import { Select } from "~/ui/Select";
 import { useToast } from "~/ui/Toast";
 import type { Slot } from "./types";
 import { useMediaQuery } from "./useMediaQuery";
+import { useCollections } from "~/features/cards/useCollections";
 
 type Source = "ours" | "web";
 type Show = "all" | "got" | "want";
@@ -53,12 +53,13 @@ export function PickCardSheet({ cards, inBinder, onPlace }: PickCardSheetProps) 
   const query = useDeferredValue(q);
   const coarse = useMediaQuery("(pointer:coarse)");
 
+  const { collections } = useCollections();
   const collOptions = useMemo(
     () => [
       { value: "", label: "All collections" },
-      ...allCollections(cards).map((c) => ({ value: c.name, label: c.name })),
+      ...collections.map((c) => ({ value: c.name, label: c.name })),
     ],
-    [cards],
+    [collections],
   );
 
   return (

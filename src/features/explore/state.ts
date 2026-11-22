@@ -1,3 +1,4 @@
+import type { Era } from "~/features/catalog/era";
 import type { FeedLang, FeedSort } from "~/features/catalog/feed";
 import { createStore, useStore } from "~/lib/store";
 import type { LiveSearch, PicksSearch } from "./search";
@@ -14,7 +15,10 @@ export const CAP_OPTIONS: readonly { value: PriceCap; label: string }[] = [
 /** A search or set's own order ("num": newest or chase cards first), or by price. */
 export type LiveSort = "num" | "high" | "low";
 
-export type PicksSort = "rec" | "low" | "high";
+export type PicksSort = "rec" | "new" | "old" | "low" | "high" | "name";
+
+export type PicksEra = Era;
+export { ERA_OPTIONS, inEra } from "~/features/catalog/era";
 
 /** Explore's live view settings. Kept outside the screen so they survive a trip to another tab. */
 export interface LiveUi {
@@ -25,9 +29,22 @@ export interface LiveUi {
   cap: PriceCap;
   /** The collection quick adds go to, or "" for none. */
   addTo: string;
+  /** "Every card" filters: a rarity name or "", full art only, and when the set came out. */
+  rarity: string;
+  fullArt: boolean;
+  era: Era;
 }
 
-export const liveUi = createStore<LiveUi>({ feedSort: "new", sort: "num", lang: "en", cap: 0, addTo: "" });
+export const liveUi = createStore<LiveUi>({
+  feedSort: "new",
+  sort: "num",
+  lang: "en",
+  cap: 0,
+  addTo: "",
+  rarity: "",
+  fullArt: false,
+  era: "any",
+});
 export const useLiveUi = (): LiveUi => useStore(liveUi);
 export const patchLiveUi = (patch: Partial<LiveUi>): void => liveUi.set((prev) => ({ ...prev, ...patch }));
 
@@ -36,6 +53,10 @@ export interface PicksUi {
   q: string;
   cap: PriceCap;
   sort: PicksSort;
+  /** A rarity name, or "" for any. */
+  rarity: string;
+  era: PicksEra;
+  fullArt: boolean;
   showPassed: boolean;
   hideAdded: boolean;
 }
@@ -44,6 +65,9 @@ export const picksUi = createStore<PicksUi>({
   q: "",
   cap: 0,
   sort: "rec",
+  rarity: "",
+  era: "any",
+  fullArt: false,
   showPassed: false,
   hideAdded: true,
 });

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
@@ -7,6 +7,8 @@ import { isGot } from "~/features/cards/pricing";
 import type { Catalog } from "~/features/catalog/catalog";
 import type { FeedLang } from "~/features/catalog/feed";
 import { formatDate, formatMoney } from "~/lib/format";
+import { usePhotoGrid } from "~/ui/Lightbox";
+import { exploreLightbox } from "./display";
 import { savedRowCount, useScrollRestoration } from "~/lib/scroll";
 import { AddedMark, ExCard, PriceTag, QuickWant } from "./ExCard";
 import { catalogLiveCard } from "./live";
@@ -58,11 +60,22 @@ export function EveryCardFeed({ cat, rows, lang }: FeedProps) {
   const { fromLive } = useAddCards();
   const { open } = useOverlayNav();
   const total = rows.length;
+  const visible = useMemo(() => rows.slice(0, shown), [rows, shown]);
+  const toPhoto = useCallback(
+    (i: number) => {
+      const row = cat.cards[i];
+      if (!row) return null;
+      const d = catalogLiveCard(cat, row);
+      return d.img ? { ...exploreLightbox(d, d.img), onDetails: () => open({ live: d.id }) } : null;
+    },
+    [cat, open],
+  );
+  const photoOf = usePhotoGrid(visible, toPhoto);
 
   return (
     <>
       <div className="ex-grid">
-        {rows.slice(0, shown).map((i) => {
+        {visible.map((i) => {
           const row = cat.cards[i];
           if (!row) return null;
           const d = catalogLiveCard(cat, row);
@@ -78,6 +91,7 @@ export function EveryCardFeed({ cat, rows, lang }: FeedProps) {
               meta={`${d.set} · #${d.number}`}
               badge={d.jp && lang !== "jp" ? "JP" : undefined}
               onOpen={() => open({ live: d.id })}
+              onPhoto={photoOf(i)}
               line={
                 <>
                   <PriceTag market={d.market} />

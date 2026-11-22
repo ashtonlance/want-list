@@ -1,4 +1,5 @@
 import type { CollectionSummary } from "~/features/cards/collections";
+import { useOverlayNav } from "~/app/overlayNav";
 import { patchListUi, showCollection } from "./state";
 
 interface TabProps {
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export function CollectionTabs({ colls, current, cardCount, canWrite }: Props) {
+  const { open } = useOverlayNav();
   return (
     <div className="colltabs">
       <Tab
@@ -54,6 +56,12 @@ export function CollectionTabs({ colls, current, cardCount, canWrite }: Props) {
           }}
         />
       ) : null}
+      <Tab
+        label={canWrite ? "Edit collections" : "All collections"}
+        pressed={false}
+        className="new"
+        onClick={() => open({ panel: "collections" })}
+      />
     </div>
   );
 }

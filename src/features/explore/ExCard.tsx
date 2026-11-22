@@ -1,7 +1,7 @@
 import { useState, type KeyboardEvent, type ReactNode } from "react";
 import { formatMoney } from "~/lib/format";
 import { CardImage } from "~/ui/CardImage";
-import { PlusIcon, TickIcon } from "~/ui/icons";
+import { CrossIcon, PlusIcon, TickIcon } from "~/ui/icons";
 import { quickWantLabels } from "./display";
 
 interface ExCardProps {
@@ -14,6 +14,8 @@ interface ExCardProps {
   /** The price, or "No price yet", and what follows it on the bottom line. */
   line: ReactNode;
   onOpen: () => void;
+  /** Shows the card full screen when its picture is tapped; without it the picture opens the sheet too. */
+  onPhoto?: (() => void) | undefined;
   className?: string;
   /** Drawn over the picture, like the JP badge. */
   badge?: string;
@@ -22,7 +24,19 @@ interface ExCardProps {
 }
 
 /** A card tile in Explore's grids. */
-export function ExCard({ sr, label, img, name, meta, line, onOpen, className, badge, coll }: ExCardProps) {
+export function ExCard({
+  sr,
+  label,
+  img,
+  name,
+  meta,
+  line,
+  onOpen,
+  onPhoto,
+  className,
+  badge,
+  coll,
+}: ExCardProps) {
   const onKeyDown = (e: KeyboardEvent<HTMLElement>) => {
     if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
       e.preventDefault();
@@ -39,7 +53,17 @@ export function ExCard({ sr, label, img, name, meta, line, onOpen, className, ba
       onClick={onOpen}
       onKeyDown={onKeyDown}
     >
-      <div className="tile-img">
+      <div
+        className="tile-img"
+        onClick={
+          onPhoto
+            ? (e) => {
+                e.stopPropagation();
+                onPhoto();
+              }
+            : undefined
+        }
+      >
         <CardImage src={img} name={name} />
         {badge ? <span className="tile-badge">{badge}</span> : null}
       </div>
@@ -87,6 +111,22 @@ export function QuickWant({
     </button>
   );
 }
+
+/** The × on a pick's tile: passes on it without opening it. */
+export const PassButton = ({ name, onPass }: { name: string; onPass: () => void }) => (
+  <button
+    className="ex-quick ex-pass"
+    type="button"
+    aria-label={`Pass on ${name}`}
+    title="Not for me"
+    onClick={(e) => {
+      e.stopPropagation();
+      onPass();
+    }}
+  >
+    <CrossIcon />
+  </button>
+);
 
 /** A price on a tile, or "No price yet". */
 export const PriceTag = ({ market, prefix = "" }: { market: number | null; prefix?: string }) =>

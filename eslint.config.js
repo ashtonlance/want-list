@@ -22,7 +22,17 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": [
         "warn",
-        { allowConstantExport: true, allowExportNames: ["Route", "useAuth", "useToast", "useLightbox"] },
+        {
+          allowConstantExport: true,
+          allowExportNames: [
+            "Route",
+            "useAuth",
+            "useToast",
+            "useLightbox",
+            "useLightboxSequence",
+            "usePhotoGrid",
+          ],
+        },
       ],
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],

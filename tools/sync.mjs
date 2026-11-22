@@ -96,7 +96,9 @@ for (const g of groups) {
   // Undated groups (promos, POP series and the like) come back stamped with the time the
   // feed was generated ("...T20:00:05.88Z"); real release dates are plain midnights.
   const pub = /T00:00:00(?:\.0+)?$/.test(g.publishedOn || "") ? g.publishedOn.slice(0, 10) : "";
-  entries.push({ set: [old ? old[0] : cleanSet(g.name), g.jp, old ? old[2] : (pub || today), g.groupId], rows, key: pub });
+  // A set that isn't out yet follows TCGplayer's release date, which can still move.
+  const date = pub > today ? pub : old ? old[2] : (pub || today);
+  entries.push({ set: [old ? old[0] : cleanSet(g.name), g.jp, date, g.groupId], rows, key: pub });
   // Keep the old modifiedOn for a failed group so its products are fetched again next time.
   groupsOut[g.groupId] = failed.has(g.groupId) ? (oldGroups[g.groupId] || "") : g.modifiedOn;
 }
@@ -111,7 +113,14 @@ for (const { set, rows } of entries) {
 
 // 4. Safety: never replace a good catalog with a much smaller one.
 if (cards.length < oldCat.cards.length * 0.95) throw new Error(`only ${cards.length} cards vs ${oldCat.cards.length} before; keeping the old catalog`);
-const newCat = { asOf: today, sets, rarities, cards, groups: groupsOut };
+// Sets announced but not out yet, with or without a card list so far: [name, jp, release date].
+const upcoming = groups
+  .map(g => ({ g, pub: /T00:00:00(?:\.0+)?$/.test(g.publishedOn || "") ? g.publishedOn.slice(0, 10) : "" }))
+  .filter(x => x.pub > today)
+  .sort((a, b) => a.pub.localeCompare(b.pub) || a.g.jp - b.g.jp)
+  .map(({ g, pub }) => [cleanSet(g.name), g.jp, pub]);
+console.log("upcoming:", upcoming.map(u => `${u[0]} (${u[1] ? "JP" : "EN"}, ${u[2]})`).join(" | ") || "none");
+const newCat = { asOf: today, sets, rarities, cards, groups: groupsOut, upcoming };
 
 // 5. prices.json: every product on the list or in Explore, plus anything it already tracked.
 const want = new Set(Object.keys((oldPrices && oldPrices.items) || {}));

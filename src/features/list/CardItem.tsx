@@ -15,6 +15,8 @@ interface ItemProps {
   canWrite: boolean;
   /** Opens the card, or toggles it while selecting. */
   onActivate: (card: Card) => void;
+  /** Shows the card full screen when its picture is tapped (not while selecting). */
+  onPhoto?: (() => void) | undefined;
 }
 
 function Check({ on }: { on: boolean }) {
@@ -22,7 +24,7 @@ function Check({ on }: { on: boolean }) {
 }
 
 /** A card in the grid layout. */
-export function CardTile({ card: c, selecting, selected, onActivate }: ItemProps) {
+export function CardTile({ card: c, selecting, selected, onActivate, onPhoto }: ItemProps) {
   const got = isGot(c);
   const sp = shortPrice(c);
   const label =
@@ -46,7 +48,17 @@ export function CardTile({ card: c, selecting, selected, onActivate }: ItemProps
       onClick={() => onActivate(c)}
       onKeyDown={onKeyDown}
     >
-      <div className="tile-img">
+      <div
+        className="tile-img"
+        onClick={
+          onPhoto && !selecting
+            ? (e) => {
+                e.stopPropagation();
+                onPhoto();
+              }
+            : undefined
+        }
+      >
         <CardImage src={cardImageSrc(c)} name={c.name} />
         {got ? <span className="tile-badge have">Got it</span> : null}
         {!got && sp?.amt ? <span className={"tile-badge" + (sp.deal ? " deal" : "")}>{sp.amt}</span> : null}
@@ -66,7 +78,7 @@ export function CardTile({ card: c, selecting, selected, onActivate }: ItemProps
 }
 
 /** A card in the list layout. */
-export function CardRow({ card: c, selecting, selected, canWrite, onActivate }: ItemProps) {
+export function CardRow({ card: c, selecting, selected, canWrite, onActivate, onPhoto }: ItemProps) {
   const { save } = useCardWrites();
   const got = isGot(c);
   const sp = shortPrice(c);
@@ -94,7 +106,19 @@ export function CardRow({ card: c, selecting, selected, canWrite, onActivate }: 
           <Check on={selected} />
         </button>
       ) : (
-        <div className={"thumb" + (src ? "" : " empty")}>{inner}</div>
+        <div
+          className={"thumb" + (src ? "" : " empty")}
+          onClick={
+            onPhoto
+              ? (e) => {
+                  e.stopPropagation();
+                  onPhoto();
+                }
+              : undefined
+          }
+        >
+          {inner}
+        </div>
       )}
       <div className="who">
         <div className="name">

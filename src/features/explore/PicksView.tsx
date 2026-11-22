@@ -1,9 +1,8 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { Fragment, useMemo } from "react";
+import { Fragment, useCallback, useMemo } from "react";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
-import { allCollections } from "~/features/cards/collections";
 import { useAddCards } from "~/features/cards/create";
 import type { Card } from "~/features/cards/types";
 import { useActiveCollection } from "~/features/list/useActiveCollection";
@@ -11,16 +10,27 @@ import { formatDate, formatMoney } from "~/lib/format";
 import { useScrollRestoration } from "~/lib/scroll";
 import { Select } from "~/ui/Select";
 import { SkeletonGrid } from "~/ui/Skeleton";
-import { AddedMark, ExCard, PriceTag, QuickWant } from "./ExCard";
+import { AddedMark, ExCard, PassButton, PriceTag, QuickWant } from "./ExCard";
 import { useLiveCards } from "./live";
-import { isPickAdded, pickImage, pickOnList, usePicks, WILDCARDS, withLive, type PickCard } from "./picks";
+import { useCatalog } from "~/features/catalog/catalog";
+import { sanitizedDates } from "~/features/catalog/feed";
+import { fullArtCards, isFullArt } from "~/features/catalog/rarity";
+import { usePhotoGrid } from "~/ui/Lightbox";
+import { exploreLightbox } from "./display";
+import { isPickAdded, pickImage, pickOnList, WILDCARDS, withLive, type PickCard } from "./picks";
 import { ALL_PICKS } from "./search";
-import { CAP_OPTIONS, patchPicksUi, usePicksUi, type PicksSort } from "./state";
+import { CAP_OPTIONS, ERA_OPTIONS, inEra, patchPicksUi, usePicksUi, type PicksSort } from "./state";
+import { usePickStatus } from "./usePickStatus";
+import { usePicks } from "./usePicks";
+import { useCollections } from "~/features/cards/useCollections";
 
 const SORTS: readonly { value: PicksSort; label: string }[] = [
   { value: "rec", label: "Best match" },
+  { value: "new", label: "Newest sets first" },
+  { value: "old", label: "Oldest sets first" },
   { value: "low", label: "Price: low to high" },
   { value: "high", label: "Price: high to low" },
+  { value: "name", label: "Name: A to Z" },
 ];
 
 interface CollTab {
@@ -43,7 +53,16 @@ function collTabs(picks: readonly PickCard[], cards: readonly Card[], order: rea
   return [...m.values()].sort((a, b) => rank(a.name) - rank(b.name) || a.name.localeCompare(b.name));
 }
 
-const pickKey = (p: PickCard) => p.tcgdexId ?? p.id;
+const pickKey = (p: PickCard) => p.tcgdexId ?? (p.tcgProduct ? `pid:${p.tcgProduct}` : p.id);
+
+/** Rarities in the picks, most common first, for the rarity filter. */
+function rarityOptions(picks: readonly PickCard[], chosen: string): { value: string; label: string }[] {
+  const counts = new Map<string, number>();
+  for (const p of picks) if (p.rarity) counts.set(p.rarity, (counts.get(p.rarity) ?? 0) + 1);
+  if (chosen && !counts.has(chosen)) counts.set(chosen, 0);
+  const names = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([n]) => n);
+  return [{ value: "", label: "Any rarity" }, ...names.map((n) => ({ value: n, label: n }))];
+}
 
 /** Explore's picks: cards Claude suggested for each collection. */
 export function PicksView() {
@@ -56,8 +75,22 @@ export function PicksView() {
   const { canWrite } = useAuth();
   const { fromPick } = useAddCards();
   const { open } = useOverlayNav();
+  const catalog = useCatalog();
+  const setDates = useMemo(() => {
+    const cat = catalog.data;
+    if (!cat) return new Map<string, string>();
+    const dates = sanitizedDates(cat);
+    const m = new Map<string, string>();
+    cat.sets.forEach((s, i) => {
+      const k = s.name.toLowerCase();
+      if (!m.get(k)) m.set(k, dates[i] ?? "");
+    });
+    return m;
+  }, [catalog.data]);
+  const passOn = usePickStatus();
 
-  const order = useMemo(() => allCollections(cards).map((c) => c.name), [cards]);
+  const { collections } = useCollections();
+  const order = useMemo(() => collections.map((c) => c.name), [collections]);
   const tabs = useMemo(() => collTabs(picks, cards, order), [picks, cards, order]);
   const openAll = useMemo(
     () => new Set(picks.filter((p) => isOpen(cards, p)).map(pickKey)).size,
@@ -105,19 +138,55 @@ export function PicksView() {
 
   const q = ui.q.trim().toLowerCase();
   const shown = useMemo(() => {
+    const dateOf = (p: PickCard) => setDates.get(p.set.toLowerCase()) ?? "";
+    const cat = catalog.data;
+    const art = ui.fullArt && cat ? fullArtCards(cat) : null;
+    const isArt = (p: PickCard) => {
+      const c = p.tcgProduct != null ? cat?.byPid.get(p.tcgProduct) : undefined;
+      return c && art ? art.has(c) : isFullArt(p.rarity, p.number, { name: p.name });
+    };
     const out = all.filter(
       (p) =>
         (ui.showPassed || p.status !== "passed") &&
         !(ui.hideAdded && isPickAdded(cards, p)) &&
         (!ui.cap || (p.market != null && p.market <= ui.cap)) &&
+        (!ui.rarity || p.rarity === ui.rarity) &&
+        (!ui.fullArt || isArt(p)) &&
+        inEra(ui.era === "any" ? "" : dateOf(p), ui.era) &&
         (!artist || p.illustrator === artist) &&
         (!q ||
           [p.name, p.set, p.number, p.illustrator, p.rarity, p.coll].join(" ").toLowerCase().includes(q)),
     );
     if (ui.sort === "low") out.sort((a, b) => (a.market ?? Infinity) - (b.market ?? Infinity));
     if (ui.sort === "high") out.sort((a, b) => (b.market ?? -1) - (a.market ?? -1));
+    if (ui.sort === "new") out.sort((a, b) => dateOf(b).localeCompare(dateOf(a)));
+    if (ui.sort === "old") out.sort((a, b) => (dateOf(a) || "9").localeCompare(dateOf(b) || "9"));
+    if (ui.sort === "name") out.sort((a, b) => a.name.localeCompare(b.name));
     return out;
-  }, [all, cards, ui.showPassed, ui.hideAdded, ui.cap, ui.sort, artist, q]);
+  }, [
+    all,
+    cards,
+    setDates,
+    catalog.data,
+    ui.showPassed,
+    ui.hideAdded,
+    ui.cap,
+    ui.rarity,
+    ui.fullArt,
+    ui.era,
+    ui.sort,
+    artist,
+    q,
+  ]);
+
+  const toPhoto = useCallback(
+    (p: PickCard) => {
+      const src = pickImage(p, p.tcgdexId ? live.map.get(p.tcgdexId) : undefined);
+      return src ? { ...exploreLightbox(p, src), onDetails: () => open({ pick: p.id }) } : null;
+    },
+    [live.map, open],
+  );
+  const photoOf = usePhotoGrid(shown, toPhoto);
 
   useScrollRestoration(`picks:${tab ?? ""}:${artist}`, loaded);
 
@@ -134,9 +203,10 @@ export function PicksView() {
   const clearArtist = () =>
     void navigate({ search: (prev) => ({ ...prev, artist: undefined }), replace: true });
 
+  const filtered = Boolean(q || ui.cap || ui.rarity || ui.fullArt || ui.era !== "any" || artist);
   const passed = all.filter((p) => p.status === "passed").length;
   const added = all.filter((p) => isPickAdded(cards, p)).length;
-  const latest = all[0]?.batch ?? 1;
+  const latest = all.find((p) => !p.auto)?.batch ?? 1;
   const asOf = all
     .map((p) => p.priceAsOf)
     .filter(Boolean)
@@ -147,7 +217,10 @@ export function PicksView() {
     : tab === WILDCARDS
       ? "Fun cards under $50 that don't belong in any of your binders. Add them loose, or start a new collection."
       : "Cards that aren't on your list yet, picked to match this collection.";
-  const sepAt = !isAll && ui.sort === "rec" && latest > 1 ? shown.findIndex((p) => p.batch < latest) : -1;
+  // In best-match order, label where older hand-picked batches start and where refill picks start.
+  const byMatch = !isAll && ui.sort === "rec";
+  const earlierAt = byMatch && latest > 1 ? shown.findIndex((p) => !p.auto && p.batch < latest) : -1;
+  const refillAt = byMatch ? shown.findIndex((p) => p.auto) : -1;
 
   return (
     <>
@@ -196,6 +269,26 @@ export function PicksView() {
             options={SORTS}
             onChange={(sort) => patchPicksUi({ sort })}
           />
+          <button
+            className="chip-toggle"
+            type="button"
+            aria-pressed={ui.fullArt}
+            onClick={() => patchPicksUi({ fullArt: !ui.fullArt })}
+          >
+            Full art
+          </button>
+          <Select
+            aria-label="Rarity"
+            value={ui.rarity}
+            options={rarityOptions(all, ui.rarity)}
+            onChange={(rarity) => patchPicksUi({ rarity })}
+          />
+          <Select
+            aria-label="Set released"
+            value={ui.era}
+            options={ERA_OPTIONS}
+            onChange={(era) => patchPicksUi({ era })}
+          />
           {added ? (
             <button
               className="chip-toggle"
@@ -235,7 +328,8 @@ export function PicksView() {
           const quickColl = p.coll === WILDCARDS ? "" : p.coll;
           return (
             <Fragment key={p.id}>
-              {i === sepAt ? <div className="ex-sep">Earlier picks</div> : null}
+              {i === earlierAt ? <div className="ex-sep">Earlier picks</div> : null}
+              {i === refillAt && i > 0 ? <div className="ex-sep">More like this</div> : null}
               <ExCard
                 sr={p.id}
                 className={p.status === "passed" ? "dim" : undefined}
@@ -245,17 +339,21 @@ export function PicksView() {
                 meta={`${p.set} · #${p.number}`}
                 coll={isAll ? p.coll : undefined}
                 onOpen={() => open({ pick: p.id })}
+                onPhoto={photoOf(p)}
                 line={
                   <>
                     <PriceTag market={p.market} prefix="~" />
                     {already ? (
                       <AddedMark have={p.status === "owned"} />
                     ) : canWrite && p.status !== "passed" ? (
-                      <QuickWant
-                        name={p.name}
-                        coll={quickColl}
-                        onWant={() => fromPick(p, "want", quickColl)}
-                      />
+                      <span className="ex-acts">
+                        <PassButton name={p.name} onPass={() => void passOn(p, "passed", true)} />
+                        <QuickWant
+                          name={p.name}
+                          coll={quickColl}
+                          onWant={() => fromPick(p, "want", quickColl)}
+                        />
+                      </span>
                     ) : null}
                   </>
                 }
@@ -265,14 +363,12 @@ export function PicksView() {
         })}
         {shown.length ? null : (
           <div className="empty-state">
-            {q || ui.cap || artist
-              ? "No picks match these filters."
-              : "You've been through every pick here. Ask Claude in chat for more."}
+            {filtered ? "No picks match these filters." : "No more cards like these right now."}
           </div>
         )}
       </div>
       <p className="hint">
-        Want fresh picks, or picks for a new collection? Ask Claude in chat to refresh Explore.
+        Picks refill on their own as you add cards or pass on them. Ask Claude in chat for hand-picked ones.
       </p>
     </>
   );

@@ -1,5 +1,15 @@
 import { useLocation } from "@tanstack/react-router";
-import { createContext, use, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  use,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent,
+  type ReactNode,
+} from "react";
 import { bigImage } from "~/lib/images";
 import { useOverlay } from "./overlay";
 
@@ -8,40 +18,108 @@ export interface LightboxItem {
   name: string;
   /** The line under the name: set, number, price. */
   caption: string;
+  /** Opens the card's sheet, from the Details button under the photo. */
+  onDetails?: () => void;
 }
 
-const LightboxContext = createContext<((item: LightboxItem) => void) | null>(null);
+interface LightboxApi {
+  open: (item: LightboxItem) => void;
+  /** The cards on screen right now, in order, so the photo can swipe to the next one. */
+  sequenceRef: { current: readonly LightboxItem[] };
+}
 
-/** Full-screen card photo. Closes on Escape, a tap outside the photo, or any navigation. */
+const LightboxContext = createContext<LightboxApi | null>(null);
+
+/** How far a swipe has to travel, in pixels, to move to the next photo. */
+const SWIPE = 50;
+
+const sameCard = (a: LightboxItem, b: LightboxItem) => bigImage(a.src) === bigImage(b.src);
+
+interface Opened {
+  items: readonly LightboxItem[];
+  index: number;
+  href: string;
+}
+
+/**
+ * Full-screen card photo. Swipe or use the arrow keys to move through the cards on screen.
+ * Closes on Escape, a tap outside the photo, or any navigation.
+ */
 export function LightboxProvider({ children }: { children: ReactNode }) {
-  const [opened, setOpened] = useState<{ item: LightboxItem; href: string } | null>(null);
+  const [opened, setOpened] = useState<Opened | null>(null);
+  const [dragX, setDragX] = useState(0);
+  const drag = useRef<{ x: number; y: number; id: number } | null>(null);
+  const sequenceRef = useRef<readonly LightboxItem[]>([]);
   const lastFocus = useRef<Element | null>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
   const href = useLocation({ select: (l) => l.href });
   // Navigating anywhere closes the photo.
-  const item = opened?.href === href ? opened.item : null;
+  const shown = opened?.href === href ? opened : null;
+  const item = shown ? shown.items[shown.index] : undefined;
+  const count = shown?.items.length ?? 0;
 
   const close = () => {
     setOpened(null);
     if (lastFocus.current instanceof HTMLElement) lastFocus.current.focus();
   };
-  useOverlay(item !== null, close);
+  const step = useCallback((dir: -1 | 1) => {
+    setDragX(0);
+    setOpened((o) => {
+      if (!o) return o;
+      const index = o.index + dir;
+      return index >= 0 && index < o.items.length ? { ...o, index } : o;
+    });
+  }, []);
+  useOverlay(item !== undefined, close);
+
   useEffect(() => {
     if (item) closeBtn.current?.focus();
   }, [item]);
 
+  useEffect(() => {
+    if (!shown) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") step(1);
+      if (e.key === "ArrowLeft") step(-1);
+    };
+    window.addEventListener("keydown", onKey);
+    // Load the neighbours ahead of time so a swipe shows them at once.
+    for (const n of [shown.items[shown.index - 1], shown.items[shown.index + 1]])
+      if (n) new Image().src = bigImage(n.src);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [shown, step]);
+
   const open = useCallback(
     (next: LightboxItem) => {
       lastFocus.current = document.activeElement;
-      setOpened({ item: next, href });
+      const items = sequenceRef.current;
+      const index = items.findIndex((i) => sameCard(i, next));
+      setDragX(0);
+      setOpened(index >= 0 ? { items, index, href } : { items: [next], index: 0, href });
     },
     [href],
   );
 
+  const onPointerDown = (e: PointerEvent) => {
+    if (count > 1) drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+  };
+  const onPointerMove = (e: PointerEvent) => {
+    const d = drag.current;
+    if (d?.id === e.pointerId) setDragX(e.clientX - d.x);
+  };
+  const onPointerUp = (e: PointerEvent) => {
+    const d = drag.current;
+    drag.current = null;
+    if (d?.id !== e.pointerId) return;
+    const dx = e.clientX - d.x;
+    if (Math.abs(dx) > SWIPE && Math.abs(dx) > Math.abs(e.clientY - d.y)) step(dx < 0 ? 1 : -1);
+    else setDragX(0);
+  };
+
   return (
-    <LightboxContext value={open}>
+    <LightboxContext value={{ open, sequenceRef }}>
       {children}
-      {item ? (
+      {item && shown ? (
         <div
           className="lightbox"
           role="dialog"
@@ -50,23 +128,118 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
           onClick={(e) => {
             if (e.target === e.currentTarget) close();
           }}
+          onPointerDown={onPointerDown}
+          onPointerMove={onPointerMove}
+          onPointerUp={onPointerUp}
+          onPointerCancel={() => {
+            drag.current = null;
+            setDragX(0);
+          }}
         >
           <button className="close" type="button" aria-label="Close" ref={closeBtn} onClick={close}>
             ×
           </button>
-          <img src={bigImage(item.src)} alt={`${item.name} card`} />
+          <img
+            key={item.src}
+            src={bigImage(item.src)}
+            alt={`${item.name} card`}
+            draggable={false}
+            style={dragX ? { transform: `translateX(${String(dragX)}px)` } : undefined}
+          />
           <div className="cap">
             <b>{item.name}</b>
             {item.caption}
           </div>
+          {item.onDetails ? (
+            <button
+              className="btn lb-details"
+              type="button"
+              onClick={() => {
+                const details = item.onDetails;
+                setOpened(null);
+                details?.();
+              }}
+            >
+              Details
+            </button>
+          ) : null}
+          {count > 1 ? (
+            <div className="lb-nav">
+              <button
+                type="button"
+                aria-label="Previous card"
+                disabled={shown.index === 0}
+                onClick={() => step(-1)}
+              >
+                ‹
+              </button>
+              <span aria-live="polite">
+                {shown.index + 1} of {count}
+              </span>
+              <button
+                type="button"
+                aria-label="Next card"
+                disabled={shown.index === count - 1}
+                onClick={() => step(1)}
+              >
+                ›
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
     </LightboxContext>
   );
 }
 
+function useLightboxApi(): LightboxApi {
+  const api = use(LightboxContext);
+  if (!api) throw new Error("useLightbox needs a LightboxProvider");
+  return api;
+}
+
 export function useLightbox(): (item: LightboxItem) => void {
-  const open = use(LightboxContext);
-  if (!open) throw new Error("useLightbox needs a LightboxProvider");
-  return open;
+  return useLightboxApi().open;
+}
+
+/**
+ * Tells the photo view which cards are on screen, in order, so it can swipe between them.
+ * The list on screen calls this; whatever opens the photo from it then gets swiping for free.
+ */
+export function useLightboxSequence(items: readonly LightboxItem[]): void {
+  const { sequenceRef } = useLightboxApi();
+  useEffect(() => {
+    sequenceRef.current = items;
+    return () => {
+      if (sequenceRef.current === items) sequenceRef.current = [];
+    };
+  }, [sequenceRef, items]);
+}
+
+/**
+ * For a grid of cards: makes the cards on screen the photo sequence and returns, for each row, what
+ * tapping its picture does (undefined when it has no picture). `toItem` must be stable.
+ */
+export function usePhotoGrid<T>(
+  rows: readonly T[],
+  toItem: (row: T) => LightboxItem | null,
+): (row: T) => (() => void) | undefined {
+  const open = useLightbox();
+  const byRow = useMemo(() => {
+    const m = new Map<T, LightboxItem>();
+    for (const r of rows) {
+      const it = toItem(r);
+      if (it) m.set(r, it);
+    }
+    return m;
+  }, [rows, toItem]);
+  const items = useMemo(() => [...byRow.values()], [byRow]);
+  useLightboxSequence(items);
+  return useCallback(
+    (row: T) => {
+      const it = byRow.get(row);
+      return it ? () => open(it) : undefined;
+    },
+    [byRow, open],
+  );
 }

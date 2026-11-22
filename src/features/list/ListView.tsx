@@ -3,11 +3,13 @@ import { prefs } from "~/app/prefs";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
-import { allCollections } from "~/features/cards/collections";
 import { visibleCards } from "~/features/cards/filters";
 import type { Card } from "~/features/cards/types";
 import { useScrollRestoration } from "~/lib/scroll";
 import { useStore } from "~/lib/store";
+import { cardImageSrc } from "~/features/cards/image";
+import { lightboxItem } from "~/features/cards/lightboxItem";
+import { usePhotoGrid } from "~/ui/Lightbox";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { BulkBar } from "./BulkBar";
 import { CardRow, CardTile } from "./CardItem";
@@ -18,6 +20,9 @@ import { Filters } from "./Filters";
 import { Stats } from "./Stats";
 import { toggleSelected, useListUi } from "./state";
 import { useActiveCollection } from "./useActiveCollection";
+import { useCollections } from "~/features/cards/useCollections";
+
+const NO_CARDS: readonly Card[] = [];
 
 function emptyText(hasCards: boolean, coll: string | null, canWrite: boolean): string {
   if (hasCards)
@@ -44,7 +49,7 @@ export function ListView() {
   const sort = useStore(prefs.sort);
   const { open } = useOverlayNav();
 
-  const colls = useMemo(() => allCollections(cards), [cards]);
+  const colls = useCollections().collections;
   const binder = coll !== null && view === "binder" && !ui.selecting;
   // While picking cards for the collection on screen, show the whole list so others can be added.
   const filterColl = ui.selecting && ui.bulkColl.trim() === coll ? null : coll;
@@ -60,6 +65,15 @@ export function ListView() {
     (c: Card) => (ui.selecting ? toggleSelected(c.id) : open({ card: c.id })),
     [ui.selecting, open],
   );
+
+  const toPhoto = useCallback(
+    (c: Card) => {
+      const src = cardImageSrc(c);
+      return src ? { ...lightboxItem(c, src), onDetails: () => open({ card: c.id }) } : null;
+    },
+    [open],
+  );
+  const photoOf = usePhotoGrid(binder ? NO_CARDS : rows, toPhoto);
 
   const Item = layout === "rows" ? CardRow : CardTile;
   let body;
@@ -78,6 +92,7 @@ export function ListView() {
             selected={ui.selected.has(c.id)}
             canWrite={canWrite}
             onActivate={activate}
+            onPhoto={photoOf(c)}
           />
         ))}
       </div>

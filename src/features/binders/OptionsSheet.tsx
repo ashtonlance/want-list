@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { POCKETS, type Pockets } from "~/app/prefs";
-import { allCollections, collectionCards } from "~/features/cards/collections";
+import { collectionCards } from "~/features/cards/collections";
 import type { Card } from "~/features/cards/types";
 import { cleanName, plural } from "~/lib/format";
 import { Select } from "~/ui/Select";
@@ -8,6 +8,7 @@ import { useToast } from "~/ui/Toast";
 import { shareCode } from "./shareCode";
 import { cardIdsIn, fillEmpty, repage, type Slots } from "./slots";
 import type { Binder } from "./types";
+import { useCollections } from "~/features/cards/useCollections";
 
 interface OptionsSheetProps {
   binder: Binder;
@@ -30,12 +31,13 @@ export function OptionsSheet({ binder: b, cards, local, onSave, onFill, onDelete
   const [confirming, setConfirming] = useState(false);
   const [showCode, setShowCode] = useState(false);
 
+  const { collections } = useCollections();
   const collOptions = useMemo(
     () => [
       { value: "", label: "Pick a collection" },
-      ...allCollections(cards).map((c) => ({ value: c.name, label: c.name })),
+      ...collections.map((c) => ({ value: c.name, label: c.name })),
     ],
-    [cards],
+    [collections],
   );
   const code = shareCode(b);
 

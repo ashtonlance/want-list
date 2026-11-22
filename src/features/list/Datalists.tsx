@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useCards } from "~/features/cards/api";
-import { allCollections, knownSets } from "~/features/cards/collections";
+import { knownSets } from "~/features/cards/collections";
+import { useCollections } from "~/features/cards/useCollections";
 
 export const SET_LIST = "setList";
 export const COLL_LIST = "collList";
@@ -9,7 +10,7 @@ export const COLL_LIST = "collList";
 export function Datalists() {
   const { cards } = useCards();
   const sets = useMemo(() => knownSets(cards), [cards]);
-  const colls = useMemo(() => allCollections(cards), [cards]);
+  const colls = useCollections().collections;
   return (
     <>
       <datalist id={SET_LIST}>

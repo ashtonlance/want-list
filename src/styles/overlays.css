@@ -76,3 +76,43 @@ body.selecting .toast {
   font-size: 22px;
   cursor: pointer;
 }
+.lightbox {
+  touch-action: pan-y pinch-zoom;
+  user-select: none;
+}
+.lightbox img {
+  transition: transform 0.18s ease-out;
+  -webkit-user-drag: none;
+}
+.lightbox .lb-details {
+  background: #fff;
+  color: #111114;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 22px;
+  font: 600 15px/1.2 inherit;
+  cursor: pointer;
+}
+.lb-nav {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  color: #ededf0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.lb-nav button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.lb-nav button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}

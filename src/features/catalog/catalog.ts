@@ -27,6 +27,8 @@ export interface Catalog {
   rarities: string[];
   cards: CatalogCard[];
   byPid: Map<number, CatalogCard>;
+  /** Sets announced but not out yet, soonest first, whether or not their cards are listed yet. */
+  upcoming: CatalogSet[];
 }
 
 export function parseCatalog(v: unknown): Catalog {
@@ -56,7 +58,13 @@ export function parseCatalog(v: unknown): Catalog {
     cards.push(c);
     byPid.set(c.pid, c);
   }
-  return { asOf: str(v.asOf) ?? "", sets, rarities, cards, byPid };
+  const upcoming = (Array.isArray(v.upcoming) ? v.upcoming : []).flatMap((s): CatalogSet[] => {
+    const a: unknown[] = Array.isArray(s) ? s : [];
+    return typeof a[0] === "string" && typeof a[2] === "string"
+      ? [{ name: a[0], jp: Boolean(a[1]), date: a[2] }]
+      : [];
+  });
+  return { asOf: str(v.asOf) ?? "", sets, rarities, cards, byPid, upcoming };
 }
 
 async function fetchCatalog(): Promise<Catalog> {

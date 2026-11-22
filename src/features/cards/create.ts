@@ -4,7 +4,7 @@ import { mergeDoc } from "~/data/docs";
 import { docKeys } from "~/data/keys";
 import { catalogQuery, type Catalog } from "~/features/catalog/catalog";
 import { catalogIdentity } from "~/features/explore/live";
-import type { PickCard } from "~/features/explore/picks";
+import { statusPatch, type PickCard } from "~/features/explore/picks";
 import type { LiveCard } from "~/features/explore/tcgdex";
 import { today } from "~/lib/format";
 import { bigImage } from "~/lib/images";
@@ -128,7 +128,7 @@ export function useAddCards() {
         return false;
       }
       try {
-        await mergeDoc("discover", p.id, { status: got ? "owned" : "added" });
+        await mergeDoc("discover", p.id, statusPatch(p, got ? "owned" : "added"));
         void qc.invalidateQueries({ queryKey: docKeys.discover });
       } catch {
         /* the card is on the list; the pick catches up on the next sync */

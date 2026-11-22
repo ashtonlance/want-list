@@ -1,10 +1,8 @@
 import { useState } from "react";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
-import { allCollections } from "~/features/cards/collections";
 import { findOnList, useAddCards, type WantOrGot } from "~/features/cards/create";
 import { isGot } from "~/features/cards/pricing";
-import type { Card } from "~/features/cards/types";
 import { formatDate, formatMoney } from "~/lib/format";
 import { HeroImage } from "~/ui/CardImage";
 import { useLightbox } from "~/ui/Lightbox";
@@ -15,6 +13,7 @@ import { useLiveCard } from "./live";
 import { ShopLinks } from "./ShopLinks";
 import { liveUi } from "./state";
 import type { LiveCard } from "./tcgdex";
+import { useCollections } from "~/features/cards/useCollections";
 
 /** A card from Explore's live data or the daily catalog: picture, today's price, and adding it. */
 export function LiveSheet({ id, onClose }: { id: string; onClose: () => void }) {
@@ -92,7 +91,7 @@ function LiveDetail({ card: d }: { card: LiveCard }) {
           {isGot(have) ? "✓ You have it" : "✓ On your list"}
         </div>
       ) : canWrite ? (
-        <LiveActions card={d} cards={cards} />
+        <LiveActions card={d} />
       ) : null}
       <ShopLinks name={d.name} set={d.set} number={d.number} pid={d.pid} />
     </>
@@ -100,11 +99,11 @@ function LiveDetail({ card: d }: { card: LiveCard }) {
 }
 
 /** Add to a collection as wanted or owned. */
-function LiveActions({ card: d, cards }: { card: LiveCard; cards: readonly Card[] }) {
+function LiveActions({ card: d }: { card: LiveCard }) {
   const { fromLive } = useAddCards();
   const [coll, setColl] = useState(() => liveUi.get().addTo);
   const [busy, setBusy] = useState(false);
-  const names = allCollections(cards).map((c) => c.name);
+  const names = useCollections().collections.map((c) => c.name);
 
   const add = async (want: WantOrGot) => {
     setBusy(true);

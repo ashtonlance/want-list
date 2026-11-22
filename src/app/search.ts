@@ -1,7 +1,7 @@
 import { oneOf, str } from "~/lib/json";
 
 /** Panels that open over any screen. */
-export type Panel = "account" | "add" | "options";
+export type Panel = "account" | "add" | "options" | "collections" | "sets";
 
 /**
  * Search params every screen understands. The open card sheet lives in the address, so the list
@@ -22,7 +22,7 @@ export function validateRootSearch(s: Record<string, unknown>): RootSearch {
     card: str(s.card) || undefined,
     pick: str(s.pick) || undefined,
     live: str(s.live) || undefined,
-    panel: oneOf(s.panel, ["account", "add", "options"] as const),
+    panel: oneOf(s.panel, ["account", "add", "options", "collections", "sets"] as const),
   };
 }
 
