@@ -1213,7 +1213,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
       return;
     }
     if (!state.discLoaded && db) { box.append(skeletonGrid("ex-grid", 6)); return; }
-    applyLivePicks(); livePicks();
+    applyLivePicks();
     const colls = exColls();
     if (!colls.length) { box.append(el("div", { class: "empty-state", text: "No suggestions yet. Ask Claude in chat to find cards for your collections." })); return; }
     const ALL = "__all";
@@ -1235,6 +1235,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
       && (!state.exCap || (s.market != null && s.market <= state.exCap))
       && (!state.exArtist || s.illustrator === state.exArtist)
       && (!q || [s.name, s.set, s.number, s.illustrator, s.rarity, s.coll].join(" ").toLowerCase().includes(q)));
+    livePicks(shown); // live TCGdex data only for the picks on screen, not every pick ever made
     if (state.exSort === "low") shown.sort((a, b) => (a.market ?? Infinity) - (b.market ?? Infinity));
     if (state.exSort === "high") shown.sort((a, b) => (b.market ?? -1) - (a.market ?? -1));
     const passed = all.filter(s => s.status === "passed").length;
@@ -1425,14 +1426,16 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
       if (!s.illustrator && d.illustrator) s.illustrator = d.illustrator;
     }
   }
-  function livePicks() {
+  function livePicks(list) {
     if (LV.picksRunning) return;
-    const ids = [...new Set(state.disc.map(s => s.tcgdexId).filter(id => id && !LV.data.has(id) && !LV.pickTried.has(id)))];
+    const ids = [...new Set(list.map(s => s.tcgdexId).filter(id => id && !LV.data.has(id) && !LV.pickTried.has(id)))];
     if (!ids.length) return;
     ids.forEach(id => LV.pickTried.add(id)); LV.picksRunning = true;
     tdMany(ids, () => {}).then(() => { LV.picksRunning = false; applyLivePicks(); if (state.mode === "explore" && state.exTab === "picks" && !busy) renderExplore(); });
   }
   /* Every card ever: the daily catalog (English and Japanese, with TCGplayer prices), endlessly scrolled. */
+  // TCGplayer shows $99,999.90 for listings with no real market; treat that as no price.
+  const realP = v => (v > 0 && v < 99999 ? v : 0);
   function allRows() {
     const C = B.catalog, key = [LV.lang, LV.allSort, LV.cap, C.asOf].join("|");
     if (LV.allKey === key) return LV.allRows;
@@ -1442,16 +1445,16 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     const sd = [], low = ["9999", "9999"];
     C.sets.forEach((x, i) => { const d = x[2] || ""; if (d && d <= low[x[1]]) { low[x[1]] = d; sd[i] = d; } else sd[i] = ""; });
     let idx = [];
-    for (let i = 0; i < cs.length; i++) { const r = cs[i]; if ((want < 0 || C.sets[r[2]][1] === want) && (!LV.cap || (r[5] > 0 && r[5] <= LV.cap))) idx.push(i); }
+    for (let i = 0; i < cs.length; i++) { const r = cs[i]; if ((want < 0 || C.sets[r[2]][1] === want) && (!LV.cap || (realP(r[5]) && r[5] <= LV.cap))) idx.push(i); }
     const nk = new Map(); const n = i => { let v = nk.get(i); if (v === undefined) nk.set(i, v = numKey(cs[i][3])); return v; };
-    if (LV.allSort === "high") idx.sort((a, b) => cs[b][5] - cs[a][5]);
-    else if (LV.allSort === "low") idx.sort((a, b) => (cs[a][5] || Infinity) - (cs[b][5] || Infinity));
+    if (LV.allSort === "high") idx.sort((a, b) => realP(cs[b][5]) - realP(cs[a][5]));
+    else if (LV.allSort === "low") idx.sort((a, b) => (realP(cs[a][5]) || Infinity) - (realP(cs[b][5]) || Infinity));
     else { const dir = LV.allSort === "old" ? -1 : 1; idx.sort((a, b) => { const da = sd[cs[a][2]], db = sd[cs[b][2]]; return (!da - !db) || dir * db.localeCompare(da) || cs[a][2] - cs[b][2] || dir * (n(b) - n(a)); }); }
     LV.allKey = key; LV.allRows = idx; return idx;
   }
   function catCard(i) {
     const C = B.catalog, r = C.cards[i], st = C.sets[r[2]], id = "cat:" + r[0];
-    if (!LV.data.has(id)) LV.data.set(id, { id, name: r[1], set: st[0], setId: "", number: String(r[3]), rarity: C.rarities[r[4]] || "", illustrator: "", img: tcgImg(r[0]), pid: r[0], market: r[5] || null, low: null, sub: "", upd: C.asOf, jp: !!st[1] });
+    if (!LV.data.has(id)) LV.data.set(id, { id, name: r[1], set: st[0], setId: "", number: String(r[3]), rarity: C.rarities[r[4]] || "", illustrator: "", img: tcgImg(r[0]), pid: r[0], market: realP(r[5]) || null, low: null, sub: "", upd: C.asOf, jp: !!st[1] });
     return LV.data.get(id);
   }
   function catTile(i) {
