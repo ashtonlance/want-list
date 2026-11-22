@@ -88,10 +88,16 @@
   async function readCell(cell, onStatus) {
     const w = await getWorker(onStatus);
     const flat = flatness(cell);
-    const topC = strip(cell, 0, 0.2, 0, 1, 2), botC = strip(cell, 0.8, 1, 0, 1, 3);
+    const topC = strip(cell, 0, 0.2, 0, 1, 2.4), botC = strip(cell, 0.8, 1, 0, 1, 3);
     const top = wordsOf((await w.recognize(topC, {}, { blocks: true, text: true })).data);
     const bot = wordsOf((await w.recognize(botC, {}, { blocks: true, text: true })).data);
     return { top, bot, flat, topC, botC };
+  }
+  /* Second look at the name with light and dark swapped: white names on dark art read far better inverted. */
+  async function rereadTop(read) {
+    const w = await getWorker(), c = document.createElement("canvas"); c.width = read.topC.width; c.height = read.topC.height;
+    const ctx = c.getContext("2d"); ctx.filter = "invert(1)"; ctx.drawImage(read.topC, 0, 0);
+    return wordsOf((await w.recognize(c, {}, { blocks: true, text: true })).data);
   }
 
   /* ---------- matching ---------- */
@@ -137,35 +143,78 @@
   function textsOf(words) {
     const clean = words.filter(w => /[a-z]/i.test(w.t)).map(w => ({ ...w, n: norm(w.t) })).filter(w => w.n && !STOP.test(w.n.replace(/ /g, "")));
     const maxH = Math.max(0, ...clean.map(w => w.h));
-    const big = clean.filter(w => w.h >= maxH * 0.6 && w.c > 25);
+    const big = clean.filter(w => w.h >= maxH * 0.6 && w.c > 10);
     return { big: big.map(w => w.n).join(" ").replace(/ /g, ""), all: clean.map(w => w.n).join(" ").replace(/ /g, ""), bigWords: big.map(w => w.n).join(" ") };
   }
-  const rank = (a, b) => (b.score - a.score) || (!!b.e.mine - !!a.e.mine) || (a.e.jp - b.e.jp) || (b.e.date || "").localeCompare(a.e.date || "");
-
-  /* Best catalog matches for one read pocket. conf: high | medium | low | empty | none */
-  function match(idx, read) {
-    const t = textsOf(read.top), nums = numbersIn(read.bot).concat(numbersIn(read.top).filter(n => /[A-Z]/.test(n)));
-    const hint = (t.bigWords || "").trim();
-    const textChars = (t.all.length + read.bot.map(w => w.t).join("").replace(/\W/g, "").length);
-    if (read.flat < 14 && textChars < 4) return { conf: "empty", alts: [], hint: "" };
-    const scored = new Map();
-    const consider = (e, s) => { const cur = scored.get(e.i); if (!cur || cur.score < s) scored.set(e.i, { e, score: s }); };
-    const sim = e => Math.max(nameSim(e.sq, t.big), nameSim(e.sq, t.all) - 0.08) + (e.mine ? 0.06 : 0);
-    for (const n of nums) for (const e of idx.byNo.get(n) || []) { const s = sim(e); if (s >= 0.45) consider(e, s + 0.5); }
-    if (t.all.length >= 3) {
-      let bestName = null, bestS = 0; const cands = [];
-      for (const n of idx.names) { const s = Math.max(nameSim(n, t.big), nameSim(n, t.all) - 0.08); if (s >= 0.6) cands.push([n, s + n.length / 400]); if (s > bestS || (s === bestS && n.length > (bestName || "").length)) { bestS = s; bestName = n; } }
-      cands.sort((a, b) => b[1] - a[1]);
-      for (const [n, s] of cands.slice(0, 4)) for (const e of idx.byName.get(n)) consider(e, s + (e.mine ? 0.06 : 0) + (nums.includes(e.nno) ? 0.5 : 0));
+  /* ---------- comparing the pocket with each printing's picture ---------- */
+  const PW = 40, PH = 56, thumbs = new Map();
+  function pixels(src, sx, sy, sw, sh, w, h) {
+    const c = document.createElement("canvas"); c.width = w; c.height = h; const ctx = c.getContext("2d", { willReadFrequently: true });
+    ctx.imageSmoothingQuality = "high"; ctx.drawImage(src, sx, sy, sw, sh, 0, 0, w, h); return ctx.getImageData(0, 0, w, h).data;
+  }
+  function loadThumb(pid) {
+    if (!thumbs.has(pid)) thumbs.set(pid, new Promise(res => { const im = new Image(); im.crossOrigin = "anonymous"; im.decoding = "async";
+      const t = setTimeout(() => res(null), 8000); im.onload = () => { clearTimeout(t); res(im); }; im.onerror = () => { clearTimeout(t); res(null); };
+      im.src = "https://tcgplayer-cdn.tcgplayer.com/product/" + pid + "_200w.jpg"; }));
+    return thumbs.get(pid);
+  }
+  /* Best normalised correlation of a printing's picture against the pocket, trying a few sizes and offsets
+     because the card never sits exactly in the middle of its sleeve. */
+  function pocketSig(cell) { return pixels(cell, 0, 0, cell.width, cell.height, PW, PH); }
+  function imageScore(sig, im) {
+    let best = -1;
+    for (const s of [0.86, 0.91, 0.96, 1]) {
+      const w = Math.round(PW * s), h = Math.min(PH, Math.round(w * 88 / 63)), cp = pixels(im, 0, 0, im.naturalWidth, im.naturalHeight, w, h);
+      const mx = PW - w, my = PH - h;
+      for (let oy = Math.max(0, (my >> 1) - 3); oy <= Math.min(my, (my >> 1) + 3); oy++) for (let ox = Math.max(0, (mx >> 1) - 3); ox <= Math.min(mx, (mx >> 1) + 3); ox++) {
+        let tot = 0;
+        for (let ch = 0; ch < 3; ch++) {
+          let sa = 0, sb = 0, saa = 0, sbb = 0, sab = 0, n = 0;
+          for (let y = 2; y < h - 2; y++) for (let x = 2; x < w - 2; x++) {
+            const a = sig[((y + oy) * PW + x + ox) * 4 + ch], b = cp[(y * w + x) * 4 + ch]; sa += a; sb += b; saa += a * a; sbb += b * b; sab += a * b; n++; }
+          const va = saa - sa * sa / n, vb = sbb - sb * sb / n; tot += va > 0 && vb > 0 ? (sab - sa * sb / n) / Math.sqrt(va * vb) : 0;
+        }
+        if (tot / 3 > best) best = tot / 3;
+      }
     }
-    const list = [...scored.values()].sort(rank);
-    if (!list.length) return { conf: "none", alts: [], hint, nums };
-    const top = list[0], numHit = nums.includes(top.e.nno);
-    const conf = numHit && top.score >= 1.3 ? "high" : (numHit && top.score >= 1.05) || (!nums.length && top.score >= 0.92 && top.e.mine) ? "medium" : "low";
-    const alts = []; const seen = new Set();
-    for (const x of list) { const k = x.e.pid; if (seen.has(k)) continue; seen.add(k); alts.push(x.e); if (alts.length >= 6) break; }
-    return { conf, alts, hint, nums };
+    return best;
   }
 
-  window.WLScan = { getWorker, fileToImage, toCanvas, rectify, readCell, buildIndex, match, norm, normNo, CW, CH };
+  const prior = e => (e.mine ? 0.06 : 0) - (e.jp ? 0.05 : 0);
+  function nameCands(idx, t, nums) {
+    const out = new Map();
+    for (const n of idx.names) { const s = Math.max(nameSim(n, t.big), nameSim(n, t.all) - 0.08); if (s >= 0.55) out.set(n, Math.max(out.get(n) || 0, s)); }
+    for (const no of nums) for (const e of idx.byNo.get(no) || []) { const s = Math.max(nameSim(e.sq, t.big), nameSim(e.sq, t.all) - 0.08); if (s >= 0.4) out.set(e.sq, Math.max(out.get(e.sq) || 0, s)); }
+    return [...out.entries()].sort((a, b) => (b[1] - a[1]) || (b[0].length - a[0].length));
+  }
+
+  /* Read one pocket and rank catalog printings. Returns { conf: high | medium | low | empty | none, alts, hint }.
+     Nothing is ever saved from here; the app asks the person to confirm every pocket. */
+  async function matchCell(idx, read, cell) {
+    let t = textsOf(read.top); const nums = numbersIn(read.bot).concat(numbersIn(read.top).filter(n => /[A-Z]/.test(n)));
+    const textChars = t.all.length + read.bot.map(w => w.t).join("").replace(/\W/g, "").length;
+    if (read.flat < 14 && textChars < 4) return { conf: "empty", alts: [], hint: "" };
+    let names = nameCands(idx, t, nums);
+    if (!names.length || names[0][1] < 0.8) {
+      const t2 = textsOf(await rereadTop(read)), n2 = nameCands(idx, t2, nums);
+      if (n2.length && (!names.length || n2[0][1] > names[0][1])) { names = n2; t = t2; }
+    }
+    const hint = (t.bigWords || "").trim();
+    if (!names.length) return { conf: "none", alts: [], hint, nums };
+    const topS = names[0][1], pool = [];
+    for (const [n, s] of names.slice(0, 3)) { if (s < topS - 0.15) continue; for (const e of idx.byName.get(n)) pool.push({ e, ns: s, num: nums.includes(e.nno) }); }
+    pool.sort((a, b) => (b.num - a.num) || (b.ns - a.ns) || (!!b.e.mine - !!a.e.mine) || (a.e.jp - b.e.jp) || (b.e.date || "").localeCompare(a.e.date || ""));
+    const look = pool.slice(0, 16), sig = pocketSig(cell);
+    const ims = await Promise.all(look.map(x => loadThumb(x.e.pid)));
+    look.forEach((x, i) => { x.img = ims[i] ? imageScore(sig, ims[i]) : 0; x.score = x.ns + (x.num ? 0.4 : 0) + 1.2 * x.img + prior(x.e); });
+    for (const x of pool.slice(16)) x.score = x.ns + (x.num ? 0.4 : 0) + prior(x.e) - 0.2;
+    pool.sort((a, b) => b.score - a.score);
+    const best = pool[0], second = pool.find(x => x.e.pid !== best.e.pid);
+    const margin = second ? (best.img || 0) - (second.img || 0) : 1;
+    const conf = best.ns >= 0.8 && (best.img >= 0.55 && (margin >= 0.06 || best.num)) ? "high"
+      : best.ns >= 0.7 && best.img >= 0.45 ? "medium" : "low";
+    return { conf, alts: pool.slice(0, 8).map(x => x.e), hint, nums, img: best.img, margin };
+  }
+
+  window.WLScan = { getWorker, fileToImage, toCanvas, rectify, readCell, buildIndex, matchCell, norm, normNo, CW, CH };
 })();
