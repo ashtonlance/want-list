@@ -1,0 +1,12 @@
+.pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:14px 10px}
+.pick-grid > .hint{grid-column:1/-1}
+.pick{border:0;background:none;padding:0;display:flex;flex-direction:column;gap:3px;text-align:left;cursor:pointer;min-width:0;color:var(--ink)}
+.pick.dim{opacity:.45}
+.pick-img{display:block;aspect-ratio:63/88;border-radius:5px;overflow:hidden;background:var(--sunk);position:relative;box-shadow:var(--card-shadow);margin-bottom:3px}
+.pick-img img{width:100%;height:100%;object-fit:cover;display:block}
+.pick-img .noimg,.bpocket .noimg{position:absolute;inset:0;display:grid;place-items:center;padding:6px;text-align:center;font-size:11px;font-weight:600;color:var(--muted);line-height:1.2}
+.bpocket .noimg{color:var(--binder-muted)}
+.pick-name{font-size:12.5px;font-weight:600;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-sub{font-size:11px;color:var(--muted);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pick-tag{font:600 11.5px/1.2 var(--f-num);font-variant-numeric:tabular-nums}
+@media (max-width:620px){.pick-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}

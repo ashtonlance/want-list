@@ -1,0 +1,10 @@
+/* account sheet */
+.acct{display:flex;flex-direction:column;gap:14px}
+.acct-who{display:flex;align-items:center;gap:12px}
+.acct-who .avatar{width:44px;height:44px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font-weight:700;font-size:18px;flex:0 0 auto}
+.acct-who div{min-width:0;display:flex;flex-direction:column;gap:2px}
+.acct-who b{overflow-wrap:anywhere}
+.acct form{display:flex;flex-direction:column;gap:10px}
+.acct .msg{font-size:14px;line-height:1.45;color:var(--ink-2);background:var(--sunk);border-radius:10px;padding:12px}
+.about{font-size:13px;color:var(--muted);line-height:1.5;display:flex;flex-direction:column;gap:8px}
+.about p{margin:0}

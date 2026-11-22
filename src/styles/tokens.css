@@ -1,0 +1,31 @@
+/* Mostly neutral: ink and greys carry the interface, card images carry the color. */
+:root{
+  --bg:#F5F5F7; --surface:#FFFFFF; --sunk:#EFEFF2; --ink:#111113; --ink-2:#3A3A3F; --muted:#6E6E76; --faint:#A1A1A8;
+  --line:rgba(17,17,19,.09); --line-2:rgba(17,17,19,.16);
+  --accent:#111113; --accent-ink:#FFFFFF; --danger:#C2261B;
+  --bar:rgba(255,255,255,.86); --scrim:rgba(0,0,0,.42); --lb:rgba(10,10,12,.92);
+  --shadow:0 1px 2px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.05);
+  --card-shadow:0 1px 2px rgba(0,0,0,.08),0 3px 10px rgba(0,0,0,.08);
+  --binder:#1D1D20; --sleeve:#2A2A2F; --pocket:rgba(255,255,255,.06); --pocket-line:rgba(255,255,255,.13); --binder-ink:#F2F2F4; --binder-muted:#9C9CA4;
+  --f:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+  --f-num:ui-rounded,-apple-system,BlinkMacSystemFont,"SF Pro Rounded","Segoe UI",system-ui,sans-serif;
+  --r:16px; --r-sm:10px;
+  --tb:calc(56px + env(safe-area-inset-top,0px));
+  --tab:calc(56px + env(safe-area-inset-bottom,0px));
+  --gx:max(16px,env(safe-area-inset-left,0px));
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#000000; --surface:#151517; --sunk:#232326; --ink:#F4F4F6; --ink-2:#D2D2D8; --muted:#8E8E96; --faint:#5E5E66;
+  --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15);
+  --accent:#F4F4F6; --accent-ink:#000000; --danger:#FF6A5F;
+  --bar:rgba(10,10,11,.84); --scrim:rgba(0,0,0,.6);
+  --shadow:none; --card-shadow:0 1px 2px rgba(0,0,0,.5),0 3px 10px rgba(0,0,0,.4);
+  --binder:#0E0E10; --sleeve:#1C1C20; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#000000; --surface:#151517; --sunk:#232326; --ink:#F4F4F6; --ink-2:#D2D2D8; --muted:#8E8E96; --faint:#5E5E66;
+  --line:rgba(255,255,255,.08); --line-2:rgba(255,255,255,.15);
+  --accent:#F4F4F6; --accent-ink:#000000; --danger:#FF6A5F;
+  --bar:rgba(10,10,11,.84); --scrim:rgba(0,0,0,.6);
+  --shadow:none; --card-shadow:0 1px 2px rgba(0,0,0,.5),0 3px 10px rgba(0,0,0,.4);
+  --binder:#0E0E10; --sleeve:#1C1C20; color-scheme:dark}

@@ -1,0 +1,11 @@
+dist
+node_modules
+src/routeTree.gen.ts
+catalog.json
+prices.json
+seed.json
+package-lock.json
+config.js
+setup.sql
+tools
+.github

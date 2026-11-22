@@ -1,0 +1,30 @@
+/* ---------- top bar ---------- */
+.topbar{position:sticky;top:0;z-index:30;background:var(--bar);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);
+  padding:env(safe-area-inset-top,0px) var(--gx) 0;border-bottom:.5px solid transparent;transition:border-color .2s}
+.topbar.scrolled{border-bottom-color:var(--line-2)}
+.topbar-in{max-width:980px;margin:0 auto;height:56px;display:flex;align-items:center;gap:12px}
+.tb-title{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.tb-title small{font-size:12px;font-weight:500;color:var(--muted);line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-title h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.tb-acts{display:flex;align-items:center;gap:8px}
+.icon-btn{width:38px;height:38px;border-radius:999px;border:0;background:var(--sunk);display:grid;place-items:center;cursor:pointer;color:var(--ink);padding:0}
+.icon-btn svg{width:20px;height:20px}
+.icon-btn.primary{background:var(--accent);color:var(--accent-ink)}
+.acct-btn{height:38px;min-width:38px;border-radius:999px;border:0;background:var(--sunk);cursor:pointer;font-weight:600;font-size:14px;padding:0 14px;color:var(--ink)}
+.acct-btn.avatar{padding:0;width:38px;background:var(--ink);color:var(--bg);font-size:15px}
+
+/* ---------- bottom tab bar ---------- */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--bar);-webkit-backdrop-filter:saturate(1.6) blur(20px);backdrop-filter:saturate(1.6) blur(20px);
+  border-top:.5px solid var(--line-2);padding:0 var(--gx) env(safe-area-inset-bottom,0px);display:flex;justify-content:center}
+.tabbar .tabs{display:flex;width:100%;max-width:520px}
+.tabbar button{flex:1;border:0;background:none;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;color:var(--faint);font-size:11px;font-weight:600;letter-spacing:.01em}
+.tabbar button svg{width:24px;height:24px}
+.tabbar button[aria-pressed=true]{color:var(--ink)}
+body.selecting .tabbar{display:none}
+
+/* ---------- summary ---------- */
+.stats{display:flex;flex-wrap:wrap;gap:10px 28px;padding:2px 2px 0}
+.stats > span{display:flex;flex-direction:column;gap:1px;font-size:12.5px;color:var(--muted);line-height:1.25;min-width:0}
+.stats b{color:var(--ink);font:700 22px/1.1 var(--f-num);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.banner{font-size:14px;color:var(--ink-2);background:var(--surface);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow);line-height:1.45}
+.banner.tap{cursor:pointer}

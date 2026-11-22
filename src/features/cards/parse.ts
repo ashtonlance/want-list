@@ -1,0 +1,71 @@
+import { bool, isRecord, num, numOrNull, numRecord, oneOf, str, strArray, strish, type JsonRecord } from "~/lib/json";
+import type { Ask, Card, Deal, Listing, TcgPrice } from "./types";
+
+function parseAsk(v: unknown): Ask | null {
+  if (!isRecord(v)) return null;
+  return {
+    kind: oneOf(v.kind, ["ask", "market", "price", "none"] as const) ?? "none",
+    amount: num(v.amount) ?? null,
+    source: str(v.source) ?? "",
+    asOf: str(v.asOf) ?? "",
+  };
+}
+
+function parseDeal(v: unknown): Deal | null {
+  if (!isRecord(v)) return null;
+  return {
+    site: str(v.site) ?? "",
+    seller: str(v.seller) ?? "",
+    condition: str(v.condition) ?? "",
+    url: str(v.url) ?? "",
+    price: num(v.price) ?? null,
+    shipping: num(v.shipping) ?? null,
+    total: num(v.total) ?? null,
+    checkedAt: str(v.checkedAt) ?? "",
+  };
+}
+
+function parseListing(v: unknown): Listing | null {
+  if (!isRecord(v)) return null;
+  const url = str(v.url);
+  return url ? { url, site: str(v.site) ?? "", addedAt: str(v.addedAt) ?? "" } : null;
+}
+
+export function parseTcg(v: unknown): TcgPrice | null {
+  if (!isRecord(v)) return null;
+  const pid = num(v.productId) ?? (str(v.productId) ? Number(v.productId) : null);
+  return {
+    sub: str(v.sub) ?? "",
+    market: numOrNull(v.market) ?? null,
+    low: numOrNull(v.low) ?? null,
+    productId: pid != null && Number.isFinite(pid) ? pid : null,
+    asOf: str(v.asOf) ?? "",
+  };
+}
+
+/** Reads one stored card. Missing or malformed fields fall back to empty values rather than failing. */
+export function parseCard(id: string, d: JsonRecord): Card {
+  return {
+    id,
+    name: str(d.name) ?? "",
+    number: strish(d.number) ?? "",
+    variant: str(d.variant) ?? "",
+    set: str(d.set) ?? "",
+    lang: d.lang === "JP" ? "JP" : "EN",
+    note: str(d.note) ?? "",
+    addedAt: str(d.addedAt) ?? "",
+    ask: parseAsk(d.ask),
+    deal: parseDeal(d.deal),
+    listing: parseListing(d.listing),
+    dhUrl: str(d.dhUrl) || null,
+    img: str(d.img) || null,
+    imgSource: str(d.imgSource) ?? "",
+    priority: bool(d.priority) ?? false,
+    status: d.status === "got" ? "got" : "want",
+    checkRequested: bool(d.checkRequested) ?? false,
+    order: num(d.order) ?? null,
+    collections: strArray(d.collections),
+    slots: numRecord(d.slots),
+    tcg: parseTcg(d.tcg),
+  };
+}

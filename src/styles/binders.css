@@ -1,0 +1,48 @@
+/* ---------- binder views ---------- */
+.binder{display:flex;flex-direction:column;gap:14px}
+.spread{background:var(--binder);border-radius:var(--r);padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.page{background:var(--sleeve);border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.page-label{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--binder-muted)}
+.pockets{display:grid;grid-template-columns:repeat(var(--cols,3),minmax(0,1fr));gap:7px}
+.pocket{display:block;width:100%;max-width:100%;aspect-ratio:63/88;border-radius:5px;background:var(--pocket);border:1px solid var(--pocket-line);position:relative;overflow:hidden;padding:0;min-width:0;color:var(--binder-ink)}
+button.pocket{cursor:pointer}
+.pocket img{width:100%;height:100%;object-fit:cover;display:block}
+.pocket.need img{filter:grayscale(1);opacity:.36}
+.pocket .lbl{position:absolute;left:4px;right:4px;bottom:4px;font:600 10.5px/1.2 var(--f-num);color:var(--binder-ink);background:rgba(0,0,0,.7);border-radius:4px;padding:3px 4px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pocket .lbl.need{background:rgba(255,255,255,.92);color:#111}
+.pocket .noimg{position:absolute;inset:0;display:grid;place-items:center;padding:6px;text-align:center;font-size:11px;color:var(--binder-muted);line-height:1.2}
+.pocket-wrap{position:relative;min-width:0}
+.mv{position:absolute;top:4px;right:4px;display:flex;gap:3px;z-index:2}
+.mv button{width:26px;height:26px;border-radius:7px;border:0;background:rgba(0,0,0,.66);color:#fff;font-size:11px;cursor:pointer;line-height:1}
+.mv button:disabled{opacity:.3;cursor:default}
+@media (max-width:700px){.spread{grid-template-columns:1fr;padding:10px}}
+.bhead{display:flex;flex-direction:column;gap:4px}
+.bhead-top{display:flex;gap:10px;align-items:center;justify-content:space-between}
+.bhead h2{margin:0;font-size:20px;font-weight:700;letter-spacing:-.01em;line-height:1.2;min-width:0;overflow-wrap:anywhere}
+.bsum{margin:0;color:var(--muted);font-size:13.5px}
+.bnav{display:flex;align-items:center;justify-content:space-between;gap:8px;font-weight:600;font-size:14px;color:var(--ink-2)}
+.bspread.one{grid-template-columns:1fr}
+.bpocket{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.bpocket.empty{display:grid;place-items:center;border-style:dashed;background:transparent}
+.bpocket .plus{font-size:24px;line-height:1;color:var(--binder-muted);font-weight:300}
+.bpocket .own-mark{position:absolute;top:4px;right:4px;width:20px;height:20px;border-radius:50%;background:#fff;color:#111;font:700 12px/20px var(--f);text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.bpocket.moving{outline:3px solid #fff;outline-offset:-3px}
+.bpocket.target{box-shadow:inset 0 0 0 2px rgba(255,255,255,.35)}
+.movebar{position:sticky;top:calc(var(--tb) + 8px);z-index:15;display:flex;gap:10px;align-items:center;justify-content:space-between;background:var(--ink);color:var(--bg);border-radius:var(--r);padding:8px 8px 8px 16px;font-weight:600;font-size:14px}
+.movebar .btn{background:var(--bg);color:var(--ink)}
+.binder-tools{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+
+.sheet-tabs{display:flex;width:100%;margin-bottom:10px}
+.sheet-tabs button{flex:1}
+.pick-q{margin-bottom:8px}
+.pick-ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.pick-ctrls select{width:auto;flex:1 1 160px;min-height:38px;font-size:14px}
+.chk{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:var(--ink-2);min-height:40px}
+.chk input{width:18px;height:18px;accent-color:var(--ink)}
+.pocket-detail{display:grid;grid-template-columns:110px 1fr;gap:16px;align-items:start;margin-bottom:16px}
+.pocket-detail img{width:110px;border-radius:6px;box-shadow:var(--card-shadow)}
+.pocket-detail > div:only-child{grid-column:1/-1}
+.pd-status{margin-top:8px;font-size:14px;font-weight:600}
+.sheet-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sheet-acts .btn{min-height:48px;text-align:center;white-space:normal}
+.sheet-acts .btn.primary{grid-column:1/-1}
