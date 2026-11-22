@@ -20,7 +20,10 @@ export const prefs = {
   coll: createPersistedStore("wl-coll", nullable, fromNullable),
   view: createPersistedStore<CollView>("wl-view", (r) => (r === "binder" ? "binder" : "list")),
   pockets: createPersistedStore<Pockets>("wl-pockets", (r) => asPockets(Number(r)) ?? 9),
-  sort: createPersistedStore<ListSort>("wl-sort", (r) => LIST_SORTS.find((s) => s.value === r)?.value ?? "list"),
+  sort: createPersistedStore<ListSort>(
+    "wl-sort",
+    (r) => LIST_SORTS.find((s) => s.value === r)?.value ?? "list",
+  ),
   layout: createPersistedStore<ListLayout>("wl-layout", (r) => (r === "rows" ? "rows" : "grid")),
   section: createPersistedStore<Section>("wl-mode", (r) => (r === "explore" || r === "binders" ? r : "list")),
   exploreTab: createPersistedStore<ExploreTab>("wl-extab", (r) => (r === "picks" ? "picks" : "live")),

@@ -20,7 +20,7 @@ export function today(): string {
 }
 
 export function slugify(s: string | null | undefined): string {
-  return String(s ?? "")
+  return (s ?? "")
     .toLowerCase()
     .replace(/&/g, " ")
     .replace(/[^a-z0-9]+/g, "-")
@@ -30,10 +30,7 @@ export function slugify(s: string | null | undefined): string {
 
 /** Collection and binder names: single spaces, at most 60 characters. */
 export function cleanName(s: string | null | undefined): string {
-  return String(s ?? "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 60);
+  return (s ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
 }
 
 /** Card numbers sort by their digits; letter-prefixed numbers (TG05, SV052) sort after plain ones. */

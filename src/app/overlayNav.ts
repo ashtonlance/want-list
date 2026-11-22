@@ -30,7 +30,12 @@ export function useOverlayNav() {
       router.history.back();
       return;
     }
-    void navigate({ to: ".", search: (prev) => ({ ...prev, ...NO_OVERLAY }), replace: true, resetScroll: false });
+    void navigate({
+      to: ".",
+      search: (prev) => ({ ...prev, ...NO_OVERLAY }),
+      replace: true,
+      resetScroll: false,
+    });
   }, [navigate, router]);
 
   return { open, close };

@@ -11,7 +11,12 @@ export function Seg<T extends string>({ label, value, options, onChange, classNa
   return (
     <div className={"seg" + (className ? " " + className : "")} role="group" aria-label={label}>
       {options.map((o) => (
-        <button key={o.value} type="button" aria-pressed={value === o.value} onClick={() => onChange(o.value)}>
+        <button
+          key={o.value}
+          type="button"
+          aria-pressed={value === o.value}
+          onClick={() => onChange(o.value)}
+        >
           {o.label}
         </button>
       ))}

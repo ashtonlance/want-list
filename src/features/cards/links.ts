@@ -34,7 +34,12 @@ function queryText(c: LinkCard): string {
 
 function dhLink(c: LinkCard): ShopLink {
   if (c.dhUrl) return { label: "DoubleHolo", href: c.dhUrl, title: "Open this card on DoubleHolo" };
-  if (c.set) return { label: "DoubleHolo", href: dhSetUrl(c.set, c.lang === "JP"), title: "Open this card's set on DoubleHolo" };
+  if (c.set)
+    return {
+      label: "DoubleHolo",
+      href: dhSetUrl(c.set, c.lang === "JP"),
+      title: "Open this card's set on DoubleHolo",
+    };
   return {
     label: "DoubleHolo",
     href: `https://doubleholo.com/pokemon/${slugify(c.name.split(" ")[0])}`,
@@ -72,7 +77,12 @@ export function marketLinks(c: LinkCard): ShopLink[] {
 }
 
 /** Shop links for a card that isn't on the list yet (a pick or a live card). */
-export function quickShopLinks(c: { name: string; set: string; number: string; pid: number | null }): ShopLink[] {
+export function quickShopLinks(c: {
+  name: string;
+  set: string;
+  number: string;
+  pid: number | null;
+}): ShopLink[] {
   return [
     { label: "TCGplayer", href: c.pid ? tcgProductUrl(c.pid) : tcgSearchUrl(`${c.name} ${c.number}`) },
     { label: "eBay", href: ebayBuyNowUrl(`${c.name} ${c.set} ${c.number} pokemon`) },

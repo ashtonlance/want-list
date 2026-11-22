@@ -53,8 +53,6 @@ export function feedRows(cat: Catalog, { lang, sort, cap }: FeedOptions): number
     const sb = cs[b]?.set ?? 0;
     const da = dates[sa] ?? "";
     const db = dates[sb] ?? "";
-    return (
-      Number(!da) - Number(!db) || dir * db.localeCompare(da) || sa - sb || dir * (n(b) - n(a))
-    );
+    return Number(!da) - Number(!db) || dir * db.localeCompare(da) || sa - sb || dir * (n(b) - n(a));
   });
 }

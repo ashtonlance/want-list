@@ -1,11 +1,11 @@
 import type { Session } from "@supabase/supabase-js";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, use, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { queryKeys } from "~/data/keys";
 import { supabase } from "~/lib/supabase";
 
 interface Auth {
-  /** False until the saved session has been read. */
+  /** False until the saved session has been read and, if signed in, the account checked. */
   ready: boolean;
   email: string | null;
   /** True once the signed-in account is confirmed as an editor of the list. */
@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
   const [refused, setRefused] = useState(false);
+  const qc = useQueryClient();
 
   useEffect(() => {
     let live = true;
@@ -35,8 +36,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(data.session);
       setReady(true);
     });
-    const { data } = supabase.auth.onAuthStateChange((_event, next) => {
+    const { data } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next);
+      // What the database lets you read can depend on who you are: fetch everything again.
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") void qc.invalidateQueries();
       setRefused(false);
       setReady(true);
     });
@@ -44,7 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       live = false;
       data.subscription.unsubscribe();
     };
-  }, []);
+  }, [qc]);
 
   const email = session?.user.email?.toLowerCase() ?? null;
   const editor = useQuery({
@@ -60,8 +63,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<Auth>(
-    () => ({ ready, email, canWrite: editor.data === true && !refused, markReadOnly, signOut }),
-    [ready, email, editor.data, refused, markReadOnly, signOut],
+    () => ({
+      ready: ready && (email === null || !editor.isPending),
+      email,
+      canWrite: editor.data === true && !refused,
+      markReadOnly,
+      signOut,
+    }),
+    [ready, email, editor.isPending, editor.data, refused, markReadOnly, signOut],
   );
   return <AuthContext value={value}>{children}</AuthContext>;
 }

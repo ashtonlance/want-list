@@ -49,7 +49,7 @@ export const tdSetOf = (id: string): string => id.slice(0, id.lastIndexOf("-"));
 
 /** TCGdex also lists Pokémon TCG Pocket, the phone game; those cards can't be bought, so they're left out. */
 export const isPocket = (setId: string, img: string | null | undefined): boolean =>
-  /^(P-[A-Z]|[A-Z]\d+[a-z]?)$/.test(setId) || /\/tcgp\//.test(img ?? "");
+  /^(P-[A-Z]|[A-Z]\d+[a-z]?)$/.test(setId) || (img ?? "").includes("/tcgp/");
 
 const SUB_ORDER = [
   "holofoil",
@@ -72,7 +72,9 @@ export function normalizeTdCard(j: unknown): LiveCard {
     return isRecord(v) ? (num(v.marketPrice) ?? num(v.midPrice) ?? null) : null;
   };
   const sub =
-    SUB_ORDER.find((k) => subs.includes(k) && priceOf(k) != null) ?? subs.find((k) => priceOf(k) != null) ?? subs[0];
+    SUB_ORDER.find((k) => subs.includes(k) && priceOf(k) != null) ??
+    subs.find((k) => priceOf(k) != null) ??
+    subs[0];
   const v = sub ? pricing[sub] : undefined;
   const variant = isRecord(v) ? v : null;
   const detailed = Array.isArray(d.variants_detailed) ? d.variants_detailed : [];

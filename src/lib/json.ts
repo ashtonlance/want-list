@@ -2,7 +2,8 @@
 
 export type JsonRecord = Record<string, unknown>;
 
-export const isRecord = (v: unknown): v is JsonRecord => typeof v === "object" && v !== null && !Array.isArray(v);
+export const isRecord = (v: unknown): v is JsonRecord =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
 
 export const str = (v: unknown): string | undefined => (typeof v === "string" ? v : undefined);
 

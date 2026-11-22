@@ -15,25 +15,28 @@ export function CardImage({ src, name, alt = "", ...rest }: CardImageProps) {
   return <img src={src} alt={alt} loading="lazy" decoding="async" onError={() => setFailed(src)} {...rest} />;
 }
 
-/** The large picture at the top of a card sheet: the small image straight away, the big one once it has loaded. */
+/**
+ * The large picture at the top of a card sheet: the small image straight away, the big one once it
+ * has loaded. Give it `key={src}` so a new card starts fresh.
+ */
 export function HeroImage({ src, name }: { src: string; name: string }) {
-  const [shown, setShown] = useState(src);
+  const [bigLoaded, setBigLoaded] = useState(false);
   const [failed, setFailed] = useState(false);
+  const big = bigImage(src);
   useEffect(() => {
-    setShown(src);
-    setFailed(false);
-    const big = bigImage(src);
     if (big === src) return;
     let live = true;
     const pre = new Image();
     pre.onload = () => {
-      if (live) setShown(big);
+      if (live) setBigLoaded(true);
     };
     pre.src = big;
     return () => {
       live = false;
     };
-  }, [src]);
+  }, [src, big]);
   if (failed) return <span className="noimg">{name}</span>;
-  return <img src={shown} alt={`${name} card`} decoding="async" onError={() => setFailed(true)} />;
+  return (
+    <img src={bigLoaded ? big : src} alt={`${name} card`} decoding="async" onError={() => setFailed(true)} />
+  );
 }

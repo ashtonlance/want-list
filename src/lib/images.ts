@@ -5,7 +5,7 @@ export function tcgImage(productId: number | string, big = false): string {
 
 /** The large version of a small TCGplayer or TCGdex image, or the same URL when there isn't one. */
 export function bigImage(src: string): string {
-  if (/_400w\.jpg$/.test(src)) return src.replace(/_400w\.jpg$/, "_in_1000x1000.jpg");
+  if (src.endsWith("_400w.jpg")) return src.slice(0, -"_400w.jpg".length) + "_in_1000x1000.jpg";
   if (/assets\.tcgdex\.net\/.+\/low\.webp$/.test(src)) return src.replace(/low\.webp$/, "high.webp");
   return src;
 }

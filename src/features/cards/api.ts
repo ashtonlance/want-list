@@ -76,7 +76,8 @@ export function useCardWrites(): CardWrites {
     async (pairs, message) => {
       let ok = 0;
       for (const [c, patch] of pairs) if (await save(c, patch, undefined, true)) ok++;
-      if (message) toast(ok === pairs.length ? message : `Saved ${ok} of ${pairs.length}. Try again for the rest.`);
+      if (message)
+        toast(ok === pairs.length ? message : `Saved ${ok} of ${pairs.length}. Try again for the rest.`);
     },
     [save, toast],
   );

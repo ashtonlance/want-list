@@ -1,6 +1,9 @@
 import type { SelectHTMLAttributes } from "react";
 
-interface SelectProps<T extends string | number> extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "value" | "onChange"> {
+interface SelectProps<T extends string | number> extends Omit<
+  SelectHTMLAttributes<HTMLSelectElement>,
+  "value" | "onChange"
+> {
   value: T;
   options: readonly { value: T; label: string }[];
   onChange: (value: T) => void;

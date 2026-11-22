@@ -1,4 +1,15 @@
-import { bool, isRecord, num, numOrNull, numRecord, oneOf, str, strArray, strish, type JsonRecord } from "~/lib/json";
+import {
+  bool,
+  isRecord,
+  num,
+  numOrNull,
+  numRecord,
+  oneOf,
+  str,
+  strArray,
+  strish,
+  type JsonRecord,
+} from "~/lib/json";
 import type { Ask, Card, Deal, Listing, TcgPrice } from "./types";
 
 function parseAsk(v: unknown): Ask | null {

@@ -99,7 +99,9 @@ export function pickOnList(cards: readonly Card[], p: PickCard): boolean {
   const name = p.name.toLowerCase();
   const set = p.set.toLowerCase();
   const no = stripZeros(p.number);
-  return cards.some((c) => c.name.toLowerCase() === name && stripZeros(c.number) === no && c.set.toLowerCase() === set);
+  return cards.some(
+    (c) => c.name.toLowerCase() === name && stripZeros(c.number) === no && c.set.toLowerCase() === set,
+  );
 }
 
 export const isPickAdded = (cards: readonly Card[], p: PickCard): boolean =>

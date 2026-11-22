@@ -48,13 +48,18 @@ export const marketAsk = (amount: number | null, asOf: string) =>
 const tcgListing = (pid: number) => ({ url: tcgProductUrl(pid), site: "TCGplayer", addedAt: today() });
 
 /** The live card if it's on the list: same TCGplayer product, or same name, number and set. */
-export function findOnList(cards: readonly Card[], d: Pick<LiveCard, "pid" | "name" | "number" | "set">): Card | null {
+export function findOnList(
+  cards: readonly Card[],
+  d: Pick<LiveCard, "pid" | "name" | "number" | "set">,
+): Card | null {
   const nn = (s: string) => s.replace(/^0+/, "").toLowerCase();
   return (
     cards.find(
       (c) =>
         (d.pid != null && pidOf(c) === d.pid) ||
-        (c.name.toLowerCase() === d.name.toLowerCase() && nn(c.number) === nn(d.number) && c.set.toLowerCase() === d.set.toLowerCase()),
+        (c.name.toLowerCase() === d.name.toLowerCase() &&
+          nn(c.number) === nn(d.number) &&
+          c.set.toLowerCase() === d.set.toLowerCase()),
     ) ?? null
   );
 }
@@ -135,7 +140,7 @@ export function useAddCards() {
   );
 
   const catalogSoon = useCallback(async (): Promise<Catalog | undefined> => {
-    const fetching = qc.fetchQuery(catalogQuery);
+    const fetching = qc.query(catalogQuery);
     const timeout = new Promise<undefined>((r) => setTimeout(() => r(undefined), 5000));
     return Promise.race([fetching, timeout]).catch(() => undefined);
   }, [qc]);
@@ -176,4 +181,3 @@ export function useAddCards() {
 
   return { fromPick, fromLive, updateExisting, create, slotIn };
 }
-

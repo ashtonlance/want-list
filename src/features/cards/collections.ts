@@ -42,23 +42,26 @@ export function addToCollection(c: Card, name: string, slot: number): CardPatch 
   return { collections: [...c.collections, name], slots: { ...c.slots, [name]: slot } };
 }
 
+const withoutKey = (slots: Record<string, number>, name: string): Record<string, number> =>
+  Object.fromEntries(Object.entries(slots).filter(([k]) => k !== name));
+
 export function removeFromCollection(c: Card, name: string): CardPatch {
-  const slots = { ...c.slots };
-  delete slots[name];
-  return { collections: c.collections.filter((n) => n !== name), slots };
+  return { collections: c.collections.filter((n) => n !== name), slots: withoutKey(c.slots, name) };
 }
 
 export function renameInCard(c: Card, from: string, to: string): CardPatch {
-  const slots = { ...c.slots };
-  if (from in slots) {
-    slots[to] = slots[from] ?? 0;
-    delete slots[from];
-  }
+  const slot = c.slots[from];
+  const slots = slot === undefined ? { ...c.slots } : { ...withoutKey(c.slots, from), [to]: slot };
   return { collections: [...new Set(c.collections.map((n) => (n === from ? to : n)))], slots };
 }
 
 /** Patches that swap two neighbouring cards in a collection and renumber the rest to match. */
-export function moveInCollection(ordered: readonly Card[], name: string, i: number, dir: -1 | 1): [Card, CardPatch][] {
+export function moveInCollection(
+  ordered: readonly Card[],
+  name: string,
+  i: number,
+  dir: -1 | 1,
+): [Card, CardPatch][] {
   const j = i + dir;
   if (j < 0 || j >= ordered.length) return [];
   const order = ordered.slice();

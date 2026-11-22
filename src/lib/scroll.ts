@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
+import { isRecord } from "./json";
 import { storage } from "./storage";
 
 /**
@@ -19,6 +20,8 @@ interface Spot {
   shown?: number;
 }
 
+const isSpot = (v: unknown): v is Spot => isRecord(v) && typeof v.y === "number";
+
 const STORE_KEY = "wl-scroll";
 const TTL = 30 * 60_000;
 
@@ -26,9 +29,9 @@ function loadSpots(): Map<string, Spot> {
   try {
     const raw: unknown = JSON.parse(storage.get(STORE_KEY) ?? "null");
     if (raw && typeof raw === "object" && "t" in raw && "pos" in raw) {
-      const { t, pos } = raw as { t: unknown; pos: unknown };
-      if (typeof t === "number" && Date.now() - t < TTL && pos && typeof pos === "object") {
-        return new Map(Object.entries(pos as Record<string, Spot>));
+      const { t, pos } = raw;
+      if (typeof t === "number" && Date.now() - t < TTL && isRecord(pos)) {
+        return new Map(Object.entries(pos).flatMap(([k, v]) => (isSpot(v) ? [[k, v] as const] : [])));
       }
     }
   } catch {
@@ -106,12 +109,14 @@ export function useScrollRestoration(key: string, ready: boolean, shown?: number
       if (restoring.current === key) restoring.current = null;
       for (const ev of ["touchstart", "wheel", "keydown"] as const) window.removeEventListener(ev, done);
     };
-    for (const ev of ["touchstart", "wheel", "keydown"] as const) window.addEventListener(ev, done, { passive: true });
+    for (const ev of ["touchstart", "wheel", "keydown"] as const)
+      window.addEventListener(ev, done, { passive: true });
     const attempt = () => {
       if (cancelled) return;
       if (!spot) {
         window.scrollTo(0, 0);
-        return done();
+        done();
+        return;
       }
       const el = spot.id ? findAnchor(spot.id) : null;
       const target = el ? window.scrollY + el.getBoundingClientRect().top - (spot.off ?? 0) : spot.y;
@@ -124,7 +129,8 @@ export function useScrollRestoration(key: string, ready: boolean, shown?: number
           frame = requestAnimationFrame(attempt);
           return;
         }
-        return done();
+        done();
+        return;
       }
       tries += 1;
       frame = requestAnimationFrame(attempt);

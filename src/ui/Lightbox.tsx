@@ -19,7 +19,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
   const closeBtn = useRef<HTMLButtonElement>(null);
   const href = useLocation({ select: (l) => l.href });
   // Navigating anywhere closes the photo.
-  const item = opened && opened.href === href ? opened.item : null;
+  const item = opened?.href === href ? opened.item : null;
 
   const close = () => {
     setOpened(null);

@@ -1,7 +1,15 @@
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { queryKeys } from "~/data/keys";
 import { tcgImage } from "~/lib/images";
-import { cleanCatalogName, rarityOf, realPrice, setOf, useCatalog, type Catalog, type CatalogCard } from "~/features/catalog/catalog";
+import {
+  cleanCatalogName,
+  rarityOf,
+  realPrice,
+  setOf,
+  useCatalog,
+  type Catalog,
+  type CatalogCard,
+} from "~/features/catalog/catalog";
 import { fetchTdCard, fetchTdSetCards, fetchTdSets, searchTd, type LiveCard } from "./tcgdex";
 
 const HOUR = 60 * 60_000;
@@ -10,7 +18,7 @@ const HOUR = 60 * 60_000;
 export function catalogLiveCard(cat: Catalog, c: CatalogCard): LiveCard {
   const st = setOf(cat, c);
   return {
-    id: "cat:" + c.pid,
+    id: `cat:${c.pid}`,
     name: c.name,
     set: st.name,
     setId: "",

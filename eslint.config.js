@@ -16,10 +16,12 @@ export default tseslint.config(
     plugins: { "react-hooks": reactHooks, "react-refresh": reactRefresh },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": ["warn", { allowConstantExport: true, allowExportNames: ["Route"] }],
+      "react-refresh/only-export-components": ["warn", { allowConstantExport: true, allowExportNames: ["Route", "useAuth", "useToast", "useLightbox"] }],
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/restrict-template-expressions": ["error", { allowNumber: true }],
       "@typescript-eslint/no-confusing-void-expression": ["error", { ignoreArrowShorthand: true }],
+      // "" from a form field or the address means "not set", so `||` is the intended operator for strings.
+      "@typescript-eslint/prefer-nullish-coalescing": ["error", { ignorePrimitives: { string: true } }],
       "@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: { attributes: false } }],
     },
   },

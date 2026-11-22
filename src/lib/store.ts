@@ -3,9 +3,9 @@ import { storage } from "./storage";
 
 /** A tiny observable value for UI state that outlives a screen (filters, chosen tabs). */
 export interface Store<T> {
-  get(): T;
-  set(next: T | ((prev: T) => T)): void;
-  subscribe(listener: () => void): () => void;
+  get: () => T;
+  set: (next: T | ((prev: T) => T)) => void;
+  subscribe: (listener: () => void) => () => void;
 }
 
 export function createStore<T>(initial: T, onChange?: (value: T) => void): Store<T> {

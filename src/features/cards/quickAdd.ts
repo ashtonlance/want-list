@@ -140,15 +140,27 @@ export function parseLink(raw: string, knownSets: readonly string[]): ParsedLink
     if (site === "DoubleHolo" && segs[0] === "card") dhUrl = u.origin + u.pathname;
     words =
       segs
-        .filter((s) => /[a-z]{3,}/i.test(s) && s.includes("-") && !/^(itm|item|product|products|p|us|en|listing)$/i.test(s))
+        .filter(
+          (s) =>
+            /[a-z]{3,}/i.test(s) &&
+            s.includes("-") &&
+            !/^(itm|item|product|products|p|us|en|listing)$/i.test(s),
+        )
         .sort((a, b) => b.length - a.length)[0] ?? "";
     if (/^japanese-/i.test(words)) {
       lang = "JP";
       words = words.slice(9);
     }
   }
-  const text = [setHint, words].join(" ").replace(/[-_]+/g, " ").replace(NOISE, " ").replace(/\s+/g, " ").trim();
-  const p: ParsedCard = text ? parseQuick(text, knownSets) : { name: "", set: "", number: "", variant: "", lang: "EN" };
+  const text = [setHint, words]
+    .join(" ")
+    .replace(/[-_]+/g, " ")
+    .replace(NOISE, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  const p: ParsedCard = text
+    ? parseQuick(text, knownSets)
+    : { name: "", set: "", number: "", variant: "", lang: "EN" };
   if (!p.set && setHint) {
     p.set = titleCase(setHint.replace(/[-_]+/g, " ").toLowerCase());
     p.name = titleCase(

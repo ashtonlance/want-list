@@ -30,10 +30,15 @@ export interface Catalog {
 }
 
 export function parseCatalog(v: unknown): Catalog {
-  if (!isRecord(v) || !Array.isArray(v.sets) || !Array.isArray(v.cards)) throw new Error("catalog.json is malformed");
+  if (!isRecord(v) || !Array.isArray(v.sets) || !Array.isArray(v.cards))
+    throw new Error("catalog.json is malformed");
   const sets = v.sets.map((s): CatalogSet => {
     const a: unknown[] = Array.isArray(s) ? s : [];
-    return { name: String(a[0] ?? ""), jp: Boolean(a[1]), date: typeof a[2] === "string" ? a[2] : "" };
+    return {
+      name: typeof a[0] === "string" ? a[0] : "",
+      jp: Boolean(a[1]),
+      date: typeof a[2] === "string" ? a[2] : "",
+    };
   });
   const rarities = Array.isArray(v.rarities) ? v.rarities.map((r) => String(r)) : [];
   const cards: CatalogCard[] = [];
@@ -72,7 +77,8 @@ export function useCatalog(enabled = true) {
   return useQuery({ ...catalogQuery, enabled });
 }
 
-export const setOf = (cat: Catalog, c: CatalogCard): CatalogSet => cat.sets[c.set] ?? { name: "", jp: false, date: "" };
+export const setOf = (cat: Catalog, c: CatalogCard): CatalogSet =>
+  cat.sets[c.set] ?? { name: "", jp: false, date: "" };
 export const rarityOf = (cat: Catalog, c: CatalogCard): string => cat.rarities[c.rarity] ?? "";
 
 /** TCGplayer shows $99,999.90 for listings with no real market; treat that as no price. */
