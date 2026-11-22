@@ -1421,7 +1421,9 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   function applyLivePicks() {
     for (const s of state.disc) {
       const d = s.tcgdexId && LV.data.get(s.tcgdexId); if (!d) continue;
-      if (d.market != null) { s.market = d.market; s.priceAsOf = d.upd || today(); s.live = true; }
+      // Keep whichever price is fresher: today's synced TCGplayer price or TCGdex's live one.
+      const upd = d.upd || today();
+      if (d.market != null && (s.market == null || !s.priceAsOf || upd >= s.priceAsOf)) { s.market = d.market; s.priceAsOf = upd; s.live = true; }
       if (!s.rarity && d.rarity) s.rarity = d.rarity;
       if (!s.illustrator && d.illustrator) s.illustrator = d.illustrator;
     }
@@ -1784,7 +1786,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     for (const d of state.disc) {
       const e = prices.items[d.tcgProduct]; if (!e) continue;
       const p = pickSub(e, "");
-      if (p && p.market != null) { d.market = p.market; d.priceAsOf = prices.asOf; }
+      if (p && p.market != null) { d.market = p.market; d.priceAsOf = prices.asOf; d.live = false; }
     }
   }
   fetch("prices.json", { cache: "no-store" }).then(r => r.ok ? r.json() : null).then(j => { if (j && j.items) { prices = j; applyPrices(); render(); } }).catch(() => {});
