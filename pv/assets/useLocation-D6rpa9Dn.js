@@ -1,0 +1,1 @@
+import{a as e,t}from"./useSelector-C3uNirea.js";import{F as n}from"./json-DD-aj9ON.js";function r(r){let i=e();return t(i.stores.location,n(r,i))}export{r as t};

@@ -1,0 +1,1 @@
+import{M as e}from"./index-v37k4Spo.js";var t=e;export{t as component};
