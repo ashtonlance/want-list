@@ -26,11 +26,21 @@ function siteData(): Plugin {
   return {
     name: "want-list:site-data",
     configureServer(server) {
-      server.middlewares.use(async (req, res, next) => {
+      server.middlewares.use((req, res, next) => {
         const name = DATA_FILES.find((f) => req.url?.split("?")[0]?.endsWith("/" + f));
-        if (!name) return next();
-        res.setHeader("content-type", "application/json");
-        res.end(await readFile(resolve(root, name)));
+        if (!name) {
+          next();
+          return;
+        }
+        readFile(resolve(root, name)).then(
+          (body) => {
+            res.setHeader("content-type", "application/json");
+            res.end(body);
+          },
+          (err: unknown) => {
+            next(err);
+          },
+        );
       });
     },
     async generateBundle() {
@@ -65,12 +75,7 @@ export default defineConfig({
     "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(supabase.url),
     "import.meta.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(supabase.anonKey),
   },
-  plugins: [
-    tanstackRouter({ target: "react", autoCodeSplitting: true }),
-    react(),
-    siteData(),
-    spaFallback(),
-  ],
+  plugins: [tanstackRouter({ target: "react", autoCodeSplitting: true }), react(), siteData(), spaFallback()],
   build: { target: "es2022" },
   test: {
     environment: "jsdom",

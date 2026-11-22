@@ -13,6 +13,7 @@ import { newBinderId } from "./parse";
 import { emptySlots, pageCount, slotInfo, swapSlots, withSlot, type SlotInfo } from "./slots";
 import type { Binder } from "./types";
 import { useAddToList } from "./useAddToList";
+import { setBinderPage, useBinderPage } from "./state";
 import { useBinderSheet } from "./useBinderSheet";
 import { useBinders } from "./useBinders";
 import { useMediaQuery } from "./useMediaQuery";
@@ -28,7 +29,10 @@ export function BindersView() {
   const changeSlots = useSlotChange(save);
   const curId = useStore(prefs.binder);
   const binder = binders.find((b) => b.id === curId) ?? binders[0] ?? null;
-  const [wantedPage, setPage] = useState(0);
+  const wantedPage = useBinderPage(binder?.id);
+  const setPage = (page: number) => {
+    if (binder) setBinderPage(binder.id, page);
+  };
   const [moving, setMoving] = useState<number | null>(null);
   const { sheet, open: openSheet, close: closeSheet } = useBinderSheet();
   const per = useMediaQuery("(max-width:620px)") ? 1 : 2;
@@ -44,7 +48,6 @@ export function BindersView() {
 
   const choose = (id: string | null) => {
     prefs.binder.set(id);
-    setPage(0);
     setMoving(null);
   };
 
