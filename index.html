@@ -269,6 +269,8 @@ button.pocket{cursor:pointer}
 .ex-to{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted);margin-bottom:10px}
 .ex-to select{flex:1}
 .lv-more{width:100%;margin-top:4px}
+.ex-card.cv{content-visibility:auto;contain-intrinsic-size:auto 320px}
+.lv-foot{text-align:center;padding:8px 0}
 .ex-tools .scroller select{width:auto;min-height:36px;font-size:14px;padding-top:6px;padding-bottom:6px;background-color:var(--surface);box-shadow:inset 0 0 0 1px var(--line-2);border-radius:999px;padding-left:14px}
 .ex-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:18px 12px}
 @media (max-width:620px){.ex-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 12px}}
@@ -1059,7 +1061,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     const status = s.status || "new", already = s.status === "added" || s.status === "owned" || onList(s);
     box.textContent = "";
     box.append(el("div", { class: "sheet-head" }, el("h3", { text: s.coll === WILD ? "Wildcard pick" : "Pick for " + s.coll }), el("button", { class: "sheet-x", type: "button", "aria-label": "Close", text: "×", "data-close": true })));
-    const src = s.tcgProduct ? tcgImg(s.tcgProduct) : null;
+    const src = s.tcgProduct ? tcgImg(s.tcgProduct) : (LV.data.get(s.tcgdexId) || {}).img || null;
     const lb = () => openLightbox({ name: s.name, set: s.set, number: s.number, img: s.img, variant: "", status: "want", ask: s.market != null ? { kind: "market", amount: s.market } : null, tcg: s.tcgProduct ? { productId: s.tcgProduct } : null });
     const fig = src ? el("button", { class: "detail-img", type: "button", "aria-label": "Show " + s.name + " full screen", onclick: lb }, heroImg(src, s.name)) : el("div", { class: "detail-img empty", text: "No photo" });
     const art = el("div", { class: "meta" });
@@ -1067,7 +1069,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     if (s.illustrator) art.append(el("span", {}, document.createTextNode("art by "), el("button", { class: "artist", type: "button", text: s.illustrator, title: "More picks by " + s.illustrator, onclick: () => { state.exArtist = s.illustrator; state.exColl = "__all"; closePanel("#detailSheet"); renderExplore(); window.scrollTo({ top: 0, behavior: "smooth" }); } })));
     const info = el("div", { class: "detail-info" }, el("div", { class: "name", text: s.name }),
       el("div", { class: "meta" }, el("span", { text: s.set }), el("span", { class: "num", text: "#" + s.number })), art,
-      s.market != null ? el("div", { class: "price" }, el("div", { class: "ask", text: "~" + fmt$(s.market) }), el("div", { class: "ask-label", text: "TCGplayer market, before shipping" + (s.priceAsOf ? " · " + fmtDate(s.priceAsOf) : "") }))
+      s.market != null ? el("div", { class: "price" }, el("div", { class: "ask", text: "~" + fmt$(s.market) }), el("div", { class: "ask-label", text: (s.live ? "Live TCGplayer market" : "TCGplayer market") + ", before shipping" + (s.priceAsOf ? " · " + fmtDate(s.priceAsOf) : "") }))
         : el("div", { class: "none", text: "No market price yet" }));
     box.append(el("div", { class: "detail-hero" }, fig, info));
     const why = (s.reason || "").replace(" · " + s.rarity, "");
@@ -1203,12 +1205,15 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     for (const [v, t] of [["live", "Live"], ["picks", "Picks for you"]]) seg.append(el("button", { type: "button", "aria-pressed": String(state.exTab === v), text: t, onclick: () => { if (state.exTab === v) return; state.exTab = v; store.set("wl-extab", v); renderExplore(); window.scrollTo({ top: 0 }); } }));
     box.append(seg);
     if (state.exTab === "live") {
+      const sy = window.scrollY;
       renderLive(box);
+      if (sy && Math.abs(window.scrollY - sy) > 2) window.scrollTo(0, sy);
       if (keepQ) { const i = $("#lvQ"); if (i) { i.focus(); try { i.setSelectionRange(keepQ[0], keepQ[1]); } catch {} } }
       if (state.openLive) drawDetail();
       return;
     }
     if (!state.discLoaded && db) { box.append(skeletonGrid("ex-grid", 6)); return; }
+    applyLivePicks(); livePicks();
     const colls = exColls();
     if (!colls.length) { box.append(el("div", { class: "empty-state", text: "No suggestions yet. Ask Claude in chat to find cards for your collections." })); return; }
     const ALL = "__all";
@@ -1257,7 +1262,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
       if (!sepDone && !isAll && state.exSort === "rec" && latest > 1 && (s.batch ?? 1) < latest) { sepDone = true; grid.append(el("div", { class: "ex-sep", text: "Earlier picks" })); }
       const status = s.status || "new", already = isAdded(s);
       const card = el("article", { class: "ex-card" + (status === "passed" ? " dim" : ""), role: "button", tabindex: "0", "aria-label": s.name + ", " + s.set + (s.market != null ? ", about " + fmt$(s.market) : "") });
-      const src = s.tcgProduct ? tcgImg(s.tcgProduct) : null;
+      const src = s.tcgProduct ? tcgImg(s.tcgProduct) : (LV.data.get(s.tcgdexId) || {}).img || null;
       const fig = el("div", { class: "tile-img" });
       if (src) { const img = el("img", { src, alt: "", loading: "lazy", decoding: "async" }); img.addEventListener("error", () => img.replaceWith(el("span", { class: "noimg", text: s.name })), { once: true }); fig.append(img); }
       else fig.append(el("span", { class: "noimg", text: s.name }));
@@ -1314,7 +1319,8 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   }
   /* ---------- live explore: cards and prices fetched from TCGdex when you look ---------- */
   const TD = "https://api.tcgdex.net/v2/en";
-  const LV = { setsP: null, sets: null, rank: new Map(), q: "", setId: null, list: null, listKey: "", listP: null, err: "", data: new Map(), pend: new Map(), shown: 24, sort: "num", cap: 0, addTo: "", priceJob: 0 };
+  const ALLC = "__all";
+  const LV = { setsP: null, sets: null, rank: new Map(), q: "", setId: ALLC, lang: "en", allSort: "new", allShown: 60, allKey: "", allRows: null, io: null, pickTried: new Set(), list: null, listKey: "", listP: null, err: "", data: new Map(), pend: new Map(), shown: 24, sort: "num", cap: 0, addTo: "", priceJob: 0 };
   const tdSetOf = id => id.slice(0, id.lastIndexOf("-"));
   /* TCGdex also lists Pokémon TCG Pocket, the phone game; those cards can't be bought, so leave them out. */
   const isPocket = (setId, img) => /^(P-[A-Z]|[A-Z]\d+[a-z]?)$/.test(setId || "") || /\/tcgp\//.test(img || "");
@@ -1347,6 +1353,11 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     await Promise.all(Array.from({ length: 8 }, run));
   }
   function liveLoad() {
+    if (!LV.q && LV.setId === ALLC) {
+      if (!LV.sets && !LV.setsP) tdSets().then(() => renderExplore(), () => {});
+      if (!B.catalog && !LV.catWait) { LV.catWait = true; loadCatalog().then(() => { LV.catWait = false; if (!B.catalog) LV.err = "Couldn't load every card. Check your connection and try again."; renderExplore(); }); }
+      return;
+    }
     const key = LV.q ? "q:" + LV.q.toLowerCase() : "set:" + (LV.setId || "");
     if (LV.listKey === key && (LV.list || LV.listP)) return;
     LV.listKey = key; LV.list = null; LV.err = ""; LV.shown = 24;
@@ -1405,10 +1416,90 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     card.addEventListener("keydown", e => { if (e.target === card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open(); } });
     return card;
   }
+  /* Picks for you: refresh each pick's price (and fill any missing details) from live TCGdex data. */
+  function applyLivePicks() {
+    for (const s of state.disc) {
+      const d = s.tcgdexId && LV.data.get(s.tcgdexId); if (!d) continue;
+      if (d.market != null) { s.market = d.market; s.priceAsOf = d.upd || today(); s.live = true; }
+      if (!s.rarity && d.rarity) s.rarity = d.rarity;
+      if (!s.illustrator && d.illustrator) s.illustrator = d.illustrator;
+    }
+  }
+  function livePicks() {
+    if (LV.picksRunning) return;
+    const ids = [...new Set(state.disc.map(s => s.tcgdexId).filter(id => id && !LV.data.has(id) && !LV.pickTried.has(id)))];
+    if (!ids.length) return;
+    ids.forEach(id => LV.pickTried.add(id)); LV.picksRunning = true;
+    tdMany(ids, () => {}).then(() => { LV.picksRunning = false; applyLivePicks(); if (state.mode === "explore" && state.exTab === "picks" && !busy) renderExplore(); });
+  }
+  /* Every card ever: the daily catalog (English and Japanese, with TCGplayer prices), endlessly scrolled. */
+  function allRows() {
+    const C = B.catalog, key = [LV.lang, LV.allSort, LV.cap, C.asOf].join("|");
+    if (LV.allKey === key) return LV.allRows;
+    const want = LV.lang === "en" ? 0 : LV.lang === "jp" ? 1 : -1, sd = C.sets.map(x => x[2] || ""), cs = C.cards;
+    let idx = [];
+    for (let i = 0; i < cs.length; i++) { const r = cs[i]; if ((want < 0 || C.sets[r[2]][1] === want) && (!LV.cap || (r[5] > 0 && r[5] <= LV.cap))) idx.push(i); }
+    const nk = new Map(); const n = i => { let v = nk.get(i); if (v === undefined) nk.set(i, v = numKey(cs[i][3])); return v; };
+    if (LV.allSort === "high") idx.sort((a, b) => cs[b][5] - cs[a][5]);
+    else if (LV.allSort === "low") idx.sort((a, b) => (cs[a][5] || Infinity) - (cs[b][5] || Infinity));
+    else { const dir = LV.allSort === "old" ? -1 : 1; idx.sort((a, b) => dir * sd[cs[b][2]].localeCompare(sd[cs[a][2]]) || cs[a][2] - cs[b][2] || dir * (n(b) - n(a))); }
+    LV.allKey = key; LV.allRows = idx; return idx;
+  }
+  function catCard(i) {
+    const C = B.catalog, r = C.cards[i], st = C.sets[r[2]], id = "cat:" + r[0];
+    if (!LV.data.has(id)) LV.data.set(id, { id, name: r[1], set: st[0], setId: "", number: String(r[3]), rarity: C.rarities[r[4]] || "", illustrator: "", img: tcgImg(r[0]), pid: r[0], market: r[5] || null, low: null, sub: "", upd: C.asOf, jp: !!st[1] });
+    return LV.data.get(id);
+  }
+  function catTile(i) {
+    const d = catCard(i);
+    const card = el("article", { class: "ex-card cv", role: "button", tabindex: "0", "aria-label": d.name + ", " + d.set + (d.market ? ", " + fmt$(d.market) : "") });
+    const fig = el("div", { class: "tile-img" }), img = el("img", { src: d.img, alt: "", loading: "lazy", decoding: "async" });
+    img.addEventListener("error", () => img.replaceWith(el("span", { class: "noimg", text: d.name })), { once: true });
+    fig.append(img);
+    if (d.jp && LV.lang !== "jp") fig.append(el("span", { class: "tile-badge", text: "JP" }));
+    const line = el("div", { class: "ex-line" }, d.market ? el("span", { class: "ex-price", text: fmt$(d.market) }) : el("span", { class: "ex-meta", text: "No price yet" }));
+    const have = onListLive(d);
+    if (have) line.append(el("span", { class: "ex-added", text: isGot(have) ? "✓ Have it" : "✓ On list" }));
+    else if (canWrite) {
+      const quick = el("button", { class: "ex-quick", type: "button", "aria-label": "Want " + d.name + (LV.addTo ? ", add to " + LV.addTo : ""), title: "Want it" + (LV.addTo ? " (adds to " + LV.addTo + ")" : "") }, svg(PLUS));
+      quick.addEventListener("click", e => { e.stopPropagation(); quick.classList.add("done"); quick.replaceChildren(svg(TICK)); addFromLive(d, quick, "want", LV.addTo).then(ok => { if (!ok) { quick.classList.remove("done"); quick.replaceChildren(svg(PLUS)); } }); });
+      line.append(quick);
+    }
+    card.append(fig, el("div", { class: "ex-name", text: d.name }), el("div", { class: "ex-meta", text: d.set + " · #" + d.number }), line);
+    const open = () => { state.openLive = d.id; state.openRow = state.openPick = null; openPanel("#detailSheet"); drawDetail(); $("#detailSheet .sheet-card").scrollTop = 0; };
+    card.addEventListener("click", open);
+    card.addEventListener("keydown", e => { if (e.target === card && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); open(); } });
+    return card;
+  }
+  function renderAll(box) {
+    if (LV.io) { LV.io.disconnect(); LV.io = null; }
+    if (!B.catalog) { box.append(skeletonGrid("ex-grid", 6)); return; }
+    const rows = allRows(), grid = el("div", { class: "ex-grid" });
+    let shown = Math.min(LV.allShown, rows.length);
+    for (let k = 0; k < shown; k++) grid.append(catTile(rows[k]));
+    if (!rows.length) grid.append(el("div", { class: "empty-state", text: "No cards match these filters." }));
+    const foot = el("p", { class: "hint lv-foot", text: "" });
+    const setFoot = () => { foot.textContent = shown < rows.length ? "Loading more… " + shown.toLocaleString() + " of " + rows.length.toLocaleString() : rows.length ? "That's all " + rows.length.toLocaleString() + " cards." : ""; };
+    setFoot();
+    box.append(grid, foot);
+    if (shown < rows.length && "IntersectionObserver" in window) {
+      LV.io = new IntersectionObserver(es => {
+        if (!es.some(e => e.isIntersecting)) return;
+        const end = Math.min(shown + 60, rows.length), frag = document.createDocumentFragment();
+        for (let k = shown; k < end; k++) frag.append(catTile(rows[k]));
+        grid.append(frag); shown = LV.allShown = end; setFoot();
+        if (shown >= rows.length) { LV.io.disconnect(); LV.io = null; }
+      }, { rootMargin: "1500px 0px" });
+      LV.io.observe(foot);
+    }
+    box.append(el("p", { class: "hint", text: "Every English and Japanese card from TCGplayer's catalog, refreshed daily. Prices are TCGplayer market before shipping, as of " + fmtDate(B.catalog.asOf) + "." }));
+  }
   function renderLive(box) {
     liveLoad();
-    const head = el("div", { class: "ex-intro" }, el("h2", { text: LV.q ? "Results for “" + LV.q + "”" : (LV.sets && LV.sets.find(s => s.id === LV.setId) || {}).name || "Newest cards" }),
-      el("p", { text: LV.q ? "Every printing, newest sets first. Prices are today's TCGplayer market." : "Straight from the latest card data, chase cards first. Prices are today's TCGplayer market." }));
+    const all = !LV.q && LV.setId === ALLC;
+    const langWord = { en: "English", jp: "Japanese", both: "English and Japanese" }[LV.lang];
+    const head = el("div", { class: "ex-intro" }, el("h2", { text: LV.q ? "Results for “" + LV.q + "”" : all ? "Every card" : (LV.sets && LV.sets.find(s => s.id === LV.setId) || {}).name || "Newest cards" }),
+      el("p", { text: LV.q ? "Every printing, newest sets first. Prices are today's TCGplayer market." : all ? (B.catalog ? "All " + allRows().length.toLocaleString() + " " : "Every ") + langWord + " cards ever made" + (LV.cap ? " under " + fmt$(LV.cap) : "") + ". Keep scrolling." : "Straight from the latest card data, chase cards first. Prices are today's TCGplayer market." }));
     const form = el("form", { class: "lv-search", role: "search", autocomplete: "off" });
     const q = el("input", { type: "search", id: "lvQ", placeholder: "Search any card, like Gengar", "aria-label": "Search live cards", value: LV.typed ?? LV.q, enterkeyhint: "search" });
     form.append(q, el("button", { class: "btn small", type: "submit", text: "Search" }));
@@ -1416,14 +1507,22 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     form.addEventListener("submit", e => { e.preventDefault(); clearTimeout(deb); q.blur(); go(); });
     q.addEventListener("input", () => { LV.typed = q.value; clearTimeout(deb); deb = setTimeout(() => { if (!q.value.trim() || q.value.trim().length >= 3) go(); }, 650); });
     const sets = el("div", { class: "colltabs" });
+    sets.append(el("button", { class: "colltab", type: "button", "aria-pressed": String(all), onclick: () => { LV.q = ""; LV.typed = null; LV.setId = ALLC; LV.allShown = 60; liveLoad(); renderExplore(); window.scrollTo({ top: 0 }); } }, el("b", { text: "Every card" })));
     if (LV.sets) for (const s of LV.sets.slice(0, 10)) sets.append(el("button", { class: "colltab", type: "button", "aria-pressed": String(!LV.q && LV.setId === s.id), onclick: () => { LV.q = ""; LV.typed = null; LV.setId = s.id; liveLoad(); renderExplore(); window.scrollTo({ top: 0 }); } }, el("b", { text: s.name })));
     const tools = el("div", { class: "scroller" });
     const sort = el("select", { "aria-label": "Sort live cards" });
-    for (const [v, t] of [["num", LV.q ? "Newest first" : "Chase cards first"], ["high", "Price: high to low"], ["low", "Price: low to high"]]) { const o = el("option", { value: v, text: t }); if (LV.sort === v) o.selected = true; sort.append(o); }
-    sort.addEventListener("change", () => { LV.sort = sort.value; if (LV.sort !== "num") livePrices(); renderExplore(); });
+    const sortOpts = all ? [["new", "Newest first"], ["old", "Oldest first"], ["high", "Price: high to low"], ["low", "Price: low to high"]] : [["num", LV.q ? "Newest first" : "Chase cards first"], ["high", "Price: high to low"], ["low", "Price: low to high"]];
+    for (const [v, t] of sortOpts) { const o = el("option", { value: v, text: t }); if ((all ? LV.allSort : LV.sort) === v) o.selected = true; sort.append(o); }
+    sort.addEventListener("change", () => { if (all) { LV.allSort = sort.value; LV.allShown = 60; window.scrollTo({ top: 0 }); } else { LV.sort = sort.value; if (LV.sort !== "num") livePrices(); } renderExplore(); });
+    if (all) {
+      const lang = el("select", { "aria-label": "Card language" });
+      for (const [v, t] of [["en", "English"], ["jp", "Japanese"], ["both", "English and Japanese"]]) { const o = el("option", { value: v, text: t }); if (LV.lang === v) o.selected = true; lang.append(o); }
+      lang.addEventListener("change", () => { LV.lang = lang.value; LV.allShown = 60; window.scrollTo({ top: 0 }); renderExplore(); });
+      tools.append(lang);
+    }
     const cap = el("select", { "aria-label": "Price limit" });
     for (const [v, t] of [[0, "Any price"], [5, "Under $5"], [25, "Under $25"], [100, "Under $100"]]) { const o = el("option", { value: String(v), text: t }); if (LV.cap === v) o.selected = true; cap.append(o); }
-    cap.addEventListener("change", () => { LV.cap = +cap.value; if (LV.cap) livePrices(); renderExplore(); });
+    cap.addEventListener("change", () => { LV.cap = +cap.value; LV.allShown = 60; if (LV.cap && !all) livePrices(); renderExplore(); });
     tools.append(sort, cap);
     if (canWrite) {
       const to = el("select", { "aria-label": "Collection for added cards" });
@@ -1433,6 +1532,8 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     }
     box.append(head, el("div", { class: "ex-tools" }, form, sets, tools));
     if (LV.err) { box.append(el("div", { class: "empty-state" }, document.createTextNode(LV.err + " "), el("button", { class: "btn small", type: "button", text: "Try again", onclick: () => { LV.err = ""; liveLoad(); renderExplore(); } }))); return; }
+    if (all) return renderAll(box);
+    if (LV.io) { LV.io.disconnect(); LV.io = null; }
     if (!LV.list) { box.append(skeletonGrid("ex-grid", 6)); return; }
     let rows = LV.list;
     const priced = LV.sort !== "num" || LV.cap;
@@ -1450,7 +1551,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   function drawLiveDetail(box) {
     const id = state.openLive, d = LV.data.get(id);
     box.textContent = "";
-    box.append(el("div", { class: "sheet-head" }, el("h3", { text: "Live card" }), el("button", { class: "sheet-x", type: "button", "aria-label": "Close", text: "×", "data-close": true })));
+    box.append(el("div", { class: "sheet-head" }, el("h3", { text: String(id).startsWith("cat:") ? "Card" : "Live card" }), el("button", { class: "sheet-x", type: "button", "aria-label": "Close", text: "×", "data-close": true })));
     if (!d) {
       box.append(el("div", { class: "detail-hero" }, el("div", { class: "detail-img skel" }), el("div", { class: "detail-info" }, el("div", { class: "skel skel-line", style: "width:60%" }), el("div", { class: "skel skel-line", style: "width:40%" }))));
       tdCard(id).then(() => { if (state.openLive === id) drawDetail(); }, () => { if (state.openLive === id) { box.append(el("p", { class: "hint", text: "Couldn't load this card. Try again in a moment." })); } });
@@ -1490,11 +1591,11 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     if (!db || busy) return false;
     if (btn) btn.disabled = true;
     const got = want === "got";
-    let name = d.name, set = d.set, number = String(d.number);
+    let name = d.name, set = d.set, number = String(d.number), lang = d.jp ? "JP" : "EN";
     if (d.pid) {
       try { await Promise.race([loadCatalog(), new Promise(r => setTimeout(r, 5000))]); } catch {}
       const r = B.catalog && B.catalog.cards.find(x => x[0] === +d.pid);
-      if (r) { name = r[1].replace(/ - \d+\/\d+$/, ""); set = B.catalog.sets[r[2]][0]; number = String(r[3]); }
+      if (r) { name = r[1].replace(/ - \d+\/\d+$/, ""); set = B.catalog.sets[r[2]][0]; number = String(r[3]); lang = B.catalog.sets[r[2]][1] ? "JP" : "EN"; }
     }
     const id = docId([name, set, number].join(" "));
     const existing = state.cards.find(x => x.id === id) || onListLive(d);
@@ -1505,7 +1606,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
         if (got && existing.status !== "got") Object.assign(patch, { status: "got", checkRequested: false });
         if (Object.keys(patch).length) await save(existing, patch, null, true);
       } else {
-        await db.collection("cards").doc(id).set({ name, number, variant: "", set, lang: "EN", note: "", addedAt: today(),
+        await db.collection("cards").doc(id).set({ name, number, variant: "", set, lang, note: "", addedAt: today(),
           ask: d.market != null ? { kind: "market", amount: d.market, source: "TCGplayer market", asOf: d.upd || today() } : { kind: "none", amount: null, source: "", asOf: "" },
           deal: null, listing: d.pid ? { url: "https://www.tcgplayer.com/product/" + d.pid, site: "TCGplayer", addedAt: today() } : null, dhUrl: null,
           img: d.pid ? null : bigUrl(d.img), imgSource: d.pid ? "tcgplayer" : "tcgdex", priority: false, status: got ? "got" : "want", checkRequested: !got && d.market == null, order: -Date.now(),
