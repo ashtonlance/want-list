@@ -1847,7 +1847,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     const acts = el("div", { class: "row-btns" });
     if (img) {
       const view = turned(img, p.rot, 1400); view.className = "crop-img";
-      if (!p.corners) { const m = 0.04; p.corners = [[m, m], [1 - m, m], [1 - m, 1 - m], [m, 1 - m]]; }
+      if (!p.corners) { const m = 0.04; p.corners = WLScan.findPage(view) || [[m, m], [1 - m, m], [1 - m, 1 - m], [m, 1 - m]]; }
       const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
       svg.setAttribute("viewBox", "0 0 " + view.width + " " + view.height); svg.setAttribute("class", "crop-svg");
       wrap.append(view, svg);

@@ -234,5 +234,31 @@
     return { conf, alts, hint, nums, img: best.img, margin };
   }
 
-  window.WLScan = { getWorker, fileToImage, toCanvas, rectify, squareToQuad, readCell, buildIndex, matchCell, norm, normNo, CW, CH };
+
+  /* Guess where the page sits in a photo: everything that differs from the colour around the photo's edge,
+     largest connected patch, its four extreme corners. Returns [TL,TR,BR,BL] as 0..1 fractions, or null. */
+  function findPage(src) {
+    const k = 260 / Math.max(src.width, src.height), w = Math.max(8, Math.round(src.width * k)), h = Math.max(8, Math.round(src.height * k));
+    const c = document.createElement("canvas"); c.width = w; c.height = h; const x = c.getContext("2d"); x.drawImage(src, 0, 0, w, h);
+    const d = x.getImageData(0, 0, w, h).data, border = [], bw = Math.max(2, Math.round(Math.min(w, h) * 0.025));
+    for (let y = 0; y < h; y++) for (let X = 0; X < w; X++) if (y < bw || y >= h - bw || X < bw || X >= w - bw) border.push((y * w + X) * 4);
+    const med = ch => { const v = border.map(i => d[i + ch]).sort((a, b) => a - b); return v[v.length >> 1]; };
+    const bg = [med(0), med(1), med(2)], dist = i => Math.hypot(d[i] - bg[0], d[i + 1] - bg[1], d[i + 2] - bg[2]);
+    const bd = border.map(dist).sort((a, b) => a - b), th = Math.max(38, bd[Math.floor(bd.length * 0.9)] * 1.4);
+    const mask = new Uint8Array(w * h); for (let i = 0; i < w * h; i++) mask[i] = dist(i * 4) > th ? 1 : 0;
+    const lab = new Int32Array(w * h), stack = []; let best = 0, bestN = 0, cur = 0;
+    for (let i = 0; i < w * h; i++) { if (!mask[i] || lab[i]) continue; cur++; let n = 0; stack.push(i); lab[i] = cur;
+      while (stack.length) { const j = stack.pop(); n++; const X = j % w, Y = (j / w) | 0;
+        for (const q of [X > 0 ? j - 1 : -1, X < w - 1 ? j + 1 : -1, Y > 0 ? j - w : -1, Y < h - 1 ? j + w : -1]) if (q >= 0 && mask[q] && !lab[q]) { lab[q] = cur; stack.push(q); } }
+      if (n > bestN) { bestN = n; best = cur; } }
+    if (bestN < w * h * 0.2) return null;
+    let tl = [0, 0, 1e9], tr = [0, 0, -1e9], br = [0, 0, -1e9], bl = [0, 0, 1e9];
+    for (let i = 0; i < w * h; i++) { if (lab[i] !== best) continue; const X = i % w, Y = (i / w) | 0;
+      if (X + Y < tl[2]) tl = [X, Y, X + Y]; if (X - Y > tr[2]) tr = [X, Y, X - Y]; if (X + Y > br[2]) br = [X, Y, X + Y]; if (X - Y < bl[2]) bl = [X, Y, X - Y]; }
+    const q = [tl, tr, br, bl].map(([X, Y]) => [(X + 0.5) / w, (Y + 0.5) / h]);
+    let area = 0; for (let i = 0; i < 4; i++) { const [a, b] = q[i], [e, f] = q[(i + 1) % 4]; area += a * f - e * b; } area = Math.abs(area) / 2;
+    if (area < 0.25 || area > 0.96) return null;
+    return q;
+  }
+  window.WLScan = { getWorker, fileToImage, toCanvas, rectify, squareToQuad, findPage, readCell, buildIndex, matchCell, norm, normNo, CW, CH };
 })();
