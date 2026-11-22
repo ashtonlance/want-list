@@ -1316,10 +1316,12 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
   const TD = "https://api.tcgdex.net/v2/en";
   const LV = { setsP: null, sets: null, rank: new Map(), q: "", setId: null, list: null, listKey: "", listP: null, err: "", data: new Map(), pend: new Map(), shown: 24, sort: "num", cap: 0, addTo: "", priceJob: 0 };
   const tdSetOf = id => id.slice(0, id.lastIndexOf("-"));
+  /* TCGdex also lists Pokémon TCG Pocket, the phone game; those cards can't be bought, so leave them out. */
+  const isPocket = (setId, img) => /^(P-[A-Z]|[A-Z]\d+[a-z]?)$/.test(setId || "") || /\/tcgp\//.test(img || "");
   const numKey = n => { const m = /^(\D*)(\d+)/.exec(String(n || "")); return m ? (m[1] ? 1e6 : 0) + +m[2] : 0; };
   async function tdJson(url) { const r = await fetch(url); if (!r.ok) throw new Error("http " + r.status); return r.json(); }
   function tdSets() {
-    if (!LV.setsP) LV.setsP = tdJson(TD + "/sets?sort:field=releaseDate&sort:order=DESC").then(a => { LV.sets = a.filter(s => s.cardCount && s.cardCount.total > 0); LV.rank = new Map(a.map((s, i) => [s.id, i])); return LV.sets; }).catch(e => { LV.setsP = null; throw e; });
+    if (!LV.setsP) LV.setsP = tdJson(TD + "/sets?sort:field=releaseDate&sort:order=DESC").then(a => { LV.sets = a.filter(s => s.cardCount && s.cardCount.total > 0 && !isPocket(s.id, s.logo)); LV.rank = new Map(a.map((s, i) => [s.id, i])); return LV.sets; }).catch(e => { LV.setsP = null; throw e; });
     return LV.setsP;
   }
   /* One card's details: picture, rarity, artist, TCGplayer price and product. */
@@ -1351,7 +1353,7 @@ body.selecting .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
     const p = LV.listP = (async () => {
       await tdSets();
       if (LV.q) {
-        const a = await tdJson(TD + "/cards?name=" + encodeURIComponent(LV.q));
+        const a = (await tdJson(TD + "/cards?name=" + encodeURIComponent(LV.q))).filter(c => !isPocket(tdSetOf(c.id), c.image));
         return a.sort((x, y) => (LV.rank.get(tdSetOf(x.id)) ?? 9999) - (LV.rank.get(tdSetOf(y.id)) ?? 9999) || numKey(y.localId) - numKey(x.localId));
       }
       if (!LV.setId) LV.setId = LV.sets[0].id;
