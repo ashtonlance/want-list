@@ -12,6 +12,7 @@ import { exploreLightbox } from "./display";
 import { AddedMark, ExCard, LoadError, PriceTag, QuickWant } from "./ExCard";
 import { useLiveCards, useTdSetCards, useTdSets } from "./live";
 import { listLookup } from "./onList";
+import { useQuickAddTo } from "./quickAdd";
 import { useLiveUi } from "./state";
 import type { TdBrief } from "./tcgdex";
 
@@ -24,7 +25,8 @@ export function LiveResults({ set }: { set: string }) {
   const scrollKey = `live:set:${set}`;
   const sets = useTdSets();
   const list = useTdSetCards(set);
-  const { sort, cap, addTo } = useLiveUi();
+  const { sort, cap } = useLiveUi();
+  const addTo = useQuickAddTo();
   const [shown, setShown] = useState(() => Math.max(savedRowCount(scrollKey) ?? PAGE, PAGE));
   useScrollRestoration(scrollKey, list.data !== undefined, shown);
 

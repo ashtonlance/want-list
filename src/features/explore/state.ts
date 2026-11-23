@@ -2,7 +2,7 @@ import type { Era } from "~/features/catalog/era";
 import type { FeedLang, FeedPrice, FeedSort } from "~/features/catalog/feed";
 import type { Look } from "~/features/catalog/looks";
 import { FEED_PRICE_OPTIONS } from "~/features/catalog/feed";
-import { FEED_ERA_OPTIONS } from "~/features/catalog/era";
+import { ERA_OPTIONS, FEED_ERA_OPTIONS } from "~/features/catalog/era";
 import { LOOK_OPTIONS } from "~/features/catalog/looks";
 import { createSettingsStore } from "~/lib/settings";
 import { isRecord } from "~/lib/json";
@@ -98,7 +98,7 @@ export const DEFAULT_PICKS_UI: PicksUi = {
 export const picksUi = createSettingsStore<PicksUi>("wl-picks-ui", DEFAULT_PICKS_UI, {
   cap: values(CAP_OPTIONS),
   sort: ["rec", "new", "old", "low", "high", "name"],
-  era: values(FEED_ERA_OPTIONS),
+  era: values(ERA_OPTIONS),
 });
 export const usePicksUi = (): PicksUi => useStore(picksUi);
 export const patchPicksUi = (patch: Partial<PicksUi>): void => picksUi.set((prev) => ({ ...prev, ...patch }));

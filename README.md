@@ -9,7 +9,7 @@ Live at https://ashtonlance.github.io/want-list/
 
 - React 19 and TypeScript (strict) on Vite
 - TanStack Router (file routes in `src/routes`) and TanStack Query for all server data
-- Supabase for sign-in (magic link) and storage: tables `cards`, `discover`, `layouts`, `editors`
+- Supabase for sign-in (emailed code, with the link as a fallback) and storage: tables `cards`, `discover`, `layouts`, `editors`
   and the `photos` bucket, created by `setup.sql`
 - tesseract.js, loaded only on the scan screen, reads card numbers from binder page photos
 - GitHub Pages, deployed by GitHub Actions
@@ -32,6 +32,20 @@ whose URL and public anon key are read from `config.js` at build time. Signing i
 Configuration).
 
 Anyone can read the list. Only the emails in the `editors` table can change it.
+
+### Sign-in email
+
+The sign-in screen asks for the code from the email, and also takes the email's link pasted in. Supabase's
+default email templates send only the link, so for the code to show up:
+
+1. In Authentication, Emails, edit both the Magic Link and Confirm signup templates to include
+   `{{ .Token }}`, for example `<p>Your code: <b>{{ .Token }}</b></p>`, keeping `{{ .ConfirmationURL }}`
+   for the link.
+2. Keep the email OTP length at 6 to 10 digits (Authentication, Providers, Email). The app accepts any
+   length in that range.
+
+Supabase's built-in email sender only allows a few emails an hour and may not let the templates be edited.
+Setting up custom SMTP (Authentication, Emails, SMTP Settings) lifts both limits.
 
 ## Scripts
 

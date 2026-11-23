@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createContext, use, useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { queryKeys } from "~/data/keys";
 import { supabase } from "~/lib/supabase";
+import { pendingSignIn } from "./signIn";
 
 interface Auth {
   /** False until the saved session has been read and, if signed in, the account checked. */
@@ -38,6 +39,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const { data } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next);
+      // Signed in, by code or link: the code screen has done its job.
+      if (next) pendingSignIn.clear();
       // What the database lets you read can depend on who you are: fetch everything again.
       if (event === "SIGNED_IN" || event === "SIGNED_OUT") void qc.invalidateQueries();
       setRefused(false);

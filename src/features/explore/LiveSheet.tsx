@@ -11,7 +11,7 @@ import { useCloseWhen } from "~/ui/useCloseWhen";
 import { exploreLightbox } from "./display";
 import { useLiveCard } from "./live";
 import { ShopLinks } from "./ShopLinks";
-import { liveUi } from "./state";
+import { useQuickAddTo } from "./quickAdd";
 import type { LiveCard } from "./tcgdex";
 import { useCollections } from "~/features/cards/useCollections";
 
@@ -101,7 +101,10 @@ function LiveDetail({ card: d }: { card: LiveCard }) {
 /** Add to a collection as wanted or owned. */
 function LiveActions({ card: d }: { card: LiveCard }) {
   const { fromLive } = useAddCards();
-  const [coll, setColl] = useState(() => liveUi.get().addTo);
+  const quickAddTo = useQuickAddTo();
+  // Explore's quick add collection until another is picked here.
+  const [picked, setColl] = useState<string | null>(null);
+  const coll = picked ?? quickAddTo;
   const [busy, setBusy] = useState(false);
   const names = useCollections().collections.map((c) => c.name);
 

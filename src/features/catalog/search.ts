@@ -44,10 +44,14 @@ export function searchCatalog(cat: Catalog, query: string, withJapanese: boolean
 /** Asking for Japanese cards by name: "jp" or "japanese" anywhere in the search. */
 export const wantsJapanese = (query: string): boolean => /(^|\s)(jp|japanese)(\s|$)/i.test(query);
 
-/** Store listings and catch-all groups ("Gengar - 050/088 (Cosmos Holo)", "Miscellaneous Cards"). */
-const NOISY_SET = /miscellaneous|blister|prize pack|jumbo|deck exclusives|league & championship/i;
-const isNoisy = (cat: Catalog, c: CatalogCard): boolean =>
-  /\s-\s|\(/.test(c.name) || NOISY_SET.test(setOf(cat, c).name);
+/**
+ * Catch-all groups, deck kits and non-playable printings: TCGplayer files these under sets like "Miscellaneous Cards &
+ * Products" or "Prize Pack Series Cards". Judged by the set alone, since real printings in real sets often
+ * carry a number or variant in the name ("Audino - 074/086 (Master Ball Pattern)").
+ */
+const NOISY_SET =
+  /miscellaneous|blister|prize pack|jumbo|deck exclusives|league & championship|world championship decks|battle academy|start deck|trainer kit/i;
+const isNoisy = (cat: Catalog, c: CatalogCard): boolean => NOISY_SET.test(setOf(cat, c).name);
 
 /**
  * The search behind Add: nothing until two letters are typed, English cards unless the search asks

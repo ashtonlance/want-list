@@ -51,6 +51,7 @@ interface MatchesProps {
 function CatalogMatches({ cat, query, coll, addAs }: MatchesProps) {
   const { cards } = useCards();
   const { fromLive } = useAddCards();
+  const { toast } = useToast();
   const onList = useMemo(() => listLookup(cards), [cards]);
   const [adding, setAdding] = useState<ReadonlySet<number>>(new Set());
   const { rows, total } = useMemo(() => addSearch(cat, query, RESULTS), [cat, query]);
@@ -60,13 +61,23 @@ function CatalogMatches({ cat, query, coll, addAs }: MatchesProps) {
 
   const add = async (c: CatalogCard) => {
     if (adding.has(c.pid)) return;
+    const d = catalogLiveCard(cat, c);
+    const have = onList(d);
+    // Already there with nothing to change: say so rather than claim it was added.
+    if (have && (!coll || have.collections.includes(coll)) && (addAs === "want" || isGot(have))) {
+      toast(coll ? `${c.name} is already in ${coll}` : `${c.name} is already on your list`);
+      return;
+    }
     setAdding((s) => new Set(s).add(c.pid));
-    await fromLive(catalogLiveCard(cat, c), addAs, coll);
-    setAdding((s) => {
-      const next = new Set(s);
-      next.delete(c.pid);
-      return next;
-    });
+    try {
+      await fromLive(d, addAs, coll);
+    } finally {
+      setAdding((s) => {
+        const next = new Set(s);
+        next.delete(c.pid);
+        return next;
+      });
+    }
   };
 
   return (

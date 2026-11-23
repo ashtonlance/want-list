@@ -14,7 +14,7 @@ import { savedRowCount, useScrollRestoration } from "~/lib/scroll";
 import { AddedMark, ExCard, PriceTag, QuickWant } from "./ExCard";
 import { catalogLiveCard } from "./live";
 import { listLookup } from "./onList";
-import { useLiveUi } from "./state";
+import { useQuickAddTo } from "./quickAdd";
 
 const PAGE = 60;
 
@@ -62,7 +62,7 @@ export function EveryCardFeed({ cat, rows, lang, scrollKey, q = "" }: FeedProps)
   const { cards } = useCards();
   const onList = useMemo(() => listLookup(cards), [cards]);
   const { canWrite } = useAuth();
-  const { addTo } = useLiveUi();
+  const addTo = useQuickAddTo();
   const { fromLive } = useAddCards();
   const { open } = useOverlayNav();
   const total = rows.length;

@@ -122,6 +122,11 @@ export function LiveView() {
       .map(([name]) => ({ value: name, label: name }));
     return [{ value: "", label: "Any rarity" }, ...names];
   }, [catalog.data]);
+  // A saved rarity the catalog no longer lists would show an empty feed: drop it.
+  const staleRarity = Boolean(catalog.data && ui.rarity && !catalog.data.rarities.includes(ui.rarity));
+  useEffect(() => {
+    if (staleRarity) patchLiveUi({ rarity: "" });
+  }, [staleRarity]);
 
   // What's typed follows the address when it changes elsewhere (a chip, the back button), but a search
   // that has just gone through keeps exactly what was typed.

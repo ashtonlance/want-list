@@ -30,6 +30,24 @@ describe("addSearch", () => {
     expect(pids(searchCatalog(mixed, "gengar", false))).toEqual([2, 3, 1]);
     expect(pids(addSearch(mixed, "gengar", 10).rows)).toEqual([1, 2, 3]);
   });
+  it("keeps real printings with a number or variant in the name among the real ones", () => {
+    const real = parseCatalog({
+      asOf: "2026-11-22",
+      sets: [
+        ["Evolving Skies", 0, "2021-08-27"],
+        ["Prize Pack Series Cards", 0, "2026-10-01"],
+        ["Black Bolt", 0, "2025-07-18"],
+      ],
+      rarities: ["Rare"],
+      cards: [
+        [1, "Umbreon VMAX", 0, "95", 0, 20],
+        [2, "Umbreon VMAX (Alternate Art Secret)", 0, "215", 0, 1500],
+        [3, "Umbreon VMAX", 1, "95", 0, 18],
+        [4, "Umbreon - 074/086 (Master Ball Pattern)", 2, "074/086", 0, 30],
+      ],
+    });
+    expect(pids(addSearch(real, "umbreon", 10).rows)).toEqual([4, 1, 2, 3]);
+  });
   it("includes Japanese cards only when asked", () => {
     expect(pids(addSearch(cat, "gengar jp", 10).rows)).toEqual([5]);
     expect(pids(addSearch(cat, "gengar japanese", 10).rows)).toEqual([5]);
