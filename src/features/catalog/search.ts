@@ -9,7 +9,7 @@ export function hayOf(cat: Catalog): string[] {
   if (!hay) {
     hay = cat.cards.map((c) => {
       const st = setOf(cat, c);
-      return `${c.name} ${st.name} ${c.number.split("/")[0] ?? ""} ${numberTag(c.number)} ${st.jp ? "japanese jp" : ""}`.toLowerCase();
+      return `${c.name} ${st.name} ${c.number} ${numberTag(c.number)} ${st.jp ? "japanese jp" : ""}`.toLowerCase();
     });
     hayCache.set(cat, hay);
   }

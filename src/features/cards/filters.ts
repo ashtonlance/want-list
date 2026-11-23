@@ -36,7 +36,7 @@ const haystack = (c: Card): string =>
   [
     c.name,
     c.set,
-    c.number.split("/")[0] ?? "",
+    c.number,
     numberTag(c.number),
     c.variant,
     c.note,

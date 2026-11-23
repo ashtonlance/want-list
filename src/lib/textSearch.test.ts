@@ -27,6 +27,8 @@ describe("textMatcher", () => {
   it("matches other numbers only when they stand alone", () => {
     expect(matches("10", "gengar psa 10/10")).toBe(true);
     expect(matches("2", "need 2-3 copies")).toBe(false);
+    expect(matches("16", `champions festival [top 16] ${numberTag("bw95")}`)).toBe(true);
+    expect(matches("99", `gengar 16/99 ${numberTag("16/99")}`)).toBe(false);
     expect(matches("50", `gengar ~50 shipped ${numberTag("3")}`)).toBe(false);
     expect(matches("151 pikachu", `pikachu scarlet & violet 151 ${numberTag("173")}`)).toBe(true);
     expect(matches("pikachu 25", `pikachu 25th anniversary ${numberTag("5")}`)).toBe(false);
