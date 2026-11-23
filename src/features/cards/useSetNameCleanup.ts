@@ -38,6 +38,8 @@ export function useSetNameCleanup(): void {
     if (!ready || ran.current) return;
     ran.current = true;
     void (async () => {
+      let wrote = false;
+      let done = 0;
       try {
         const [cardDocs, layoutDocs] = await Promise.all([fetchDocs("cards"), fetchDocs("layouts")]);
         const cards = cardDocs.map((d) => withPrices(parseCard(d.id, d.data), priceFile));
@@ -50,7 +52,7 @@ export function useSetNameCleanup(): void {
           ...(isRecord(old) ? old : {}),
         };
         await setDoc("layouts", SET_NAMES_BACKUP_DOC, { cards: backup, savedAt: new Date().toISOString() });
-        let done = 0;
+        wrote = true;
         for (const f of fixes) {
           try {
             if (await patchExistingDoc("cards", f.card.id, { set: f.to })) done++;
@@ -59,13 +61,14 @@ export function useSetNameCleanup(): void {
             // Anything else: carry on with the rest; this card is tried again next visit.
           }
         }
-        if (done) toast(`Merged duplicate set names on ${plural(done, "card")}`);
       } catch (e) {
         // A refused write means this session can't edit after all; other failures try again next visit.
         if (e instanceof WriteError && e.code === "denied") markReadOnly();
       } finally {
-        void qc.invalidateQueries({ queryKey: docKeys.cards });
-        void qc.invalidateQueries({ queryKey: docKeys.layouts });
+        if (done) toast(`Merged duplicate set names on ${plural(done, "card")}`);
+        // The writes went straight to the server, so the list reloads to show them.
+        if (wrote) void qc.invalidateQueries({ queryKey: docKeys.layouts });
+        if (done) void qc.invalidateQueries({ queryKey: docKeys.cards });
       }
     })();
   }, [ready, cat, priceFile, toast, markReadOnly, qc]);

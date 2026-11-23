@@ -22,11 +22,11 @@ export function textMatcher(query: string): ((text: string) => boolean) | null {
   if (!words.length) return null;
   const tests = words.map((w) => {
     if (/^\d+$/.test(w)) {
-      // A number may carry a promo prefix of two to four letters (SV9, TG05, RC5) and one letter
-      // after it (4a), but not "25th", and other digits may not touch it (16 isn't 116). A set code
-      // like "Pt2:" or "SM2+" isn't a card number.
+      // A card number: a promo prefix (SV9, TG05, RC5, H05) or one letter after it (4a), but not
+      // "25th", and other digits may not touch it (16 isn't 116). A prefixed number right before ":"
+      // or "+" is a set code like "Pt2:" or "SM2+", not a card number.
       const n = escape(w.replace(/^0+(?=\d)/, ""));
-      const re = new RegExp(`(^|[^a-z0-9])(?:[a-z]{2,4})?0*${n}[a-z]?($|[^a-z0-9:+])`);
+      const re = new RegExp(`(^|[^a-z0-9])(?:(?:[a-z]{2,4}|[hs])0*${n}(?![:+])|0*${n}[a-z]?)($|[^a-z0-9])`);
       return (t: string) => re.test(t);
     }
     return (t: string) => t.includes(w);

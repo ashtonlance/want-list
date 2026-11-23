@@ -97,22 +97,32 @@ export async function mergeDoc(table: DocTableName, id: string, patch: JsonRecor
 }
 
 /**
- * Merges `patch` into a document that already exists, and does nothing when it's gone (so a card
- * deleted meanwhile isn't brought back). Resolves false when there was nothing to change.
+ * Merges `patch` into a document that already exists. The write only lands if nobody changed the
+ * document since it was read (otherwise it reads again and retries), so it can't undo another edit,
+ * and a document deleted meanwhile isn't brought back. Resolves false when the document is gone.
  */
 export async function patchExistingDoc(table: DocTableName, id: string, patch: JsonRecord): Promise<boolean> {
-  const { data: row, error } = await supabase.from(table).select("data").eq("id", id).maybeSingle();
-  if (error) throw writeError(error, "read refused");
-  if (!row || !isRecord(row.data)) return false;
-  const { error: upd, count } = await supabase
-    .from(table)
-    .update(
-      { data: asJson({ ...row.data, ...patch }), updated_at: new Date().toISOString() },
-      { count: "exact" },
-    )
-    .eq("id", id);
-  if (upd || count === 0) throw writeError(upd, "write refused");
-  return true;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data: row, error } = await supabase
+      .from(table)
+      .select("data,updated_at")
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw writeError(error, "read refused");
+    if (!row || !isRecord(row.data)) return false;
+    const { error: upd, count } = await supabase
+      .from(table)
+      .update(
+        { data: asJson({ ...row.data, ...patch }), updated_at: new Date().toISOString() },
+        { count: "exact" },
+      )
+      .eq("id", id)
+      .eq("updated_at", row.updated_at);
+    if (upd) throw writeError(upd, "write refused");
+    if (count) return true;
+    // Nothing updated: changed or deleted since the read. The next read tells which.
+  }
+  throw new WriteError("failed", "kept changing while being updated");
 }
 
 export async function deleteDoc(table: DocTableName, id: string): Promise<void> {
