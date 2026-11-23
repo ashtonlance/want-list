@@ -1,0 +1,21 @@
+name: Probe scenes
+on:
+  push:
+    branches: [probe-scenes]
+    paths: [tools/art/text-probe.mjs, .github/workflows/probe-scenes.yml]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci --prefix tools/art
+      - run: node tools/art/text-probe.mjs
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git add tools/art/text-probe.json && git commit -m "probe output" && git push origin HEAD:probe-scenes
