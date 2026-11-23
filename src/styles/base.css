@@ -104,8 +104,11 @@ button {
 
 /* The shimmer behind loading placeholders (see the skeleton-shimmer utility). */
 @keyframes shimmer {
+  from {
+    transform: translateX(-100%);
+  }
   to {
-    background-position: -200% 0;
+    transform: translateX(100%);
   }
 }
 

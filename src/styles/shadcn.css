@@ -68,16 +68,24 @@
   }
 }
 
-/* The app's loading shimmer, used by the Skeleton component (components/ui/skeleton.tsx). */
+/* The app's loading shimmer, used by the Skeleton component (components/ui/skeleton.tsx). The highlight
+   slides across as its own layer, on the GPU, rather than repainting the block every frame. */
 @utility skeleton-shimmer {
-  background: linear-gradient(
-    90deg,
-    var(--sunk) 0,
-    color-mix(in srgb, var(--sunk) 55%, var(--surface)) 50%,
-    var(--sunk) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.3s infinite linear;
+  position: relative;
+  overflow: hidden;
+  background-color: var(--sunk);
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0,
+      color-mix(in srgb, var(--sunk) 55%, var(--surface)) 50%,
+      transparent 100%
+    );
+    animation: shimmer 1.3s infinite linear;
+  }
 }
 
 /* Accordion panels ease open and shut (components/ui/accordion.tsx). */

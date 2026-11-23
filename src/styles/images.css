@@ -3,23 +3,29 @@
    so nothing moves when the picture arrives. Until then the frame shimmers; the picture fades in over it
    (.fade-img in motion.css). A picture that fails shows the card's name instead (.noimg). */
 :is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img, .cmp-img):has(.fade-img:not(.ready)) {
+  background-color: var(--sunk);
+}
+/* The shimmer's highlight is a layer of its own that slides across, so it moves on the GPU instead of
+   repainting every loading frame on every frame of a scroll. Each frame clips it (overflow: hidden). */
+:is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img, .cmp-img):has(.fade-img:not(.ready))::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
   background-image: linear-gradient(
     100deg,
-    transparent 20%,
+    transparent 25%,
     color-mix(in srgb, var(--surface) 55%, transparent) 50%,
-    transparent 80%
+    transparent 75%
   );
-  background-color: var(--sunk);
-  background-size: 220% 100%;
-  background-repeat: no-repeat;
   animation: img-shimmer 1.4s infinite ease-in-out;
 }
 @keyframes img-shimmer {
   from {
-    background-position: 130% 0;
+    transform: translateX(-100%);
   }
   to {
-    background-position: -30% 0;
+    transform: translateX(100%);
   }
 }
 /* The full-screen photo shimmers on the dark backdrop until its first picture arrives; the large
@@ -33,10 +39,18 @@
   background-color: rgba(255, 255, 255, 0.07);
   background-size: 220% 100%;
   background-repeat: no-repeat;
-  animation: img-shimmer 1.4s infinite ease-in-out;
+  animation: lb-shimmer 1.4s infinite ease-in-out;
+}
+@keyframes lb-shimmer {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -30% 0;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  :is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img, .cmp-img):has(.fade-img:not(.ready)),
+  :is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img, .cmp-img):has(.fade-img:not(.ready))::after,
   .lb-photo::before {
     animation: none;
   }
