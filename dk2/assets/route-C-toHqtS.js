@@ -1,0 +1,1 @@
+import{et as e}from"./index-D-u6f_-f.js";var t=e;export{t as component};
