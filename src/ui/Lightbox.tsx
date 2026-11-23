@@ -9,8 +9,11 @@ import {
   useState,
   type PointerEvent,
   type ReactNode,
+  type Ref,
 } from "react";
 import { bigImage } from "~/lib/images";
+import { findPicture, isTransitioning, morph, sheetPicture } from "~/lib/motion";
+import { useProgressiveSrc } from "./useProgressiveSrc";
 import { useOverlay } from "./overlay";
 
 export interface LightboxItem {
@@ -39,11 +42,16 @@ interface Opened {
   items: readonly LightboxItem[];
   index: number;
   href: string;
+  /** Plays its own fade in; off when the picture flew in from its tile instead. */
+  enter: boolean;
+  /** The way the last swipe went, so the next card comes in from that side. */
+  dir?: "next" | "prev";
 }
 
 /**
  * Full-screen card photo. Swipe or use the arrow keys to move through the cards on screen.
- * Closes on Escape, a tap outside the photo, or any navigation.
+ * Closes on Escape, a tap outside the photo, or any navigation. Opening and closing fly the picture
+ * from and back to its tile where it's on screen (lib/motion.ts).
  */
 export function LightboxProvider({ children }: { children: ReactNode }) {
   const [opened, setOpened] = useState<Opened | null>(null);
@@ -52,6 +60,8 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
   const sequenceRef = useRef<readonly LightboxItem[]>([]);
   const lastFocus = useRef<Element | null>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
+  const box = useRef<HTMLDivElement>(null);
+  const photo = useRef<HTMLImageElement>(null);
   const href = useLocation({ select: (l) => l.href });
   // Navigating anywhere closes the photo.
   const shown = opened?.href === href ? opened : null;
@@ -59,15 +69,22 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
   const count = shown?.items.length ?? 0;
 
   const close = () => {
-    setOpened(null);
-    if (lastFocus.current instanceof HTMLElement) lastFocus.current.focus();
+    // Back to its tile if that's on screen; otherwise the photo just fades away.
+    const tile = item ? findPicture(item.src, null, box.current) : null;
+    morph({
+      from: photo.current,
+      update: () => setOpened(null),
+      to: () => tile,
+      wait: 0,
+    });
+    if (lastFocus.current instanceof HTMLElement) lastFocus.current.focus({ preventScroll: true });
   };
   const step = useCallback((dir: -1 | 1) => {
     setDragX(0);
     setOpened((o) => {
       if (!o) return o;
       const index = o.index + dir;
-      return index >= 0 && index < o.items.length ? { ...o, index } : o;
+      return index >= 0 && index < o.items.length ? { ...o, index, dir: dir > 0 ? "next" : "prev" } : o;
     });
   }, []);
   useOverlay(item !== undefined, close);
@@ -95,7 +112,15 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
       const items = sequenceRef.current;
       const index = items.findIndex((i) => sameCard(i, next));
       setDragX(0);
-      setOpened(index >= 0 ? { items, index, href } : { items: [next], index: 0, href });
+      morph({
+        from: findPicture(next.src),
+        update: () => {
+          // Inside a transition the picture flies in, so the photo view skips its own fade.
+          const enter = !isTransitioning();
+          setOpened(index >= 0 ? { items, index, href, enter } : { items: [next], index: 0, href, enter });
+        },
+        to: () => photo.current,
+      });
     },
     [href],
   );
@@ -121,7 +146,8 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
       {children}
       {item && shown ? (
         <div
-          className="lightbox"
+          ref={box}
+          className={"lightbox" + (shown.enter ? "" : " no-enter")}
           role="dialog"
           aria-modal="true"
           aria-label="Card photo"
@@ -139,12 +165,12 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
           <button className="close" type="button" aria-label="Close" ref={closeBtn} onClick={close}>
             ×
           </button>
-          <img
+          <Photo
             key={item.src}
-            src={bigImage(item.src)}
-            alt={`${item.name} card`}
-            draggable={false}
-            style={dragX ? { transform: `translateX(${String(dragX)}px)` } : undefined}
+            ref={photo}
+            item={item}
+            className={shown.dir ? `from-${shown.dir}` : undefined}
+            dragX={dragX}
           />
           <div className="cap">
             <b>{item.name}</b>
@@ -156,8 +182,15 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
               type="button"
               onClick={() => {
                 const details = item.onDetails;
-                setOpened(null);
-                details?.();
+                // The picture flies into the card's sheet as it opens.
+                morph({
+                  from: photo.current,
+                  update: () => {
+                    setOpened(null);
+                    details?.();
+                  },
+                  to: sheetPicture,
+                });
               }}
             >
               Details
@@ -189,6 +222,28 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
         </div>
       ) : null}
     </LightboxContext>
+  );
+}
+
+interface PhotoProps {
+  item: LightboxItem;
+  ref: Ref<HTMLImageElement>;
+  className: string | undefined;
+  dragX: number;
+}
+
+/** The big picture: the grid's small image at once, so it can fly in, then the large one. */
+function Photo({ item, ref, className, dragX }: PhotoProps) {
+  const src = useProgressiveSrc(item.src);
+  return (
+    <img
+      ref={ref}
+      src={src}
+      alt={`${item.name} card`}
+      draggable={false}
+      className={className}
+      style={dragX ? { transform: `translateX(${String(dragX)}px)` } : undefined}
+    />
   );
 }
 

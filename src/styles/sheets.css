@@ -7,7 +7,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  animation: fade 0.2s ease;
+  animation: fade var(--t) var(--ease);
 }
 .sheet-card {
   background: var(--surface);
@@ -19,7 +19,7 @@
   border-radius: 20px 20px 0 0;
   padding: 6px var(--gx) calc(20px + env(safe-area-inset-bottom, 0px));
   box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.18);
-  animation: up 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: up var(--t-slow) var(--ease-sheet);
   touch-action: pan-y;
 }
 @media (min-width: 700px) {

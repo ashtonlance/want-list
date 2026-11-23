@@ -3,6 +3,7 @@ import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { defaultViewTransition } from "./app/pageTransition";
 import { restoreLastSection } from "./app/sections";
 import { PERSIST_BUSTER, PERSIST_MAX_AGE, queryPersister, shouldPersistQuery } from "./data/persist";
 import { routeTree } from "./routeTree.gen";
@@ -25,6 +26,8 @@ const router = createRouter({
   defaultPreload: "intent",
   // Views restore their own scroll position once their content is on screen.
   scrollRestoration: () => false,
+  // Screens slide the way the tab bar reads, and sheets slide away as they close (app/pageTransition.ts).
+  defaultViewTransition,
 });
 
 declare module "@tanstack/react-router" {

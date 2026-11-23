@@ -1,4 +1,13 @@
-import { createContext, use, useLayoutEffect, useRef, type ReactNode, type TouchEvent } from "react";
+import {
+  createContext,
+  use,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type TouchEvent,
+} from "react";
+import { isTransitioning } from "~/lib/motion";
 import { useOverlay } from "./overlay";
 
 const SheetClose = createContext<() => void>(() => undefined);
@@ -11,9 +20,14 @@ interface SheetProps {
   contentKey?: string;
 }
 
-/** A bottom sheet: tap the backdrop, press Escape or drag the grip down to close. */
+/**
+ * A bottom sheet: tap the backdrop, press Escape or drag the grip down to close. It slides up as it
+ * opens and down as it closes (app/pageTransition.ts), or appears with a card's picture flying in.
+ */
 export function Sheet({ label, onClose, children, contentKey }: SheetProps) {
   useOverlay(true, onClose);
+  // Opened inside a transition: that already animates it, so skip the slide-up. Fixed at mount.
+  const [noEnter] = useState(isTransitioning);
   const card = useRef<HTMLDivElement>(null);
   const drag = useRef<{ y0: number; dy: number } | null>(null);
   useLayoutEffect(() => {
@@ -37,7 +51,7 @@ export function Sheet({ label, onClose, children, contentKey }: SheetProps) {
     drag.current = null;
     const el = card.current;
     if (!d || !el) return;
-    el.style.transition = "transform .2s";
+    el.style.transition = "transform .24s cubic-bezier(0.2, 0.8, 0.2, 1)";
     if (d.dy > 110) onClose();
     else el.style.transform = "";
   };
@@ -45,7 +59,7 @@ export function Sheet({ label, onClose, children, contentKey }: SheetProps) {
   return (
     <SheetClose value={onClose}>
       <div
-        className="sheet"
+        className={"sheet" + (noEnter ? " no-enter" : "")}
         onClick={(e) => {
           if (e.target === e.currentTarget) onClose();
         }}

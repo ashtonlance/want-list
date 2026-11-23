@@ -1,9 +1,10 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
 import { useAddCards } from "~/features/cards/create";
 import { isGot } from "~/features/cards/pricing";
+import { useEnterAnimation } from "~/lib/motion";
 import { savedRowCount, useScrollRestoration } from "~/lib/scroll";
 import { usePhotoGrid } from "~/ui/Lightbox";
 import { SkeletonGrid } from "~/ui/Skeleton";
@@ -60,6 +61,8 @@ export function LiveResults({ q, set }: { q: string; set: string }) {
     [tiles.map, open],
   );
   const photoOf = usePhotoGrid(visible, toPhoto);
+  const grid = useRef<HTMLDivElement>(null);
+  useEnterAnimation(grid, `${q}|${set}|${sort}|${String(cap)}`);
 
   if (sets.isError || list.isError)
     return (
@@ -81,7 +84,7 @@ export function LiveResults({ q, set }: { q: string; set: string }) {
   return (
     <>
       {progress ? <p className="hint">{progress}</p> : null}
-      <div className="ex-grid">
+      <div className="ex-grid" ref={grid}>
         {visible.map((b) => {
           const d = tiles.map.get(b.id);
           const have = d ? onList(d) : null;
@@ -93,7 +96,7 @@ export function LiveResults({ q, set }: { q: string; set: string }) {
               img={b.image ? `${b.image}/low.webp` : d?.img}
               name={b.name}
               meta={d ? `${d.set} · #${d.number}` : `#${b.localId}`}
-              onOpen={() => open({ live: b.id })}
+              onOpen={() => open({ live: b.id }, b.id)}
               onPhoto={photoOf(b)}
               line={
                 d ? (

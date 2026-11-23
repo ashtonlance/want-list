@@ -52,7 +52,7 @@ export function CollectionBinder({ cards, coll, pockets, canWrite }: Props) {
           onClick={() => {
             const show = photoOf(c);
             if (show) show();
-            else open({ card: c.id });
+            else open({ card: c.id }, c.id);
           }}
         >
           <CardImage src={src} name={c.name} />

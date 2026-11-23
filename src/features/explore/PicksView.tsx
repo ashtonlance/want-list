@@ -1,5 +1,5 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { Fragment, useCallback, useMemo } from "react";
+import { Fragment, useCallback, useMemo, useRef } from "react";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
@@ -7,6 +7,7 @@ import { useAddCards } from "~/features/cards/create";
 import type { Card } from "~/features/cards/types";
 import { useActiveCollection } from "~/features/list/useActiveCollection";
 import { formatDate, formatMoney } from "~/lib/format";
+import { glide, useEnterAnimation } from "~/lib/motion";
 import { useScrollRestoration } from "~/lib/scroll";
 import { Select } from "~/ui/Select";
 import { SkeletonGrid } from "~/ui/Skeleton";
@@ -188,6 +189,20 @@ export function PicksView() {
   );
   const photoOf = usePhotoGrid(shown, toPhoto);
 
+  // A new tab or filter fades the picks in; passing on one lets the rest glide into its place.
+  const grid = useRef<HTMLDivElement>(null);
+  useEnterAnimation(
+    grid,
+    [tab, artist, ui.sort, ui.cap, ui.rarity, ui.fullArt, ui.era, ui.showPassed, ui.hideAdded].join("|"),
+  );
+  const pass = (p: PickCard) => {
+    const tile = document.querySelector(`[data-sr="${CSS.escape(p.id)}"]`);
+    glide(
+      () => passOn(p, "passed", true),
+      () => !tile?.isConnected || tile.classList.contains("dim"),
+    );
+  };
+
   useScrollRestoration(`picks:${tab ?? ""}:${artist}`, loaded);
 
   if (!loaded) return <SkeletonGrid className="ex-grid" count={6} />;
@@ -322,7 +337,7 @@ export function PicksView() {
           ) : null}
         </div>
       </div>
-      <div className="ex-grid">
+      <div className="ex-grid" ref={grid}>
         {shown.map((p, i) => {
           const already = isPickAdded(cards, p);
           const quickColl = p.coll === WILDCARDS ? "" : p.coll;
@@ -338,7 +353,7 @@ export function PicksView() {
                 name={p.name}
                 meta={`${p.set} · #${p.number}`}
                 coll={isAll ? p.coll : undefined}
-                onOpen={() => open({ pick: p.id })}
+                onOpen={() => open({ pick: p.id }, p.id)}
                 onPhoto={photoOf(p)}
                 line={
                   <>
@@ -347,7 +362,7 @@ export function PicksView() {
                       <AddedMark have={p.status === "owned"} />
                     ) : canWrite && p.status !== "passed" ? (
                       <span className="ex-acts">
-                        <PassButton name={p.name} onPass={() => void passOn(p, "passed", true)} />
+                        <PassButton name={p.name} onPass={() => pass(p)} />
                         <QuickWant
                           name={p.name}
                           coll={quickColl}

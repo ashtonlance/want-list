@@ -30,6 +30,13 @@
   --tb: calc(56px + env(safe-area-inset-top, 0px));
   --tab: calc(56px + env(safe-area-inset-bottom, 0px));
   --gx: max(16px, env(safe-area-inset-left, 0px));
+  /* Motion: quick, decelerating, nothing bouncy (styles/motion.css, lib/motion.ts). */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-sheet: cubic-bezier(0.22, 0.9, 0.24, 1);
+  --t-fast: 0.14s;
+  --t: 0.24s;
+  --t-slow: 0.34s;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {

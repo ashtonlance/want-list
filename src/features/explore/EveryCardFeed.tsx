@@ -9,6 +9,7 @@ import type { FeedLang } from "~/features/catalog/feed";
 import { formatDate, formatMoney } from "~/lib/format";
 import { usePhotoGrid } from "~/ui/Lightbox";
 import { exploreLightbox } from "./display";
+import { useEnterAnimation } from "~/lib/motion";
 import { savedRowCount, useScrollRestoration } from "~/lib/scroll";
 import { AddedMark, ExCard, PriceTag, QuickWant } from "./ExCard";
 import { catalogLiveCard } from "./live";
@@ -38,6 +39,9 @@ export function EveryCardFeed({ cat, rows, lang }: FeedProps) {
   useScrollRestoration(SCROLL_KEY, true, shown);
 
   const foot = useRef<HTMLParagraphElement>(null);
+  // New filters or sort: the feed fades in afresh.
+  const grid = useRef<HTMLDivElement>(null);
+  useEnterAnimation(grid, rows);
   // A fresh observer after every page, so a page that still leaves the end in view loads the next one.
   useEffect(() => {
     const el = foot.current;
@@ -74,7 +78,7 @@ export function EveryCardFeed({ cat, rows, lang }: FeedProps) {
 
   return (
     <>
-      <div className="ex-grid">
+      <div className="ex-grid" ref={grid}>
         {visible.map((i) => {
           const row = cat.cards[i];
           if (!row) return null;
@@ -90,7 +94,7 @@ export function EveryCardFeed({ cat, rows, lang }: FeedProps) {
               name={d.name}
               meta={`${d.set} · #${d.number}`}
               badge={d.jp && lang !== "jp" ? "JP" : undefined}
-              onOpen={() => open({ live: d.id })}
+              onOpen={() => open({ live: d.id }, d.id)}
               onPhoto={photoOf(i)}
               line={
                 <>

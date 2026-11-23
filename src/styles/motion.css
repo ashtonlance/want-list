@@ -1,0 +1,282 @@
+/* ---------- motion ----------
+ * View transitions are started in lib/motion.ts and app/pageTransition.ts; each kind is a type here.
+ * Everything is short and decelerating, and all of it stops under reduced motion (end of file).
+ */
+
+/* Screens: the new one slides in the way the tab bar reads, the old one drifts off and fades. */
+:root:active-view-transition-type(forward, back, fade) .topbar {
+  view-transition-name: topbar;
+}
+:root:active-view-transition-type(forward, back, fade) .tabbar {
+  view-transition-name: tabbar;
+}
+/* Browse and For you: the switch itself stays put while the screen under it changes. */
+:root:active-view-transition-type(within) .ex-seg {
+  view-transition-name: ex-seg;
+}
+::view-transition-group(topbar),
+::view-transition-group(tabbar) {
+  animation-duration: var(--t);
+}
+/* Show only the live switch, so its highlight is seen sliding rather than cross-fading. */
+::view-transition-group(ex-seg),
+::view-transition-new(ex-seg) {
+  animation: none;
+}
+::view-transition-old(ex-seg) {
+  display: none;
+}
+:root:active-view-transition-type(forward)::view-transition-old(root) {
+  animation: vt-out-left var(--t) var(--ease-in) both;
+}
+:root:active-view-transition-type(forward)::view-transition-new(root) {
+  animation: vt-in-right var(--t-slow) var(--ease) both;
+}
+:root:active-view-transition-type(back)::view-transition-old(root) {
+  animation: vt-out-right var(--t) var(--ease-in) both;
+}
+:root:active-view-transition-type(back)::view-transition-new(root) {
+  animation: vt-in-left var(--t-slow) var(--ease) both;
+}
+@keyframes vt-out-left {
+  to {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+}
+@keyframes vt-out-right {
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+@keyframes vt-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(32px);
+  }
+}
+@keyframes vt-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-32px);
+  }
+}
+
+/* A sheet closing: it slides down while the dimming behind it lifts. */
+:root:active-view-transition-type(sheet-close) .sheet-card {
+  view-transition-name: sheet;
+}
+::view-transition-old(sheet) {
+  animation: vt-sheet-down var(--t) var(--ease-in) both;
+}
+:root:active-view-transition-type(sheet-close)::view-transition-group(root) {
+  animation-duration: var(--t);
+}
+@keyframes vt-sheet-down {
+  to {
+    transform: translateY(100%);
+  }
+}
+@media (min-width: 700px) {
+  @keyframes vt-sheet-down {
+    to {
+      opacity: 0;
+      transform: translateY(24px) scale(0.98);
+    }
+  }
+}
+
+/* A card's picture flying between a tile, the photo view and a sheet. */
+::view-transition-group(card-art) {
+  animation-duration: var(--t-slow);
+  animation-timing-function: var(--ease);
+}
+::view-transition-old(card-art),
+::view-transition-new(card-art) {
+  animation-duration: var(--t-slow);
+  animation-timing-function: var(--ease);
+  height: 100%;
+  object-fit: contain;
+}
+:root:active-view-transition-type(morph)::view-transition-group(root) {
+  animation-duration: var(--t-slow);
+}
+
+/* Cards gliding into a gap; the one leaving shrinks away. The rest of the screen changes at once. */
+:root:active-view-transition-type(glide)::view-transition-old(root),
+:root:active-view-transition-type(glide)::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-group(*.glide) {
+  animation-duration: var(--t-slow);
+  animation-timing-function: var(--ease);
+}
+::view-transition-old(*.glide):only-child {
+  animation: vt-shrink-out var(--t) var(--ease-in) both;
+}
+::view-transition-new(*.glide):only-child {
+  animation: vt-grow-in var(--t) var(--ease) both;
+}
+@keyframes vt-shrink-out {
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+@keyframes vt-grow-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+
+/* Something that mounted inside a transition skips its own entrance: the transition already drew it. */
+.sheet.no-enter,
+.sheet.no-enter .sheet-card,
+.lightbox.no-enter {
+  animation: none;
+}
+
+/* Pictures fade in as they arrive instead of popping in. */
+.fade-img {
+  opacity: 0;
+  transition: opacity var(--t-slow) var(--ease);
+}
+.fade-img.ready {
+  opacity: 1;
+}
+
+/* Photo view: swiping brings the next card in from the side it was pulled from. */
+.lightbox img.from-next {
+  animation: lb-from-next var(--t) var(--ease) backwards;
+}
+.lightbox img.from-prev {
+  animation: lb-from-prev var(--t) var(--ease) backwards;
+}
+@keyframes lb-from-next {
+  from {
+    opacity: 0;
+    transform: translateX(48px) scale(0.98);
+  }
+}
+@keyframes lb-from-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-48px) scale(0.98);
+  }
+}
+
+/* Toasts rise in and drop away. */
+.toast {
+  animation: toast-in var(--t) var(--ease) backwards;
+}
+.toast.leaving {
+  animation: toast-out var(--t-fast) var(--ease-in) both;
+  pointer-events: none;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.98);
+  }
+}
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, 6px) scale(0.98);
+  }
+}
+
+/* Segmented controls: the white pill slides to the chosen option. */
+.seg.has-thumb {
+  position: relative;
+  isolation: isolate;
+}
+.seg-thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 0;
+  width: var(--w, 0);
+  transform: translateX(var(--x, 0));
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.12),
+    0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  z-index: -1;
+  transition:
+    transform var(--t) var(--ease),
+    width var(--t) var(--ease);
+}
+.seg:not(.ready) .seg-thumb {
+  transition: none;
+}
+.seg.has-thumb button[aria-pressed="true"] {
+  background: none;
+  box-shadow: none;
+}
+.seg button {
+  transition: color var(--t) var(--ease);
+}
+
+/* Taps answer with a small press; state changes ease rather than snap. */
+.btn,
+.icon-btn,
+.acct-btn,
+.sheet-x,
+.chip-toggle,
+.colltab,
+.seg button,
+.tabbar button {
+  transition:
+    transform var(--t-fast) var(--ease),
+    background-color var(--t) var(--ease),
+    color var(--t) var(--ease),
+    border-color var(--t) var(--ease),
+    opacity var(--t-fast) var(--ease);
+}
+.btn:active,
+.icon-btn:active,
+.acct-btn:active,
+.sheet-x:active,
+.chip-toggle:active,
+.colltab:active {
+  transform: scale(0.96);
+}
+.seg button:active,
+.tabbar button:active {
+  transform: scale(0.94);
+}
+.tabbar button svg {
+  transition: transform var(--t) var(--ease);
+}
+.tabbar button[aria-pressed="true"] svg {
+  animation: tab-pop var(--t-slow) var(--ease);
+}
+@keyframes tab-pop {
+  40% {
+    transform: scale(0.86);
+  }
+}
+.tile-img,
+.ex-card .tile-img {
+  transition: transform var(--t-fast) var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

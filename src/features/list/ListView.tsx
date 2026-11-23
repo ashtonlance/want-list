@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { prefs } from "~/app/prefs";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
 import { visibleCards } from "~/features/cards/filters";
 import type { Card } from "~/features/cards/types";
+import { useEnterAnimation } from "~/lib/motion";
 import { useScrollRestoration } from "~/lib/scroll";
 import { useStore } from "~/lib/store";
 import { cardImageSrc } from "~/features/cards/image";
@@ -60,9 +61,12 @@ export function ListView() {
 
   useSelectingClass(ui.selecting);
   useScrollRestoration(`list:${coll ?? ""}:${binder ? "binder" : "list"}`, loaded);
+  // A new collection, filter, sort or layout fades the cards in rather than swapping them.
+  const grid = useRef<HTMLDivElement>(null);
+  useEnterAnimation(grid, `${coll ?? ""}|${ui.status}|${String(ui.prio)}|${sort}|${layout}`);
 
   const activate = useCallback(
-    (c: Card) => (ui.selecting ? toggleSelected(c.id) : open({ card: c.id })),
+    (c: Card) => (ui.selecting ? toggleSelected(c.id) : open({ card: c.id }, c.id)),
     [ui.selecting, open],
   );
 
@@ -83,7 +87,7 @@ export function ListView() {
     body = <div className="empty-state">{emptyText(cards.length > 0, coll, canWrite)}</div>;
   else
     body = (
-      <div className={"list " + layout}>
+      <div className={"list " + layout} ref={grid}>
         {rows.map((c) => (
           <Item
             key={c.id}

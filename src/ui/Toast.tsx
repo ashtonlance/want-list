@@ -11,7 +11,12 @@ interface ToastState {
   message: string;
   undo?: () => void;
   id: number;
+  /** Playing its exit before it goes. */
+  leaving?: boolean;
 }
+
+/** How long the exit plays (styles/motion.css, .toast.leaving). */
+const EXIT_MS = 160;
 
 const ToastContext = createContext<ToastApi | null>(null);
 
@@ -23,7 +28,13 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const show = useCallback((message: string, undo?: () => void) => {
     clearTimeout(timer.current);
     setState({ message, undo, id: ++seq.current });
-    timer.current = setTimeout(() => setState(null), undo ? 5000 : 2600);
+    timer.current = setTimeout(
+      () => {
+        setState((s) => (s ? { ...s, leaving: true } : s));
+        timer.current = setTimeout(() => setState(null), EXIT_MS);
+      },
+      undo ? 5000 : 2600,
+    );
   }, []);
   useEffect(() => () => clearTimeout(timer.current), []);
 
@@ -33,7 +44,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext value={api}>
       {children}
       {state ? (
-        <div className="toast" role="status" key={state.id}>
+        <div className={"toast" + (state.leaving ? " leaving" : "")} role="status" key={state.id}>
           {state.message}
           {state.undo ? (
             <>
