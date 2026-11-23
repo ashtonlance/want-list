@@ -90,7 +90,7 @@ function LiveDetail({ card: d }: { card: LiveCard }) {
       </div>
       {have ? (
         <div className="detail-note" style={{ marginTop: 16 }}>
-          {isGot(have) ? "✓ You have it" : "✓ On your list"}
+          {isGot(have) ? "✓ Got it" : "✓ On your list"}
         </div>
       ) : canWrite ? (
         <LiveActions card={d} />
@@ -139,7 +139,7 @@ function LiveActions({ card: d }: { card: LiveCard }) {
           Want it
         </button>
         <button className="btn" type="button" disabled={busy} onClick={() => void add("got")}>
-          I have it
+          Got it
         </button>
       </div>
     </div>

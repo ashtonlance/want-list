@@ -37,7 +37,7 @@ const isUrl = (s: string) => /^https?:\/\//i.test(s);
 const RESULTS = 30;
 const ADD_AS: readonly { value: WantOrGot; label: string }[] = [
   { value: "want", label: "I want it" },
-  { value: "got", label: "I have it" },
+  { value: "got", label: "Got it" },
 ];
 
 interface MatchesProps {
@@ -91,7 +91,7 @@ function CatalogMatches({ cat, query, coll, addAs }: MatchesProps) {
           ? "Adding…"
           : have
             ? isGot(have)
-              ? "✓ Have it"
+              ? "✓ Got it"
               : "✓ On list"
             : market
               ? "~" + formatMoney(market)

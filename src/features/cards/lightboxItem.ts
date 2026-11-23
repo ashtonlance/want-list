@@ -13,7 +13,7 @@ export function lightboxItem(c: Card, src: string): LightboxItem {
       c.lang === "JP" ? "Japanese" : "",
       c.set,
       c.number ? `#${c.number}` : "",
-      isGot(c) ? "Collected" : price != null ? formatMoney(price) : "",
+      isGot(c) ? "Got it" : price != null ? formatMoney(price) : "",
     ]
       .filter(Boolean)
       .join(" · "),

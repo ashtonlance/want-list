@@ -103,7 +103,7 @@ function PickDetail({ pick }: { pick: PickCard }) {
       ) : null}
       {isPickAdded(cards, p) ? (
         <div className="detail-note" style={{ marginTop: 16 }}>
-          {p.status === "owned" ? "✓ You have it" : "✓ On your list"}
+          {p.status === "owned" ? "✓ Got it" : "✓ On your list"}
         </div>
       ) : canWrite ? (
         <PickActions pick={p} />
@@ -154,7 +154,7 @@ function PickActions({ pick: p }: { pick: PickCard }) {
           Want it
         </button>
         <button className="btn" type="button" disabled={busy} onClick={() => void add("got")}>
-          I have it
+          Got it
         </button>
         {p.status === "passed" ? (
           <button className="btn" type="button" onClick={() => void setStatus("new")}>

@@ -70,10 +70,10 @@ export type WantOrGot = "want" | "got";
 const addedMessage = (name: string, got: boolean, coll: string) =>
   coll
     ? got
-      ? `Marked ${name} as owned in ${coll}`
+      ? `Marked ${name} as got in ${coll}`
       : `Added ${name} to ${coll}`
     : got
-      ? `Marked ${name} as owned`
+      ? `Marked ${name} as got`
       : `Added ${name} to your list`;
 
 /** Adds cards from Explore and Binders. A card already on the list is updated instead of added twice. */

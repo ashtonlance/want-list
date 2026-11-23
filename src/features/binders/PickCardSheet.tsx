@@ -156,7 +156,7 @@ function OurResults({ cards, inBinder, query, show, coll, onPlace }: OurResultsP
         src={cardImageSrc(c)}
         name={c.name}
         sub={[c.set, c.number ? "#" + c.number : ""].filter(Boolean).join(" · ")}
-        tag={isGot(c) ? "Have it" : price != null ? formatMoney(price) : "Want"}
+        tag={isGot(c) ? "Got it" : price != null ? formatMoney(price) : "Want"}
         already={inBinder.has(c.id)}
         onPick={() => onPlace({ k: "c", id: c.id }, c.name)}
       />
