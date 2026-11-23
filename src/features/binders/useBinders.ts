@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { WriteError, writeFailure } from "~/data/docs";
 import { useDocsQuery, useDocWrite } from "~/data/useDocs";
+import { prefs } from "~/app/prefs";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { isMetaDoc } from "~/features/cards/useCollections";
 import { isRecord } from "~/lib/json";
@@ -30,14 +31,39 @@ function parseLocal(raw: string | null): Binder[] {
   }
 }
 
+/** Binders made or changed on this device. */
 const localBinders = createPersistedStore<Binder[]>("wl-binders-local", parseLocal, (list) =>
   JSON.stringify(list.map((b) => ({ id: b.id, ...binderData(b) }))),
 );
 
-/** The shared binders, with this device's copies laid over them. */
-const merged = (shared: readonly Binder[], local: readonly Binder[]): Binder[] => {
-  const mine = new Set(local.map((b) => b.id));
-  return [...shared.filter((b) => !mine.has(b.id)), ...local].sort(byCreated);
+/** Shared binders deleted on this device, so they stay hidden here. */
+const localDeleted = createPersistedStore<string[]>(
+  "wl-binders-local-deleted",
+  (raw) => {
+    try {
+      const v: unknown = JSON.parse(raw ?? "[]");
+      return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+    } catch {
+      return [];
+    }
+  },
+  (ids) => JSON.stringify(ids),
+);
+
+/** The shared binders, with this device's changes and deletions laid over them. */
+const merged = (
+  shared: readonly Binder[],
+  local: readonly Binder[],
+  deleted: readonly string[],
+): Binder[] => {
+  const hidden = new Set([...local.map((b) => b.id), ...deleted]);
+  return [...shared.filter((b) => !hidden.has(b.id)), ...local].sort(byCreated);
+};
+
+/** A device copy worth moving to the shared binders: new there, or changed here since the shared copy. */
+const isNewer = (b: Binder, shared: ReadonlyMap<string, Binder>): boolean => {
+  const s = shared.get(b.id);
+  return !s || b.updatedAt > s.updatedAt;
 };
 
 export interface BindersApi {
@@ -60,12 +86,14 @@ export interface BindersApi {
 export function useBinders(): BindersApi {
   const docs = useDocsQuery("layouts");
   const write = useDocWrite("layouts");
-  const { canWrite, ready } = useAuth();
+  const { canWrite, cantEdit, markReadOnly } = useAuth();
   const flagged = useStore(viewOnly);
   const mine = useStore(localBinders);
+  const deleted = useStore(localDeleted);
   const { toast, toastUndo } = useToast();
-  // Anyone who can't edit works on this device from the start, so they know before their first change.
-  const local = !canWrite && (ready || flagged);
+  // Anyone known not to be an editor works on this device from the start, so they know before their first
+  // change. An editor whose check failed keeps the shared binders, and a refused write still switches over.
+  const local = !canWrite && (cantEdit || flagged);
 
   // A confirmed editor edits the shared binders again.
   useEffect(() => {
@@ -80,17 +108,18 @@ export function useBinders(): BindersApi {
         .sort(byCreated),
     [docs.data],
   );
-  const binders = useMemo(() => (local ? merged(shared, mine) : shared), [local, shared, mine]);
-
-  const saveLocally = useCallback(
-    (b: Binder) => {
-      const base = merged(shared, localBinders.get());
-      localBinders.set(
-        base.some((x) => x.id === b.id) ? base.map((x) => (x.id === b.id ? b : x)) : [...base, b],
-      );
-    },
-    [shared],
+  const binders = useMemo(
+    () => (local ? merged(shared, mine, deleted) : shared),
+    [local, shared, mine, deleted],
   );
+
+  const saveLocally = useCallback((b: Binder) => {
+    const list = localBinders.get();
+    localBinders.set(
+      list.some((x) => x.id === b.id) ? list.map((x) => (x.id === b.id ? b : x)) : [...list, b],
+    );
+    localDeleted.set(localDeleted.get().filter((id) => id !== b.id));
+  }, []);
 
   const save = useCallback<BindersApi["save"]>(
     async (b, message) => {
@@ -119,8 +148,10 @@ export function useBinders(): BindersApi {
 
   const remove = useCallback<BindersApi["remove"]>(
     async (b) => {
-      if (local) localBinders.set(merged(shared, localBinders.get()).filter((x) => x.id !== b.id));
-      else
+      if (local) {
+        localBinders.set(localBinders.get().filter((x) => x.id !== b.id));
+        if (shared.some((x) => x.id === b.id)) localDeleted.set([...localDeleted.get(), b.id]);
+      } else
         try {
           await write.mutateAsync({ kind: "delete", id: b.id });
         } catch (e) {
@@ -129,8 +160,9 @@ export function useBinders(): BindersApi {
           else toast(writeFailure(e, "Couldn't delete it. Check your connection and try again."));
           return;
         }
-      // Saving the same binder again brings it back as it was.
+      // Saving the same binder again brings it back as it was, and back on screen.
       toastUndo(`Deleted ${b.name}. Your cards are untouched.`, () => {
+        prefs.binder.set(b.id);
         void save(b, `Put ${b.name} back`);
       });
     },
@@ -138,33 +170,41 @@ export function useBinders(): BindersApi {
   );
 
   const deviceOnly = useMemo(() => {
-    if (!canWrite) return [];
+    // Only once the shared binders are known, so a slow or failed load never makes everything look device-only.
+    if (!canWrite || !docs.data) return [];
     const byId = new Map(shared.map((b) => [b.id, b]));
-    return mine.filter((b) => {
-      const s = byId.get(b.id);
-      return !s || b.updatedAt > s.updatedAt;
-    });
-  }, [canWrite, shared, mine]);
+    return mine.filter((b) => isNewer(b, byId));
+  }, [canWrite, docs.data, shared, mine]);
 
   const moveDeviceBinders = useCallback(async () => {
     let moved = 0;
+    let lastError: unknown;
     for (const b of deviceOnly)
       try {
         await write.mutateAsync({ kind: "set", id: b.id, data: binderData(b) });
         moved++;
-      } catch {
-        // Counted below; the rest stay on this device to try again.
+      } catch (e) {
+        lastError = e;
       }
     if (moved === deviceOnly.length) {
       localBinders.set([]);
+      localDeleted.set([]);
       toast(`Moved ${moved === 1 ? "1 binder" : `${moved} binders`} to the shared binders`);
-    } else toast(writeFailure(undefined, `Moved ${moved} of ${deviceOnly.length}. Try again for the rest.`));
-  }, [deviceOnly, write, toast]);
+    } else if (lastError instanceof WriteError && lastError.code === "denied") {
+      markReadOnly();
+      toast("You can view the shared binders but not change them");
+    } else toast(writeFailure(lastError, `Moved ${moved} of ${deviceOnly.length}. Try again for the rest.`));
+  }, [deviceOnly, write, toast, markReadOnly]);
 
   const discardDeviceBinders = useCallback(() => {
     const kept = localBinders.get();
+    const hidden = localDeleted.get();
     localBinders.set([]);
-    toastUndo("Removed the binders saved on this device", () => localBinders.set(kept));
+    localDeleted.set([]);
+    toastUndo("Removed the binders saved on this device", () => {
+      localBinders.set(kept);
+      localDeleted.set(hidden);
+    });
   }, [toastUndo]);
 
   const { refetch } = docs;
@@ -172,8 +212,8 @@ export function useBinders(): BindersApi {
 
   return {
     binders,
-    loaded: docs.data !== undefined || local,
-    failed: docs.isError && docs.data === undefined && !local,
+    loaded: docs.data !== undefined,
+    failed: docs.isError && docs.data === undefined,
     retry,
     local,
     save,

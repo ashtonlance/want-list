@@ -11,6 +11,8 @@ interface Auth {
   email: string | null;
   /** True once the signed-in account is confirmed as an editor of the list. */
   canWrite: boolean;
+  /** True only when it's known that changes aren't allowed: signed out, or an account confirmed as view-only. */
+  cantEdit: boolean;
   /** Called when the database refuses a write: the app stops offering changes. */
   markReadOnly: () => void;
   /** Resolves false if signing out didn't go through (the session is kept, so nothing changes). */
@@ -72,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ready: ready && (email === null || !editor.isPending),
       email,
       canWrite: editor.data === true && !refused,
+      cantEdit: ready && (email === null || editor.data === false || refused),
       markReadOnly,
       signOut,
     }),

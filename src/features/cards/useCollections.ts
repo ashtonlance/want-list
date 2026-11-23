@@ -110,15 +110,21 @@ export function useCollectionWrites(): CollectionWrites {
   const remove = useCallback<CollectionWrites["remove"]>(
     async (name) => {
       const before = names;
+      const wasOpen = prefs.coll.get() === name;
       if (!(await saveNames(names.filter((n) => n !== name)))) return;
-      if (prefs.coll.get() === name) prefs.coll.set(null);
+      if (wasOpen) prefs.coll.set(null);
       await saveMany(
         cards
           .filter((c) => c.collections.includes(name))
           .map((c) => [c, removeFromCollection(c, name)] as const),
         `Deleted ${name}. The cards are still on your list.`,
-        // Undo puts the cards back in it, then the collection back in its place.
-        { after: () => saveNames(before) },
+        // Undo puts the cards back in it, then the collection back in its place (and on screen, if it was).
+        {
+          after: async () => {
+            if (!(await saveNames(before))) throw new Error(`couldn't restore ${name}`);
+            if (wasOpen) prefs.coll.set(name);
+          },
+        },
       );
     },
     [names, saveNames, saveMany, cards],
