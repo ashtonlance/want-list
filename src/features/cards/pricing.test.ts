@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { marketValue, pickSub, pidOf, priceOf, shortPrice, withPrices } from "./pricing";
+import { pickSub, pidOf, priceOf, shortPrice, withPrices } from "./pricing";
 import { testCard } from "./testCard";
 
 const tcg = { sub: "Holofoil", market: 12.5, low: 10, productId: 42, asOf: "2026-11-01" };
@@ -54,14 +54,6 @@ describe("priceOf", () => {
   });
   it("ignores a last sold price, which isn't something you can buy at", () => {
     expect(priceOf(testCard({ ask: { kind: "price", amount: 8, source: "", asOf: "" } }))).toBeNull();
-  });
-});
-
-describe("marketValue", () => {
-  it("is what a card is worth, not what a deal costs", () => {
-    expect(marketValue(testCard({ deal, tcg }))).toBe(12.5);
-    expect(marketValue(testCard({ ask: { kind: "market", amount: 9, source: "", asOf: "" } }))).toBe(9);
-    expect(marketValue(testCard({ ask: { kind: "ask", amount: 8, source: "", asOf: "" } }))).toBeNull();
   });
 });
 

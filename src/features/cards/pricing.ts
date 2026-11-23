@@ -51,11 +51,6 @@ export function priceOf(c: Pick<Card, "deal" | "tcg" | "ask">): number | null {
   return null;
 }
 
-/** What an owned card is worth today: its TCGplayer market, else the market price saved with it. */
-export function marketValue(c: Pick<Card, "tcg" | "ask">): number | null {
-  return tcgMarket(c) ?? (c.ask?.kind === "market" ? c.ask.amount : null);
-}
-
 export interface ShortPrice {
   amt: string | null;
   deal: boolean;
