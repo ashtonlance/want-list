@@ -21,7 +21,7 @@ import { Seg } from "~/ui/Seg";
 import { Select } from "~/ui/Select";
 import { LoadError } from "~/ui/LoadError";
 import type { Slot } from "./types";
-import { useMediaQuery } from "./useMediaQuery";
+import { useMediaQuery } from "~/lib/useMediaQuery";
 import { useCollections } from "~/features/cards/useCollections";
 
 type Source = "ours" | "web";

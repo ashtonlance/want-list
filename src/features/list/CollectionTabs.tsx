@@ -1,37 +1,11 @@
 import { PlusIcon } from "lucide-react";
-import { useMemo, type ReactNode } from "react";
-import { Button } from "~/components/ui/button";
-import { Toggle } from "~/components/ui/toggle";
+import { useMemo } from "react";
 import type { CollectionSummary } from "~/features/cards/collections";
 import { useOverlayNav } from "~/app/overlayNav";
 import { byRecentUse, useRecentCollections } from "~/features/cards/recentCollections";
+import { Rail, RailAction, RailItem } from "~/ui/Rail";
+import { useInSideBar } from "~/ui/sideSlot";
 import { patchListUi, showCollection } from "./state";
-
-interface TabProps {
-  label: string;
-  sub: string;
-  pressed: boolean;
-  onPick: () => void;
-}
-
-/** One collection to show. Pressing the one already shown keeps it shown. */
-function Tab({ label, sub, pressed, onPick }: TabProps) {
-  return (
-    <Toggle pressed={pressed} onPressedChange={onPick}>
-      <b>{label}</b>
-      <span>{sub}</span>
-    </Toggle>
-  );
-}
-
-/** The quieter pills after the collections, which open something instead of picking a collection. */
-function ActionTab({ children, onClick }: { children: ReactNode; onClick: () => void }) {
-  return (
-    <Button variant="outline" size="sm" className="rounded-full" onClick={onClick}>
-      {children}
-    </Button>
-  );
-}
 
 interface Props {
   colls: readonly CollectionSummary[];
@@ -43,26 +17,33 @@ interface Props {
 export function CollectionTabs({ colls, current, cardCount, canWrite }: Props) {
   const { open } = useOverlayNav();
   const used = useRecentCollections();
-  const ordered = useMemo(() => byRecentUse(colls, (c) => c.name, used), [colls, used]);
+  // Chips put the ones in use first, so they're in reach without scrolling. The side bar shows every
+  // collection at once, so it keeps their saved order and nothing moves under the pointer.
+  const side = useInSideBar();
+  const ordered = useMemo(
+    () => (side ? colls : byRecentUse(colls, (c) => c.name, used)),
+    [colls, used, side],
+  );
   return (
-    <div className="colltabs">
-      <Tab
+    <Rail label="Collections">
+      <RailItem
         label="All cards"
         sub={`${cardCount} cards`}
         pressed={!current}
         onPick={() => showCollection(null)}
       />
       {ordered.map((c) => (
-        <Tab
+        <RailItem
           key={c.name}
           label={c.name}
           sub={`${c.got}/${c.total}`}
+          progress={c.total ? c.got / c.total : 0}
           pressed={current === c.name}
           onPick={() => showCollection(c.name)}
         />
       ))}
       {canWrite ? (
-        <ActionTab
+        <RailAction
           onClick={() => {
             showCollection(null);
             patchListUi({ collForm: "new" });
@@ -70,11 +51,11 @@ export function CollectionTabs({ colls, current, cardCount, canWrite }: Props) {
         >
           <PlusIcon />
           New collection
-        </ActionTab>
+        </RailAction>
       ) : null}
-      <ActionTab onClick={() => open({ panel: "collections" })}>
+      <RailAction onClick={() => open({ panel: "collections" })}>
         {canWrite ? "Edit collections" : "All collections"}
-      </ActionTab>
-    </div>
+      </RailAction>
+    </Rail>
   );
 }

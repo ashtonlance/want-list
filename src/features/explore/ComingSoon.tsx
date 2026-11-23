@@ -1,7 +1,8 @@
 import { useMemo } from "react";
 import type { Catalog } from "~/features/catalog/catalog";
 import type { FeedLang } from "~/features/catalog/feed";
-import { Toggle } from "~/components/ui/toggle";
+import { RailItem } from "~/ui/Rail";
+import { useInSideBar } from "~/ui/sideSlot";
 import { formatDate, plural, today } from "~/lib/format";
 
 interface Props {
@@ -39,24 +40,27 @@ export function SoonChip({
 }) {
   const sets = useMemo(() => upcoming(cat, lang), [cat, lang]);
   const first = sets[0];
+  // The side bar's row is narrower than a chip can grow, so it gives just the date.
+  const side = useInSideBar();
   // Still shown while it's the filter in use, so there's always a pressed chip to tap back out of.
   if (!first && !on) return null;
   return (
-    <Toggle
+    <RailItem
       pressed={on}
-      onPressedChange={onClick}
+      onPick={onClick}
       // Dashed while off: these sets aren't out yet.
-      className="data-[state=off]:border-dashed data-[state=off]:bg-transparent"
-    >
-      {!first ? (
-        <b>Coming soon</b>
-      ) : (
-        <>
-          <b>{sets.length === 1 ? first.name : `${plural(sets.length, "set")} coming`}</b>
-          <span>{sets.length === 1 ? `out ${when(first.date)}` : `next ${when(first.date)}`}</span>
-        </>
-      )}
-    </Toggle>
+      chipClassName="data-[state=off]:border-dashed data-[state=off]:bg-transparent"
+      label={!first ? "Coming soon" : sets.length === 1 ? first.name : `${plural(sets.length, "set")} coming`}
+      sub={
+        !first
+          ? undefined
+          : side
+            ? when(first.date)
+            : sets.length === 1
+              ? `out ${when(first.date)}`
+              : `next ${when(first.date)}`
+      }
+    />
   );
 }
 

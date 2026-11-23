@@ -16,8 +16,7 @@ import {
 } from "~/features/catalog/feed";
 import { LOOK_OPTIONS } from "~/features/catalog/looks";
 import { sameName } from "~/features/catalog/names";
-import { Button } from "~/components/ui/button";
-import { Toggle } from "~/components/ui/toggle";
+import { Rail, RailAction, RailItem } from "~/ui/Rail";
 import {
   ActiveFilters,
   Choices,
@@ -263,16 +262,15 @@ export function LiveView() {
           </form>
           <FilterButton on={active.length > 0 || sorted} onClick={sheet.show} />
         </div>
-        <div className="colltabs">
-          <Toggle
+        <Rail label="Sets">
+          <RailItem
+            label="Every card"
             pressed={all && !soon}
-            onPressedChange={() => {
+            onPick={() => {
               showSet("");
               if (soon) feed("era")("any");
             }}
-          >
-            <b>Every card</b>
-          </Toggle>
+          />
           {catalog.data ? (
             <SoonChip
               cat={catalog.data}
@@ -285,19 +283,10 @@ export function LiveView() {
             />
           ) : null}
           {chipSets.map((s) => (
-            <Toggle key={s.id} pressed={!q && set === s.id} onPressedChange={() => showSet(s.id)}>
-              <b>{s.name}</b>
-            </Toggle>
+            <RailItem key={s.id} label={s.name} pressed={!q && set === s.id} onPick={() => showSet(s.id)} />
           ))}
-          <Button
-            variant="outline"
-            size="sm"
-            className="rounded-full"
-            onClick={() => open({ panel: "sets" })}
-          >
-            All sets
-          </Button>
-        </div>
+          <RailAction onClick={() => open({ panel: "sets" })}>All sets</RailAction>
+        </Rail>
         <ActiveFilters items={active} onClearAll={clearFilters} />
         {resultLine ? <p className="ex-meta">{resultLine}</p> : null}
       </div>

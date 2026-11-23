@@ -4,6 +4,10 @@
   flex-direction: column;
   gap: 12px;
 }
+/* On a desktop the collections move to the side bar, which can leave nothing here. */
+.collbar:empty {
+  display: none;
+}
 .colltabs {
   display: flex;
   gap: 8px;
@@ -339,6 +343,12 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+@media (min-width: 1024px) {
+  .list.grid {
+    grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+    gap: 22px 16px;
+  }
+}
 .tile {
   display: flex;
   flex-direction: column;
@@ -479,6 +489,15 @@ body.selecting:not(:has(.bulk .inner > [data-slot="button"])) {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+/* Beside the desktop side bar, as wide as the content above it (styles/chrome.css). */
+@media (min-width: 1024px) {
+  .bulk {
+    left: var(--side-w);
+  }
+  .bulk .inner {
+    max-width: 1400px;
+  }
 }
 .bulk .bulk-top {
   display: flex;

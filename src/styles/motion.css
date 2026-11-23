@@ -10,12 +10,17 @@
 :root:active-view-transition-type(forward, back, fade) .tabbar {
   view-transition-name: tabbar;
 }
+/* The desktop side bar stays put too; only the list in it changes. */
+:root:active-view-transition-type(forward, back, fade, within) .sidenav {
+  view-transition-name: sidenav;
+}
 /* Browse and For you: the switch itself stays put while the screen under it changes. */
 :root:active-view-transition-type(within) .ex-seg {
   view-transition-name: ex-seg;
 }
 ::view-transition-group(topbar),
-::view-transition-group(tabbar) {
+::view-transition-group(tabbar),
+::view-transition-group(sidenav) {
   animation-duration: var(--t);
 }
 /* Show only the live switch, so its highlight is seen sliding rather than cross-fading. */

@@ -28,6 +28,12 @@
     gap: 18px 12px;
   }
 }
+@media (min-width: 1024px) {
+  .ex-grid {
+    grid-template-columns: repeat(auto-fill, minmax(172px, 1fr));
+    gap: 22px 16px;
+  }
+}
 .ex-card {
   position: relative;
   display: flex;

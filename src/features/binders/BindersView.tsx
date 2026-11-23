@@ -11,7 +11,7 @@ import { useScrollRestoration } from "~/lib/scroll";
 import { useStore } from "~/lib/store";
 import { Alert } from "~/components/ui/alert";
 import { Button } from "~/components/ui/button";
-import { Toggle } from "~/components/ui/toggle";
+import { Rail, RailAction, RailItem } from "~/ui/Rail";
 import { Empty, EmptyDescription } from "~/components/ui/empty";
 import { SignInLink } from "~/features/auth/SignInHint";
 import { LoadError } from "~/ui/LoadError";
@@ -25,7 +25,7 @@ import { useAddToList } from "./useAddToList";
 import { setBinderPage, useBinderPage } from "./state";
 import { useBinderSheet } from "./useBinderSheet";
 import { useBinders } from "./useBinders";
-import { useMediaQuery } from "./useMediaQuery";
+import { useMediaQuery } from "~/lib/useMediaQuery";
 import { useSlotChange } from "./useSlotChange";
 
 /** Binders: lay out pages from cards on the list or any card in the catalog. */
@@ -168,30 +168,26 @@ export function BindersView() {
           </div>
         </Alert>
       ) : null}
-      <div className="colltabs" role="group" aria-label="Binders">
-        {binders.map((b) => (
-          <Toggle key={b.id} pressed={b.id === binder?.id} onPressedChange={() => choose(b.id)}>
-            <b>{b.name}</b>
-            <span>
-              {b.slots.filter(Boolean).length} of {b.slots.length} pockets
-            </span>
-          </Toggle>
-        ))}
-        <Button
-          variant="outline"
-          size="sm"
-          className="rounded-full"
-          onClick={() => openSheet({ kind: "new" })}
-        >
+      <Rail label="Binders">
+        {binders.map((b) => {
+          const filled = b.slots.filter(Boolean).length;
+          return (
+            <RailItem
+              key={b.id}
+              label={b.name}
+              sub={`${filled} of ${b.slots.length} pockets`}
+              progress={b.slots.length ? filled / b.slots.length : 0}
+              pressed={b.id === binder?.id}
+              onPick={() => choose(b.id)}
+            />
+          );
+        })}
+        <RailAction onClick={() => openSheet({ kind: "new" })}>
           <PlusIcon />
           New binder
-        </Button>
-        {canScan ? (
-          <Button variant="outline" size="sm" className="rounded-full" onClick={scan}>
-            Scan pages
-          </Button>
-        ) : null}
-      </div>
+        </RailAction>
+        {canScan ? <RailAction onClick={scan}>Scan pages</RailAction> : null}
+      </Rail>
       {binder ? (
         <>
           <BinderHead binder={binder} infos={infos} onOptions={() => openSheet({ kind: "options" })} />

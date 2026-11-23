@@ -94,6 +94,133 @@ body.selecting .tabbar {
   display: none;
 }
 
+/* ---------- desktop side bar ----------
+ * From 1024px wide the tab bar gives way to a side bar (app/SideNav.tsx): the sections, then the screen's
+ * collections, sets or binders (ui/Rail.tsx). Content moves right of it and widens.
+ */
+:root {
+  --side-w: 0px;
+}
+body {
+  padding-left: var(--side-w);
+}
+@media (min-width: 1024px) {
+  :root {
+    --tab: 0px;
+  }
+  /* Only where the side bar is drawn: the shared want list has none. */
+  :root:has(.sidenav) {
+    --side-w: 248px;
+  }
+  .wrap,
+  .topbar-in {
+    max-width: 1400px;
+  }
+}
+.sidenav {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  width: var(--side-w);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 0 12px 24px;
+  background: var(--bg);
+  border-right: 0.5px solid var(--line-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+/* Level with the top bar beside it. */
+.side-brand {
+  flex: none;
+  margin: 0;
+  height: 52px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.side-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.side-sections a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  color: var(--ink-2);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color var(--t-fast) var(--ease);
+}
+.side-sections a svg {
+  width: 20px;
+  height: 20px;
+  color: var(--muted);
+}
+.side-sections a[aria-current="page"] {
+  background: var(--sunk);
+  color: var(--ink);
+}
+.side-sections a[aria-current="page"] svg {
+  color: var(--ink);
+}
+@media (hover: hover) {
+  .side-sections a:hover {
+    background: var(--sunk);
+  }
+}
+.side-slot:empty {
+  display: none;
+}
+.side-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.side-head {
+  margin: 0 0 4px;
+  padding: 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+/* A little air between the choices and the actions after them. */
+.side-rail > [data-slot="toggle"] + [data-slot="button"] {
+  margin-top: 6px;
+}
+/* A collection's or binder's progress, under its row (ui/Rail.tsx). */
+.side-progress {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 5px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.side-progress::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--muted);
+  transform: scaleX(var(--p));
+  transform-origin: left;
+  transition: transform var(--t) var(--ease);
+}
+
 /* ---------- summary ---------- */
 .stats {
   display: flex;

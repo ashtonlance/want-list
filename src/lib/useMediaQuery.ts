@@ -16,3 +16,9 @@ export function useMediaQuery(query: string): boolean {
     () => false,
   );
 }
+
+/** The desktop layout's breakpoint: the side bar, wider content and the details pane. Matches the CSS. */
+export const DESKTOP_QUERY = "(min-width: 1024px)";
+
+/** Whether the window is wide enough for the desktop layout. */
+export const useDesktop = () => useMediaQuery(DESKTOP_QUERY);

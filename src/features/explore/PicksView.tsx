@@ -3,6 +3,8 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { useOverlayNav } from "~/app/overlayNav";
 import { Empty } from "~/components/ui/empty";
 import { Toggle } from "~/components/ui/toggle";
+import { Rail, RailItem } from "~/ui/Rail";
+import { useInSideBar } from "~/ui/sideSlot";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
 import { useAddCards } from "~/features/cards/create";
@@ -116,6 +118,8 @@ export function PicksView() {
   const { coll, artist = "" } = useSearch({ from: "/explore/picks" });
   const navigate = useNavigate({ from: "/explore/picks" });
   const { picks, loaded, refilled, day } = usePicks();
+  // The side bar has less room for each collection's count than a chip.
+  const side = useInSideBar();
   // Refill picks on screen stay put for the day, whatever loads or changes next.
   useEffect(() => {
     if (refilled) rememberShown(picks, day);
@@ -362,18 +366,23 @@ export function PicksView() {
 
   return (
     <>
-      <div className="colltabs">
-        <Toggle pressed={isAll} onPressedChange={() => showTab(ALL_PICKS)}>
-          <b>All picks</b>
-          <span>{openAll} open</span>
-        </Toggle>
+      <Rail label="Collections">
+        <RailItem
+          label="All picks"
+          sub={`${openAll} open`}
+          pressed={isAll}
+          onPick={() => showTab(ALL_PICKS)}
+        />
         {tabs.map((t) => (
-          <Toggle key={t.name} pressed={tab === t.name} onPressedChange={() => showTab(t.name)}>
-            <b>{t.name}</b>
-            <span>{t.open === 1 ? "1 new pick" : `${t.open} new picks`}</span>
-          </Toggle>
+          <RailItem
+            key={t.name}
+            label={t.name}
+            sub={side ? `${t.open} new` : t.open === 1 ? "1 new pick" : `${t.open} new picks`}
+            pressed={tab === t.name}
+            onPick={() => showTab(t.name)}
+          />
         ))}
-      </div>
+      </Rail>
       <div className="ex-tools">
         <div className="ex-bar">
           <SearchInput
