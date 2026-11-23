@@ -134,7 +134,7 @@ const keyCache = new Map<string, string>();
 
 /**
  * A Pokémon as one key: lower case, accents off, letters and digits only, ♀ and ♂ as f and m, so "Mr. Mime"
- * is mrmime and "Nidoran ♀" and "nidoran (f)" are both nidoranf. Matches tools/families.mjs.
+ * is mrmime and "Nidoran ♀" and "nidoran (f)" are both nidoranf. Matches tools/pokedex.mjs.
  */
 export function speciesKey(s: string): string {
   let k = keyCache.get(s);
