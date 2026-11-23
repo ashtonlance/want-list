@@ -1,13 +1,5 @@
 import { formatMoney } from "~/lib/format";
-import {
-  latestDay,
-  pricePoints,
-  priceDrop,
-  priceTrend,
-  sharePct,
-  usePriceHistory,
-  type PricePoint,
-} from "./history";
+import { pricePoints, priceTrend, sharePct, usePriceDrop, usePriceHistory, type PricePoint } from "./history";
 import type { Card } from "./types";
 
 const W = 300;
@@ -35,8 +27,8 @@ export function PriceTrend({ card: c }: { card: Card }) {
   const { data: hist } = usePriceHistory();
   const points = pricePoints(hist, c);
   const trend = priceTrend(points);
+  const drop = usePriceDrop(c);
   if (!hist || !trend) return null;
-  const drop = priceDrop(points, latestDay(hist, c));
   const pct = Math.round(Math.abs(trend.change) * 100);
   const since = shortDay(trend.first.day);
   const change =
@@ -66,7 +58,7 @@ export function PriceTrend({ card: c }: { card: Card }) {
         </div>
         {drop ? (
           <p className="trend-drop">
-            ↓ {sharePct(drop.share)} under its usual {formatMoney(drop.from)} this past month
+            ↓ {sharePct(drop.share)} under its usual {formatMoney(drop.from)} lately
           </p>
         ) : null}
       </div>

@@ -7,7 +7,7 @@
 // Existing cards keep their names, numbers and set names, so nothing on the list shifts.
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fetchArtists } from "./artists.mjs";
-import { centsOf, readHistory, setDay, writeHistory } from "./lib/history.mjs";
+import { centsOf, readHistory, recentReleases, setDay, writeHistory } from "./lib/history.mjs";
 import { readListPids } from "./lib/listPids.mjs";
 
 const ROOT = new URL("..", import.meta.url);
@@ -163,7 +163,8 @@ const history = readHistory(await readJson("prices-history.json"));
 const todayRow = new Map();
 for (const pid of want) { const c = centsOf(priceOf.get(+pid)); if (c) todayRow.set(pid, c); }
 setDay(history, today, todayRow);
-const newHistory = writeHistory(history, Object.keys(items), today);
+const pubOf = new Map(entries.filter((e) => e.key).map((e) => [e.set[3], e.key]));
+const newHistory = writeHistory(history, Object.keys(items), today, recentReleases(newCat, Object.keys(items), today, pubOf));
 
 await writeFile(new URL("catalog.json", ROOT), JSON.stringify(newCat));
 await writeFile(new URL("prices.json", ROOT), JSON.stringify(newPrices));

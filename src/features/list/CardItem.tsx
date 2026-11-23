@@ -162,7 +162,7 @@ export function CardRow({ card: c, selecting, selected, canWrite, onActivate, on
         ) : null}
         {sp?.amt ? <span className={"amt" + (sp.deal ? " deal" : "")}>{sp.amt}</span> : null}
         {drop ? (
-          <small className="drop">↓ {sharePct(drop.share)} this month</small>
+          <small className="drop">↓ {sharePct(drop.share)} lately</small>
         ) : sp ? (
           <small>{sp.label}</small>
         ) : null}

@@ -7,7 +7,7 @@ import { spawnSync } from "node:child_process";
 import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { KEEP_DAYS, addDays, centsOf, readHistory, setDay, writeHistory } from "./lib/history.mjs";
+import { KEEP_DAYS, addDays, centsOf, readHistory, releasedOf, setDay, writeHistory } from "./lib/history.mjs";
 
 const ROOT = new URL("..", import.meta.url);
 const ARCHIVE = "https://tcgcsv.com/archive/tcgplayer";
@@ -58,10 +58,13 @@ for (const pid of pids) {
 const wanted = new Set(groupOf.values());
 console.log(`${pids.length} products in ${wanted.size} groups; ${pids.length - groupOf.size} not in the catalog`);
 
-const history = readHistory(await readJson("prices-history.json"));
+const histJson = await readJson("prices-history.json");
+const history = readHistory(histJson);
 const BUDGET_MS = (Number(process.env.BUDGET_MINUTES) || 45) * 60_000;
 const started = Date.now();
-const save = () => writeFile(new URL("prices-history.json", ROOT), JSON.stringify(writeHistory(history, pids, asOf)));
+// Release dates come from the daily sync, which knows which sets have real ones.
+const released = releasedOf(histJson, pids);
+const save = () => writeFile(new URL("prices-history.json", ROOT), JSON.stringify(writeHistory(history, pids, asOf, released)));
 
 // Products each day still lacks. A product the archive has no price for stays missing, so it's tried again
 // on a rerun; that only costs a download.
@@ -128,5 +131,5 @@ for (const { day, missing } of days) {
 }
 
 await save();
-const out = writeHistory(history, pids, asOf);
+const out = writeHistory(history, pids, asOf, released);
 console.log(`filled ${filled} days; history now has ${out.days.length} days for ${Object.keys(out.items).length} products`);
