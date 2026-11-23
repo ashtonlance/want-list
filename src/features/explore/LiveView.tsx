@@ -12,6 +12,7 @@ import {
   type FeedSort,
 } from "~/features/catalog/feed";
 import { LOOK_OPTIONS, lookCards } from "~/features/catalog/looks";
+import { sameName } from "~/features/catalog/names";
 import { Button } from "~/components/ui/button";
 import { Toggle } from "~/components/ui/toggle";
 import {
@@ -126,7 +127,8 @@ export function LiveView() {
     return [{ value: "", label: "Any rarity" }, ...names];
   }, [catalog.data]);
   // A saved rarity the catalog no longer lists would show an empty feed: drop it.
-  const staleRarity = Boolean(catalog.data && ui.rarity && !catalog.data.rarities.includes(ui.rarity));
+  const rarity = (ui.rarity && catalog.data?.rarities.find((r) => sameName(r, ui.rarity))) || "";
+  const staleRarity = Boolean(catalog.data && ui.rarity && !rarity);
   useEffect(() => {
     if (staleRarity) patchLiveUi({ rarity: "" });
   }, [staleRarity]);
@@ -220,7 +222,7 @@ export function LiveView() {
         ...(ui.era !== "any"
           ? [{ key: "era", label: label(FEED_ERA_OPTIONS, ui.era), clear: () => feed("era")("any") }]
           : []),
-        ...(ui.rarity ? [{ key: "rarity", label: ui.rarity, clear: () => feed("rarity")("") }] : []),
+        ...(rarity ? [{ key: "rarity", label: rarity, clear: () => feed("rarity")("") }] : []),
         ...(ui.lang !== "en"
           ? [{ key: "lang", label: LANG_WORD[ui.lang], clear: () => feed("lang")("en") }]
           : []),
@@ -341,7 +343,7 @@ export function LiveView() {
               <FilterSection label="Rarity">
                 <Select
                   aria-label="Rarity"
-                  value={ui.rarity}
+                  value={rarity}
                   options={rarityOptions}
                   onChange={feed("rarity")}
                 />

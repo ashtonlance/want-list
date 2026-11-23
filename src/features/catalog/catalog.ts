@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "~/data/keys";
 import { isRecord, str } from "~/lib/json";
+import { mergeNames, tidyRarity } from "./names";
 
 export interface CatalogSet {
   name: string;
@@ -46,8 +47,10 @@ export function parseCatalog(v: unknown): Catalog {
       date: typeof a[2] === "string" ? a[2] : "",
     };
   });
-  const rarities = Array.isArray(v.rarities) ? v.rarities.map((r) => String(r)) : [];
-  const artists = Array.isArray(v.artists) ? v.artists.map((a) => String(a)) : [];
+  const indexIn = (i: unknown, list: readonly string[]): number =>
+    Number.isInteger(i) && (i as number) >= 0 && (i as number) < list.length ? (i as number) : -1;
+  const rawRarities = Array.isArray(v.rarities) ? v.rarities.map((r) => String(r)) : [];
+  const rawArtists = Array.isArray(v.artists) ? v.artists.map((a) => String(a)) : [];
   const cards: CatalogCard[] = [];
   const byPid = new Map<number, CatalogCard>();
   for (const r of v.cards) {
@@ -57,13 +60,27 @@ export function parseCatalog(v: unknown): Catalog {
       name: String(r[1] ?? ""),
       set: r[2],
       number: String(r[3] ?? ""),
-      rarity: typeof r[4] === "number" ? r[4] : -1,
+      rarity: indexIn(r[4], rawRarities),
       market: typeof r[5] === "number" ? r[5] : 0,
-      artist: typeof r[6] === "number" && r[6] < artists.length ? r[6] : -1,
+      artist: indexIn(r[6], rawArtists),
     };
     cards.push(c);
     byPid.set(c.pid, c);
   }
+  // One filter choice per rarity and artist, however TCGplayer and TCGdex spell them.
+  const uses = (field: "rarity" | "artist", n: number) => {
+    const out = new Array<number>(n).fill(0);
+    for (const c of cards) if (c[field] >= 0) out[c[field]] = (out[c[field]] ?? 0) + 1;
+    return out;
+  };
+  const rar = mergeNames(rawRarities, uses("rarity", rawRarities.length), tidyRarity);
+  const art = mergeNames(rawArtists, uses("artist", rawArtists.length));
+  for (const c of cards) {
+    if (c.rarity >= 0) c.rarity = rar.index[c.rarity] ?? -1;
+    if (c.artist >= 0) c.artist = art.index[c.artist] ?? -1;
+  }
+  const rarities = rar.names;
+  const artists = art.names;
   const upcoming = (Array.isArray(v.upcoming) ? v.upcoming : []).flatMap((s): CatalogSet[] => {
     const a: unknown[] = Array.isArray(s) ? s : [];
     return typeof a[0] === "string" && typeof a[2] === "string"

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { testCard } from "~/features/cards/testCard";
-import { pickMark, type PickCard } from "./picks";
+import { pickMark, reasonWithoutRarity, type PickCard } from "./picks";
 
 const pick = (over: Partial<PickCard>): PickCard => ({
   id: "p1",
@@ -38,5 +38,16 @@ describe("pickMark", () => {
     expect(pickMark([], pick({ status: "added" }))).toBe("On your list");
     expect(pickMark([], pick({}))).toBeUndefined();
     expect(pickMark([], pick({ status: "passed" }))).toBeUndefined();
+  });
+});
+
+describe("reasonWithoutRarity", () => {
+  it("drops the rarity at the end of a reason however it is spelled", () => {
+    expect(reasonWithoutRarity("Gengar · Illustration rare", "Illustration Rare")).toBe("Gengar");
+    expect(reasonWithoutRarity("Gengar · Illustration Rare", "Illustration Rare")).toBe("Gengar");
+    expect(reasonWithoutRarity("Ocean theme · water art", "Illustration Rare")).toBe(
+      "Ocean theme · water art",
+    );
+    expect(reasonWithoutRarity("Gengar", "")).toBe("Gengar");
   });
 });

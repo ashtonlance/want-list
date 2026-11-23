@@ -4,6 +4,7 @@ import type { Card } from "~/features/cards/types";
 import { today } from "~/lib/format";
 import { num, oneOf, str, strish, type JsonRecord } from "~/lib/json";
 import { tcgImage } from "~/lib/images";
+import { sameName, tidyRarity } from "~/features/catalog/names";
 import { GOT, listMark } from "./display";
 import type { LiveCard } from "./tcgdex";
 
@@ -55,7 +56,7 @@ export function parsePick(id: string, d: JsonRecord): PickCard {
     market: num(d.market) ?? null,
     priceAsOf: str(d.priceAsOf) ?? "",
     live: false,
-    rarity: str(d.rarity) ?? "",
+    rarity: tidyRarity(str(d.rarity) ?? ""),
     illustrator: str(d.illustrator) ?? "",
     reason: str(d.reason) ?? "",
     auto: false,
@@ -139,3 +140,9 @@ export function pickMark(cards: readonly Card[], p: PickCard): string | undefine
 
 export const pickImage = (p: PickCard, live: LiveCard | undefined): string | null =>
   p.tcgProduct ? tcgImage(p.tcgProduct) : (live?.img ?? null);
+
+/** A pick's reason without the " · rarity" it ends in, however that rarity is spelled. */
+export function reasonWithoutRarity(reason: string, rarity: string): string {
+  const at = reason.lastIndexOf(" · ");
+  return rarity && at >= 0 && sameName(reason.slice(at + 3), rarity) ? reason.slice(0, at) : reason;
+}

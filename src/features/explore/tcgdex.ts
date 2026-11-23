@@ -1,5 +1,6 @@
 import { isRecord, num, str } from "~/lib/json";
 import { createLimiter } from "~/lib/limit";
+import { tidyRarity } from "~/features/catalog/names";
 import { numberSortKey } from "~/lib/format";
 import { tcgImage } from "~/lib/images";
 import type { SubPrices } from "~/features/cards/prices";
@@ -94,7 +95,7 @@ export function normalizeTdCard(j: unknown): LiveCard {
     set: (set && str(set.name)) ?? "",
     setId: (set && str(set.id)) ?? tdSetOf(id),
     number: str(d.localId) ?? "",
-    rarity: str(d.rarity) ?? "",
+    rarity: tidyRarity(str(d.rarity) ?? ""),
     illustrator: str(d.illustrator) ?? "",
     img: image ? image + "/low.webp" : pid ? tcgImage(pid) : null,
     pid,

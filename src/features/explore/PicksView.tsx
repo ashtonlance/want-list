@@ -27,6 +27,7 @@ import { SearchInput } from "~/ui/SearchInput";
 import { useLiveCards } from "./live";
 import { useCatalog } from "~/features/catalog/catalog";
 import { sanitizedDates } from "~/features/catalog/feed";
+import { mergeNames, sameName, tidyRarity } from "~/features/catalog/names";
 import { fullArtCards, isFullArt } from "~/features/catalog/rarity";
 import { usePhotoGrid } from "~/ui/Lightbox";
 import { catalogLightbox, GOT } from "./display";
@@ -94,13 +95,20 @@ function collTabs(picks: readonly PickCard[], cards: readonly Card[], order: rea
 
 const pickKey = (p: PickCard) => p.tcgdexId ?? (p.tcgProduct ? `pid:${p.tcgProduct}` : p.id);
 
-/** Rarities in the picks, most common first, for the rarity filter. */
+/** One choice per rarity, however a pick spells it, most picks first, for the rarity filter. */
 function rarityOptions(picks: readonly PickCard[], chosen: string): { value: string; label: string }[] {
   const counts = new Map<string, number>();
   for (const p of picks) if (p.rarity) counts.set(p.rarity, (counts.get(p.rarity) ?? 0) + 1);
   if (chosen && !counts.has(chosen)) counts.set(chosen, 0);
-  const names = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([n]) => n);
-  return [{ value: "", label: "Any rarity" }, ...names.map((n) => ({ value: n, label: n }))];
+  const spellings = [...counts.keys()];
+  const uses = [...counts.values()];
+  const { names, index } = mergeNames(spellings, uses, tidyRarity);
+  const total = names.map(() => 0);
+  index.forEach((g, i) => (total[g] = (total[g] ?? 0) + (uses[i] ?? 0)));
+  const order = names
+    .map((name, g) => ({ name, n: total[g] ?? 0 }))
+    .sort((a, b) => b.n - a.n || a.name.localeCompare(b.name));
+  return [{ value: "", label: "Any rarity" }, ...order.map((e) => ({ value: e.name, label: e.name }))];
 }
 
 /** Explore's picks: cards Claude suggested for each collection. */
@@ -198,10 +206,10 @@ export function PicksView() {
         (ui.showPassed || p.status !== "passed") &&
         !(ui.hideAdded && isPickAdded(cards, p)) &&
         (!ui.cap || (p.market != null && p.market <= ui.cap)) &&
-        (!ui.rarity || p.rarity === ui.rarity) &&
+        (!ui.rarity || sameName(p.rarity, ui.rarity)) &&
         (!ui.fullArt || isArt(p)) &&
         inEra(ui.era === "any" ? "" : dateOf(p), ui.era) &&
-        (!artist || p.illustrator === artist) &&
+        (!artist || sameName(p.illustrator, artist)) &&
         (!q ||
           [p.name, p.set, p.number, p.illustrator, p.rarity, p.coll].join(" ").toLowerCase().includes(q)),
     );
@@ -307,6 +315,9 @@ export function PicksView() {
     void navigate({ search: (prev) => ({ ...prev, artist: undefined }), replace: true });
 
   const filtered = Boolean(q || ui.cap || ui.rarity || ui.fullArt || ui.era !== "any" || artist);
+  const rarityChoices = rarityOptions(all, ui.rarity);
+  // A rarity saved under another spelling still selects its choice.
+  const rarity = rarityChoices.find((o) => sameName(o.value, ui.rarity))?.value ?? "";
   const passed = all.filter((p) => p.status === "passed").length;
   const added = all.filter((p) => isPickAdded(cards, p)).length;
   const label = <T,>(options: readonly { value: T; label: string }[], v: T) =>
@@ -320,7 +331,7 @@ export function PicksView() {
     ...(ui.era !== "any"
       ? [{ key: "era", label: label(ERA_OPTIONS, ui.era), clear: () => patchPicksUi({ era: "any" }) }]
       : []),
-    ...(ui.rarity ? [{ key: "rarity", label: ui.rarity, clear: () => patchPicksUi({ rarity: "" }) }] : []),
+    ...(rarity ? [{ key: "rarity", label: rarity, clear: () => patchPicksUi({ rarity: "" }) }] : []),
     ...(!ui.hideAdded && added
       ? [{ key: "added", label: "Showing added", clear: () => patchPicksUi({ hideAdded: true }) }]
       : []),
@@ -408,8 +419,8 @@ export function PicksView() {
           <FilterSection label="Rarity">
             <Select
               aria-label="Rarity"
-              value={ui.rarity}
-              options={rarityOptions(all, ui.rarity)}
+              value={rarity}
+              options={rarityChoices}
               onChange={(rarity) => patchPicksUi({ rarity })}
             />
           </FilterSection>

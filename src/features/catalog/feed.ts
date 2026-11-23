@@ -3,6 +3,7 @@ import { realPrice, type Catalog } from "./catalog";
 import { inEra, type Era } from "./era";
 import { textMatcher } from "~/lib/textSearch";
 import { lookCards, rarityTiers, type Look } from "./looks";
+import { sameName } from "./names";
 import { hayOf, nameStartsWith } from "./search";
 
 export type FeedLang = "en" | "jp" | "both";
@@ -67,7 +68,7 @@ export function feedRows(
   const want = lang === "en" ? false : lang === "jp" ? true : null;
   const cs = cat.cards;
   const dates = sanitizedDates(cat);
-  const rarityIdx = rarity ? cat.rarities.indexOf(rarity) : -1;
+  const rarityIdx = rarity ? cat.rarities.findIndex((r) => sameName(r, rarity)) : -1;
   const setInEra = cat.sets.map((s, i) => inEra(era === "soon" ? s.date : (dates[i] ?? ""), era));
   const looks = lookCards(cat, look);
   const match = textMatcher(q);
