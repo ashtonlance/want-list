@@ -1,0 +1,1 @@
+import{et as e}from"./index-COrI3KSf.js";var t=e;export{t as component};
