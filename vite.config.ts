@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { copyFile, readFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
@@ -52,7 +52,10 @@ function siteData(): Plugin {
   };
 }
 
-/** GitHub Pages serves 404.html for unknown paths, so deep links still boot the app. */
+/**
+ * GitHub Pages serves 404.html for unknown paths, so deep links still boot the app. The shared want list
+ * also gets a real page at share/, so link previews in Messages and the like get a 200 rather than a 404.
+ */
 function spaFallback(): Plugin {
   let outDir = "dist";
   return {
@@ -63,6 +66,8 @@ function spaFallback(): Plugin {
     },
     async closeBundle() {
       await copyFile(resolve(outDir, "index.html"), resolve(outDir, "404.html"));
+      await mkdir(resolve(outDir, "share"), { recursive: true });
+      await copyFile(resolve(outDir, "index.html"), resolve(outDir, "share", "index.html"));
     },
   };
 }
@@ -84,7 +89,7 @@ const offline = VitePWA({
   manifest: false,
   workbox: {
     globPatterns: ["**/*.{js,css,html,png,svg,webmanifest}"],
-    globIgnores: ["404.html"],
+    globIgnores: ["404.html", "share/**"],
     navigateFallback: "index.html",
     // Opening a file directly (catalog.json, an icon) gets the file, not the app.
     navigateFallbackDenylist: [/\/[^/?]+\.[a-z0-9]+$/i],

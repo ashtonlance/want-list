@@ -2,6 +2,10 @@ import { defaultStringifySearch } from "@tanstack/react-router";
 import { tabSearch } from "~/features/explore/state";
 import { prefs, type ExploreTab, type Section } from "./prefs";
 
+/** The read-only want list page that's shared with family. It sits outside the tabs. */
+export const isSharePath = (pathname: string): boolean =>
+  pathname === "/share" || pathname.startsWith("/share/");
+
 /** The three tabs at the bottom of the screen, by path. */
 export function sectionOf(pathname: string): Section {
   if (pathname.startsWith("/explore")) return "explore";

@@ -1,4 +1,4 @@
-import { Outlet } from "@tanstack/react-router";
+import { Outlet, useLocation } from "@tanstack/react-router";
 import { useRealtimeSync } from "~/data/realtime";
 import { AuthProvider } from "~/features/auth/AuthProvider";
 import { useSetNameCleanup } from "~/features/cards/useSetNameCleanup";
@@ -10,6 +10,7 @@ import { TabBar } from "./TabBar";
 import { UpdatePrompt } from "./UpdatePrompt";
 import { Topbar } from "./Topbar";
 import { useSectionMemory } from "./useSectionMemory";
+import { isSharePath } from "./sections";
 
 /** The frame around every screen: top bar, tab bar, sheets, and the app-wide providers. */
 export function Shell() {
@@ -25,6 +26,18 @@ export function Shell() {
 }
 
 function Frame() {
+  // The shared want list is a read-only page for family and friends: no tabs, sheets, live sync or edits.
+  const shared = isSharePath(useLocation({ select: (l) => l.pathname }));
+  return shared ? (
+    <main className="wrap share-wrap">
+      <Outlet />
+    </main>
+  ) : (
+    <AppFrame />
+  );
+}
+
+function AppFrame() {
   useRealtimeSync();
   useSectionMemory();
   useSetNameCleanup();

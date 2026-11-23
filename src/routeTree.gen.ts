@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BindersRouteRouteImport } from './routes/binders/route'
 import { Route as ExploreRouteRouteImport } from './routes/explore/route'
+import { Route as ShareRouteImport } from './routes/share'
 import { Route as BindersIndexRouteImport } from './routes/binders/index'
 import { Route as BindersScanRouteImport } from './routes/binders/scan'
 import { Route as ExploreIndexRouteImport } from './routes/explore/index'
@@ -30,6 +31,11 @@ const BindersRouteRoute = BindersRouteRouteImport.update({
 const ExploreRouteRoute = ExploreRouteRouteImport.update({
   id: '/explore',
   path: '/explore',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ShareRoute = ShareRouteImport.update({
+  id: '/share',
+  path: '/share',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BindersIndexRoute = BindersIndexRouteImport.update({
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/binders': typeof BindersRouteRouteWithChildren
   '/explore': typeof ExploreRouteRouteWithChildren
+  '/share': typeof ShareRoute
   '/binders/scan': typeof BindersScanRoute
   '/explore/picks': typeof ExplorePicksRoute
   '/binders/': typeof BindersIndexRoute
@@ -64,6 +71,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/share': typeof ShareRoute
   '/binders/scan': typeof BindersScanRoute
   '/explore/picks': typeof ExplorePicksRoute
   '/binders': typeof BindersIndexRoute
@@ -74,6 +82,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/binders': typeof BindersRouteRouteWithChildren
   '/explore': typeof ExploreRouteRouteWithChildren
+  '/share': typeof ShareRoute
   '/binders/scan': typeof BindersScanRoute
   '/explore/picks': typeof ExplorePicksRoute
   '/binders/': typeof BindersIndexRoute
@@ -85,17 +94,25 @@ export interface FileRouteTypes {
     | '/'
     | '/binders'
     | '/explore'
+    | '/share'
     | '/binders/scan'
     | '/explore/picks'
     | '/binders/'
     | '/explore/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/binders/scan' | '/explore/picks' | '/binders' | '/explore'
+  to:
+    | '/'
+    | '/share'
+    | '/binders/scan'
+    | '/explore/picks'
+    | '/binders'
+    | '/explore'
   id:
     | '__root__'
     | '/'
     | '/binders'
     | '/explore'
+    | '/share'
     | '/binders/scan'
     | '/explore/picks'
     | '/binders/'
@@ -106,6 +123,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BindersRouteRoute: typeof BindersRouteRouteWithChildren
   ExploreRouteRoute: typeof ExploreRouteRouteWithChildren
+  ShareRoute: typeof ShareRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -129,6 +147,13 @@ declare module '@tanstack/react-router' {
       path: '/explore'
       fullPath: '/explore'
       preLoaderRoute: typeof ExploreRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/share': {
+      id: '/share'
+      path: '/share'
+      fullPath: '/share'
+      preLoaderRoute: typeof ShareRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/binders/': {
@@ -194,6 +219,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BindersRouteRoute: BindersRouteRouteWithChildren,
   ExploreRouteRoute: ExploreRouteRouteWithChildren,
+  ShareRoute: ShareRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,0 +1,86 @@
+/* ---------- shared want list (read-only page for family) ---------- */
+body:has(.share-wrap) {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 32px);
+}
+.share {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.share-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 12px;
+}
+.share-head small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.share-head h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.share-coll {
+  margin: 2px 0 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.share-sum {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+.share-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.share-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.share-tile .tile-img {
+  border: 0;
+  padding: 0;
+  cursor: zoom-in;
+  width: 100%;
+}
+.share-tile .tile-img:disabled {
+  cursor: default;
+}
+.share-buy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 2px;
+}
+.share-price {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.share-buy a {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border-radius: 999px;
+  padding: 4px 10px;
+  text-decoration: none;
+}
+.share-foot {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--muted);
+  text-align: center;
+}

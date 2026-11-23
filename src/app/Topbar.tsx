@@ -2,7 +2,9 @@ import { useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useActiveCollection } from "~/features/list/useActiveCollection";
-import { PlusIcon } from "~/ui/icons";
+import { useCollections } from "~/features/cards/useCollections";
+import { useShareLink } from "~/features/share/useShareLink";
+import { PlusIcon, ShareIcon } from "~/ui/icons";
 import { useOverlayNav } from "./overlayNav";
 import { sectionOf } from "./sections";
 
@@ -25,6 +27,9 @@ export function Topbar() {
   const { email, canWrite } = useAuth();
   const { open } = useOverlayNav();
   const scrolled = useScrolled();
+  const share = useShareLink();
+  // A saved collection name is only trusted once collections load, so a renamed one isn't shared.
+  const collsLoaded = useCollections().loaded;
   const title = section === "list" ? (coll ?? "My list") : TITLES[section];
 
   return (
@@ -35,6 +40,17 @@ export function Topbar() {
           <h1>{title}</h1>
         </div>
         <div className="tb-acts">
+          {section === "list" ? (
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label={coll ? `Share ${coll}` : "Share the want list"}
+              disabled={coll !== null && !collsLoaded}
+              onClick={() => void share(coll)}
+            >
+              <ShareIcon />
+            </button>
+          ) : null}
           {canWrite && section === "list" ? (
             <button
               type="button"

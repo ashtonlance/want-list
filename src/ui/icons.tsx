@@ -73,3 +73,19 @@ export const BinderIcon = (p: IconProps) => (
     <path d="M12 4v16M4 12h16" />
   </svg>
 );
+
+/** The iPhone share mark: a box with an arrow out of the top. */
+export const ShareIcon = (p: IconProps) => (
+  <svg
+    {...base}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.9}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...p}
+  >
+    <path d="M12 3.5v11M8 7l4-3.5L16 7" />
+    <path d="M8.5 10.5H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1.5" />
+  </svg>
+);
