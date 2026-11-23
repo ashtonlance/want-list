@@ -1,9 +1,10 @@
 import type { PriceFile } from "~/features/cards/prices";
-import { isGot, pickSub } from "~/features/cards/pricing";
+import { pickSub } from "~/features/cards/pricing";
 import type { Card } from "~/features/cards/types";
 import { today } from "~/lib/format";
 import { num, oneOf, str, strish, type JsonRecord } from "~/lib/json";
 import { tcgImage } from "~/lib/images";
+import { GOT, listMark } from "./display";
 import type { LiveCard } from "./tcgdex";
 
 export type PickStatus = "new" | "passed" | "added" | "owned";
@@ -107,19 +108,23 @@ export function withLive(p: PickCard, d: LiveCard | undefined): PickCard {
 
 const stripZeros = (s: string) => s.replace(/^0+/, "");
 
-/** Whether the list already has this card, matched by name, number and set. */
-/** The card on the list with the pick's name, number and set, if any. */
+/** The card on the list with the pick's name, number, set and language, if any. */
 export function pickListCard(cards: readonly Card[], p: PickCard): Card | null {
   const name = p.name.toLowerCase();
   const set = p.set.toLowerCase();
   const no = stripZeros(p.number);
   return (
     cards.find(
-      (c) => c.name.toLowerCase() === name && stripZeros(c.number) === no && c.set.toLowerCase() === set,
+      (c) =>
+        c.lang === p.lang &&
+        c.name.toLowerCase() === name &&
+        stripZeros(c.number) === no &&
+        c.set.toLowerCase() === set,
     ) ?? null
   );
 }
 
+/** Whether the list already has this card. */
 export const pickOnList = (cards: readonly Card[], p: PickCard): boolean => pickListCard(cards, p) !== null;
 
 export const isPickAdded = (cards: readonly Card[], p: PickCard): boolean =>
@@ -128,8 +133,8 @@ export const isPickAdded = (cards: readonly Card[], p: PickCard): boolean =>
 /** "Got it" or "On your list" for a pick already taken, going by the list card when there is one. */
 export function pickMark(cards: readonly Card[], p: PickCard): string | undefined {
   const card = pickListCard(cards, p);
-  if (card) return isGot(card) ? "Got it" : "On your list";
-  return p.status === "owned" ? "Got it" : p.status === "added" ? "On your list" : undefined;
+  if (card) return listMark(card);
+  return p.status === "owned" ? GOT : p.status === "added" ? "On your list" : undefined;
 }
 
 export const pickImage = (p: PickCard, live: LiveCard | undefined): string | null =>

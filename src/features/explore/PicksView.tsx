@@ -26,7 +26,7 @@ import { useCatalog } from "~/features/catalog/catalog";
 import { sanitizedDates } from "~/features/catalog/feed";
 import { fullArtCards, isFullArt } from "~/features/catalog/rarity";
 import { usePhotoGrid } from "~/ui/Lightbox";
-import { catalogLightbox } from "./display";
+import { catalogLightbox, GOT } from "./display";
 import { isPickAdded, pickImage, pickMark, pickOnList, WILDCARDS, withLive, type PickCard } from "./picks";
 import { ALL_PICKS } from "./search";
 import { byRecentUse, noteCollectionUse, useRecentCollections } from "~/features/cards/recentCollections";
@@ -427,7 +427,7 @@ export function PicksView() {
                   <>
                     <PriceTag market={p.market} prefix="~" />
                     {mark ? (
-                      <AddedMark have={mark === "Got it"} />
+                      <AddedMark have={mark === GOT} />
                     ) : canWrite && p.status !== "passed" ? (
                       <span className="ex-acts">
                         <PassButton name={p.name} onPass={() => pass(p)} />

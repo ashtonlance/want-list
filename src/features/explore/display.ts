@@ -3,9 +3,12 @@ import type { Card } from "~/features/cards/types";
 import { formatMoney } from "~/lib/format";
 import type { LightboxItem } from "~/ui/Lightbox";
 
+/** The tag on a card that's got. */
+export const GOT = "Got it";
+
 /** How a catalog card stands with the list, worded as its sheet words it: "Got it" or "On your list". */
 export const listMark = (have: Card | null): string | undefined =>
-  have ? (isGot(have) ? "Got it" : "On your list") : undefined;
+  have ? (isGot(have) ? GOT : "On your list") : undefined;
 
 /**
  * The full-screen photo of a catalog card, captioned like a card on the list, with `mark` saying
@@ -20,7 +23,12 @@ export function exploreLightbox(
     src,
     mark,
     name: c.name,
-    caption: [c.set, c.number ? `#${c.number}` : "", c.market != null ? formatMoney(c.market) : ""]
+    // A card that's got shows no shopping price, as on the list.
+    caption: [
+      c.set,
+      c.number ? `#${c.number}` : "",
+      mark !== GOT && c.market != null ? formatMoney(c.market) : "",
+    ]
       .filter(Boolean)
       .join(" · "),
   };

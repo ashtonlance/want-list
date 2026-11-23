@@ -302,7 +302,10 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
                     setBusy((b) => new Set(b).add(key));
                     // A run that throws counts as one that didn't work.
                     const ok = await run()
-                      .catch(() => false)
+                      .catch((e: unknown) => {
+                        console.error(e);
+                        return false;
+                      })
                       .finally(() => setBusy((b) => new Set([...b].filter((k) => k !== key))));
                     if (ok) setDone((d) => new Set(d).add(key));
                   }}

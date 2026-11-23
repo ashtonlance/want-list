@@ -18,7 +18,10 @@ describe("catalogLightbox", () => {
     const item = catalogLightbox(raikou, "x.webp", "Got it", { coll: "", run });
     expect(item.mark).toBe("Got it");
     expect(item.action).toBeUndefined();
-    expect(item.caption).toBe("Delta Reign · #136 · $101.83");
+    expect(item.caption).toBe("Delta Reign · #136");
+    expect(catalogLightbox(raikou, "x.webp", "On your list", null).caption).toBe(
+      "Delta Reign · #136 · $101.83",
+    );
   });
   it("offers Want it for a card not on the list, naming the collection, only to editors", () => {
     const item = catalogLightbox(raikou, "x.webp", undefined, { coll: "Legends", run });
