@@ -4,14 +4,13 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { prefs, type Pockets } from "~/app/prefs";
 import { useBinders } from "~/features/binders/useBinders";
 import { useCards } from "~/features/cards/api";
-import { pidOf } from "~/features/cards/pricing";
-import type { Card } from "~/features/cards/types";
-import { catalogQuery, type Catalog } from "~/features/catalog/catalog";
+import { catalogQuery } from "~/features/catalog/catalog";
 import { useStore } from "~/lib/store";
 import { useToast } from "~/ui/Toast";
 import { canvas, context, fileToImage, rectify, release, turned, type Quad } from "./engine/image";
-import { buildIndex, matchCell, type Match, type ScanIndex } from "./engine/match";
-import { getWorker, readCell } from "./engine/ocr";
+import type { Match } from "./engine/match";
+import { getWorker } from "./engine/ocr";
+import { indexFor, readPocket } from "./read";
 import {
   GRID,
   MARGIN_CORNERS,
@@ -22,17 +21,6 @@ import {
   type ScanCell,
 } from "./session";
 
-/* Building the index walks the whole catalog, so it's kept until the list gains or loses a card. */
-let indexCache: { catalog: Catalog; cards: number; index: ScanIndex } | null = null;
-
-function indexFor(catalog: Catalog, cards: readonly Card[]): ScanIndex {
-  if (indexCache?.catalog !== catalog || indexCache.cards !== cards.length) {
-    const mine = cards.map((c) => ({ id: c.id, name: c.name, set: c.set, number: c.number, pid: pidOf(c) }));
-    indexCache = { catalog, cards: cards.length, index: buildIndex(catalog, mine) };
-  }
-  return indexCache.index;
-}
-
 /** A small picture of the straightened pocket, for review. */
 function pocketPhoto(cell: HTMLCanvasElement): string {
   const t = canvas(240, 335);
@@ -40,21 +28,6 @@ function pocketPhoto(cell: HTMLCanvasElement): string {
   const url = t.toDataURL("image/jpeg", 0.75);
   release(t);
   return url;
-}
-
-async function readPocket(index: ScanIndex, cell: HTMLCanvasElement): Promise<Match> {
-  try {
-    const read = await readCell(cell);
-    try {
-      return await matchCell(index, read, cell);
-    } finally {
-      release(read.topC);
-      release(read.botC);
-    }
-  } catch {
-    // One unreadable pocket shouldn't stop the page; the person picks the card instead.
-    return { conf: "none", alts: [], hint: "" };
-  }
 }
 
 function cellOf(photo: string, m: Match): ScanCell {

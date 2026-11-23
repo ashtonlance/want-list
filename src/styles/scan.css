@@ -189,3 +189,142 @@
 .scanview input[type="search"] {
   width: 100%;
 }
+
+/* ---------- scan one card (in Add) ---------- */
+.add-row .icon-btn {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-sm);
+}
+.cardscan {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.cam {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--r);
+  background: #000;
+  aspect-ratio: 3 / 4;
+  max-height: min(56vh, 520px);
+  width: 100%;
+  margin: 0 auto;
+}
+.cam video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* The card outline, with everything around it dimmed so the card stands out. */
+.cam-guide {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  height: 80%;
+  aspect-ratio: 63 / 88;
+  max-width: 86%;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  border-radius: 14px;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.38);
+  transition: border-color var(--t) var(--ease);
+  animation: cam-shot var(--t-slow) var(--ease);
+}
+.cam-guide.busy {
+  border-color: rgba(255, 255, 255, 0.45);
+  animation:
+    cam-shot var(--t-slow) var(--ease),
+    cam-pulse 1.2s var(--ease) var(--t-slow) infinite alternate;
+}
+@keyframes cam-shot {
+  from {
+    background: rgba(255, 255, 255, 0.35);
+  }
+}
+@keyframes cam-pulse {
+  to {
+    border-color: rgba(255, 255, 255, 0.95);
+  }
+}
+.cam-status,
+.cam-tip {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.cam-tip {
+  background: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+.cam-actions {
+  display: flex;
+  justify-content: center;
+}
+/* A camera shutter in the interface's ink: a ring with a disc inside. */
+.shutter {
+  width: 66px;
+  height: 66px;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid var(--ink);
+  background: var(--ink);
+  box-shadow: inset 0 0 0 3px var(--bg);
+  cursor: pointer;
+  transition:
+    transform var(--t-fast) var(--ease),
+    opacity var(--t) var(--ease);
+}
+.shutter:active {
+  transform: scale(0.92);
+}
+.shutter:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.cam-off {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--r);
+  background: var(--sunk);
+}
+.cam-off p {
+  margin: 0;
+  color: var(--ink-2);
+}
+.cam-off .btn.disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+.cam-result .hint {
+  margin: 0 0 12px;
+}
+.cam-result {
+  animation: cam-result-in var(--t) var(--ease);
+}
+@keyframes cam-result-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}

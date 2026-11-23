@@ -1,20 +1,26 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState, type SubmitEvent } from "react";
+import {
+  lazy,
+  Suspense,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type SubmitEvent,
+} from "react";
 import { cardDocId, useCardWrites, useCards } from "~/features/cards/api";
 import { collectionCards, knownSets } from "~/features/cards/collections";
-import { newCard, useAddCards, type WantOrGot } from "~/features/cards/create";
-import { isGot } from "~/features/cards/pricing";
-import { realPrice, setOf, useCatalog, type Catalog, type CatalogCard } from "~/features/catalog/catalog";
+import { newCard, type WantOrGot } from "~/features/cards/create";
+import { useCatalog, type Catalog } from "~/features/catalog/catalog";
 import { addSearch } from "~/features/catalog/search";
-import { catalogLiveCard } from "~/features/explore/live";
-import { listLookup } from "~/features/explore/onList";
 import { parseLink, parseQuick, type ParsedCard, type ParsedLink } from "~/features/cards/quickAdd";
 import type { Lang } from "~/features/cards/types";
-import { cleanName, formatMoney, today } from "~/lib/format";
-import { tcgImage } from "~/lib/images";
-import { PickTile } from "~/ui/PickTile";
+import { cleanName, today } from "~/lib/format";
 import { Seg } from "~/ui/Seg";
 import { Sheet, SheetHead } from "~/ui/Sheet";
+import { CameraIcon } from "~/ui/icons";
 import { useToast } from "~/ui/Toast";
+import { CatalogTiles } from "./CatalogTiles";
 import { COLL_LIST, SET_LIST } from "./Datalists";
 import { useActiveCollection } from "./useActiveCollection";
 
@@ -31,6 +37,11 @@ interface Draft {
   /** The line above the form saying where the details came from. */
   note0: string;
 }
+
+/* The scanner pulls in the card-matching code, so it loads only when the camera is tapped. */
+const CardScanner = lazy(() =>
+  import("~/features/scan/CardScanner").then((m) => ({ default: m.CardScanner })),
+);
 
 const isUrl = (s: string) => /^https?:\/\//i.test(s);
 
@@ -49,70 +60,17 @@ interface MatchesProps {
 
 /** Catalog printings matching the search, with pictures. A tap adds one straight to the list. */
 function CatalogMatches({ cat, query, coll, addAs }: MatchesProps) {
-  const { cards } = useCards();
-  const { fromLive } = useAddCards();
-  const { toast } = useToast();
-  const onList = useMemo(() => listLookup(cards), [cards]);
-  const [adding, setAdding] = useState<ReadonlySet<number>>(new Set());
   const { rows, total } = useMemo(() => addSearch(cat, query, RESULTS), [cat, query]);
-
   if (!rows.length)
     return <p className="hint">No card by that name. Check the spelling, or type it in below.</p>;
-
-  const add = async (c: CatalogCard) => {
-    if (adding.has(c.pid)) return;
-    const d = catalogLiveCard(cat, c);
-    const have = onList(d);
-    // Already there with nothing to change: say so rather than claim it was added.
-    if (have && (!coll || have.collections.includes(coll)) && (addAs === "want" || isGot(have))) {
-      toast(coll ? `${c.name} is already in ${coll}` : `${c.name} is already on your list`);
-      return;
-    }
-    setAdding((s) => new Set(s).add(c.pid));
-    try {
-      await fromLive(d, addAs, coll);
-    } finally {
-      setAdding((s) => {
-        const next = new Set(s);
-        next.delete(c.pid);
-        return next;
-      });
-    }
-  };
-
   return (
-    <div className="pick-grid add-results">
-      {rows.map((c) => {
-        const set = setOf(cat, c);
-        const market = realPrice(c.market);
-        const d = catalogLiveCard(cat, c);
-        const have = onList(d);
-        const tag = adding.has(c.pid)
-          ? "Adding…"
-          : have
-            ? isGot(have)
-              ? "✓ Got it"
-              : "✓ On list"
-            : market
-              ? "~" + formatMoney(market)
-              : "+ Add";
-        return (
-          <PickTile
-            key={c.pid}
-            src={tcgImage(c.pid)}
-            name={c.name}
-            sub={`${set.jp ? "JP · " : ""}${set.name} · #${c.number}`}
-            tag={tag}
-            onPick={() => void add(c)}
-          />
-        );
-      })}
+    <CatalogTiles cat={cat} rows={rows} coll={coll} addAs={addAs}>
       {total > rows.length ? (
         <p className="hint">
           Showing {rows.length} of {total.toLocaleString()}. Add a set name or number to narrow it.
         </p>
       ) : null}
-    </div>
+    </CatalogTiles>
   );
 }
 
@@ -143,6 +101,7 @@ export function AddSheet({ onClose }: { onClose: () => void }) {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
   const [addAs, setAddAs] = useState<WantOrGot>("want");
+  const [scanning, setScanning] = useState(false);
   const quickForm = useRef<HTMLFormElement>(null);
   const query = useDeferredValue(quick);
   const catalog = useCatalog();
@@ -220,122 +179,156 @@ export function AddSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet label="Add a card" onClose={onClose}>
       <SheetHead title="Add a card" />
-      <section>
-        <form ref={quickForm} className="add-row" autoComplete="off" onSubmit={submitQuick}>
-          <input
-            type="search"
-            value={quick}
-            onChange={(e) => {
-              setQuick(e.target.value);
-              if (draft) setDraft(null);
-            }}
-            onPaste={() =>
-              setTimeout(() => {
-                const v = quickForm.current?.querySelector("input")?.value.trim() ?? "";
-                if (/^https?:\/\/\S+$/i.test(v)) quickForm.current?.requestSubmit();
-              }, 0)
-            }
-            aria-label="Search for a card, or paste a listing link"
-            placeholder="Search cards, or paste a link"
-            enterKeyHint="search"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            autoFocus
-          />
-        </form>
-        {searching ? (
-          <>
-            <div className="add-bar">
-              <Seg label="Add as" value={addAs} options={ADD_AS} onChange={setAddAs} />
-              {coll ? <span className="hint">Goes to {coll}</span> : null}
-            </div>
-            {catalog.data ? (
-              <CatalogMatches cat={catalog.data} query={query} coll={coll ?? ""} addAs={addAs} />
-            ) : catalog.isError ? null : (
-              <p className="hint">Loading every Pokémon card…</p>
-            )}
-            <button className="linkbtn add-manual" type="button" onClick={next}>
-              Not here? Type in the details
+      {scanning ? (
+        <section>
+          <div className="add-bar">
+            <Seg label="Add as" value={addAs} options={ADD_AS} onChange={setAddAs} />
+            {coll ? <span className="hint">Goes to {coll}</span> : null}
+          </div>
+          <Suspense fallback={<p className="hint">Starting the camera…</p>}>
+            <CardScanner
+              cat={catalog.data}
+              failed={catalog.isError}
+              coll={coll ?? ""}
+              addAs={addAs}
+              onSearch={(text) => {
+                // A name read off the card starts the search; otherwise whatever was typed is kept.
+                if (text) {
+                  setQuick(text);
+                  setDraft(null);
+                }
+                setScanning(false);
+              }}
+            />
+          </Suspense>
+        </section>
+      ) : (
+        <section>
+          <form ref={quickForm} className="add-row" autoComplete="off" onSubmit={submitQuick}>
+            <input
+              type="search"
+              value={quick}
+              onChange={(e) => {
+                setQuick(e.target.value);
+                if (draft) setDraft(null);
+              }}
+              onPaste={() =>
+                setTimeout(() => {
+                  const v = quickForm.current?.querySelector("input")?.value.trim() ?? "";
+                  if (/^https?:\/\/\S+$/i.test(v)) quickForm.current?.requestSubmit();
+                }, 0)
+              }
+              aria-label="Search for a card, or paste a listing link"
+              placeholder="Search cards, or paste a link"
+              enterKeyHint="search"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              autoFocus
+            />
+            <button
+              className="icon-btn"
+              type="button"
+              aria-label="Scan a card with the camera"
+              title="Scan a card"
+              onClick={() => setScanning(true)}
+            >
+              <CameraIcon />
             </button>
-          </>
-        ) : draft ? null : (
-          <p className="hint">
-            Search by name, set or number, like &quot;umbreon prismatic 161&quot;, then tap a card to add it.
-            Add &quot;jp&quot; for Japanese cards. Or paste a link from DoubleHolo, TCGplayer, eBay or
-            anywhere else.
-          </p>
-        )}
-        {draft ? (
-          <form className="confirm" onSubmit={(e) => void save(e)}>
-            {draft.note0 ? <p className="parsed-note">{draft.note0}</p> : null}
-            <label className="wide">
-              Card name
-              <input type="text" required autoFocus={!draft.name} {...field("name")} />
-            </label>
-            <label>
-              Number
-              <input
-                type="text"
-                placeholder="161"
-                autoFocus={!!draft.name && !!draft.set}
-                {...field("number")}
-              />
-            </label>
-            <label>
-              Variant
-              <input type="text" placeholder="Reverse Holo" {...field("variant")} />
-            </label>
-            <label className="wide">
-              Set
-              <input type="text" list={SET_LIST} autoFocus={!!draft.name && !draft.set} {...field("set")} />
-            </label>
-            <label>
-              Language
-              <select {...field("lang")}>
-                <option value="EN">English</option>
-                <option value="JP">Japanese</option>
-              </select>
-            </label>
-            <label>
-              Status
-              <select {...field("status")}>
-                <option value="want">I want it</option>
-                <option value="got">I already have it</option>
-              </select>
-            </label>
-            <label className="wide">
-              Collection
-              <input
-                type="text"
-                list={COLL_LIST}
-                placeholder="Optional, e.g. Gengar binder"
-                {...field("coll")}
-              />
-            </label>
-            <label className="wide">
-              Note
-              <input type="text" placeholder="Optional" {...field("note")} />
-            </label>
-            <label className="full">
-              Listing link
-              <input
-                type="url"
-                placeholder="Optional: a listing you're eyeing, or the card's DoubleHolo page"
-                {...field("link")}
-              />
-            </label>
-            <div className="actions">
-              <button className="btn" type="button" onClick={() => setDraft(null)}>
-                Cancel
-              </button>
-              <button className="btn primary" type="submit" disabled={saving}>
-                Save to list
-              </button>
-            </div>
           </form>
-        ) : null}
-      </section>
+          {searching ? (
+            <>
+              <div className="add-bar">
+                <Seg label="Add as" value={addAs} options={ADD_AS} onChange={setAddAs} />
+                {coll ? <span className="hint">Goes to {coll}</span> : null}
+              </div>
+              {catalog.data ? (
+                <CatalogMatches cat={catalog.data} query={query} coll={coll ?? ""} addAs={addAs} />
+              ) : catalog.isError ? null : (
+                <p className="hint">Loading every Pokémon card…</p>
+              )}
+              <button className="linkbtn add-manual" type="button" onClick={next}>
+                Not here? Type in the details
+              </button>
+            </>
+          ) : draft ? null : (
+            <p className="hint">
+              Search by name, set or number, like &quot;umbreon prismatic 161&quot;, then tap a card to add
+              it. Add &quot;jp&quot; for Japanese cards. Or paste a link from DoubleHolo, TCGplayer, eBay or
+              anywhere else. Have the card in hand? Tap the camera to scan it.
+            </p>
+          )}
+          {draft ? (
+            <form className="confirm" onSubmit={(e) => void save(e)}>
+              {draft.note0 ? <p className="parsed-note">{draft.note0}</p> : null}
+              <label className="wide">
+                Card name
+                <input type="text" required autoFocus={!draft.name} {...field("name")} />
+              </label>
+              <label>
+                Number
+                <input
+                  type="text"
+                  placeholder="161"
+                  autoFocus={!!draft.name && !!draft.set}
+                  {...field("number")}
+                />
+              </label>
+              <label>
+                Variant
+                <input type="text" placeholder="Reverse Holo" {...field("variant")} />
+              </label>
+              <label className="wide">
+                Set
+                <input type="text" list={SET_LIST} autoFocus={!!draft.name && !draft.set} {...field("set")} />
+              </label>
+              <label>
+                Language
+                <select {...field("lang")}>
+                  <option value="EN">English</option>
+                  <option value="JP">Japanese</option>
+                </select>
+              </label>
+              <label>
+                Status
+                <select {...field("status")}>
+                  <option value="want">I want it</option>
+                  <option value="got">I already have it</option>
+                </select>
+              </label>
+              <label className="wide">
+                Collection
+                <input
+                  type="text"
+                  list={COLL_LIST}
+                  placeholder="Optional, e.g. Gengar binder"
+                  {...field("coll")}
+                />
+              </label>
+              <label className="wide">
+                Note
+                <input type="text" placeholder="Optional" {...field("note")} />
+              </label>
+              <label className="full">
+                Listing link
+                <input
+                  type="url"
+                  placeholder="Optional: a listing you're eyeing, or the card's DoubleHolo page"
+                  {...field("link")}
+                />
+              </label>
+              <div className="actions">
+                <button className="btn" type="button" onClick={() => setDraft(null)}>
+                  Cancel
+                </button>
+                <button className="btn primary" type="submit" disabled={saving}>
+                  Save to list
+                </button>
+              </div>
+            </form>
+          ) : null}
+        </section>
+      )}
     </Sheet>
   );
 }
