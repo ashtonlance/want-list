@@ -126,10 +126,10 @@ export async function patchExistingDoc(table: DocTableName, id: string, patch: J
       .eq("updated_at", row.at);
     if (error) throw writeError(error, "write refused");
     if (count) return true;
-    // Nothing updated. If the row is unchanged the write was refused for this row; report it without
-    // assuming the whole session lost edit rights. Otherwise it was deleted or edited since the read.
+    // Nothing updated. Row-level security refuses an update by matching no rows, so an unchanged row
+    // means the write was refused; otherwise it was deleted or edited since the read, so try again.
     const next = await read();
-    if (next?.at === row.at) throw new WriteError("failed", "write had no effect");
+    if (next?.at === row.at) throw writeError(null, "write refused");
     row = next;
   }
   if (!row) return false;

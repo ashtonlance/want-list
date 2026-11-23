@@ -21,13 +21,13 @@ export function numberTag(number: string): string {
   return n ? TAG + n : "";
 }
 
-/** The words of a query, lowercased, with "#16" and "16/99" both read as 16. */
+/** The words of a query, lowercased, with "#16" and "16/99" read as 16 and "tg05/tg30" as tg05. */
 export function queryWords(query: string): string[] {
   return query
     .toLowerCase()
     .split(/\s+/)
     .map((w) => w.replace(/^#/, ""))
-    .map((w) => (/^\d+\/\d+$/.test(w) ? (w.split("/")[0] ?? w) : w))
+    .map((w) => (/^[a-z]{0,4}\d+[a-z]?\/[a-z]{0,4}\d+$/.test(w) ? (w.split("/")[0] ?? w) : w))
     .filter(Boolean);
 }
 
@@ -39,7 +39,7 @@ export function textMatcher(query: string): ((text: string) => boolean) | null {
     if (/^\d+$/.test(w)) {
       const n = escape(w.replace(/^0+(?=\d)/, ""));
       const own = new RegExp(`${TAG}[a-z]{0,4}0*${n}[a-z]?(?=$|\\s)`);
-      const loose = new RegExp(`(^|[\\s(])0*${n}(?=$|[^a-z0-9:+\\-])`);
+      const loose = new RegExp(`(^|[\\s([\\[])0*${n}(?=$|[\\s),.;!?/\\]])`);
       return (t: string) => own.test(t) || loose.test(t);
     }
     return (t: string) => t.includes(w);
