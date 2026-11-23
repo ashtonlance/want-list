@@ -93,6 +93,8 @@ export function QuickWant({
       className={cn(quick, done && "bg-foreground text-background disabled:opacity-100")}
       aria-label={label}
       title={title}
+      // W on a desktop presses it (app/useShortcuts.ts).
+      data-act="want"
       disabled={done}
       onClick={() => {
         setDone(true);
@@ -113,6 +115,7 @@ export const PassButton = ({ name, onPass }: { name: string; onPass: () => void 
     className={cn(quick, "text-muted-foreground")}
     aria-label={`Pass on ${name}`}
     title="Not for me"
+    data-act="pass"
     onClick={() => onPass()}
   >
     <CrossIcon />

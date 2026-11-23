@@ -1,5 +1,14 @@
 import { useEffect } from "react";
-import { focusedTile, focusTile, neighbor, openTile, paneCard, tileOf, type Direction } from "~/lib/tiles";
+import {
+  focusedTile,
+  focusTile,
+  neighbor,
+  openTile,
+  pageCovered,
+  paneCard,
+  tileOf,
+  type Direction,
+} from "~/lib/tiles";
 
 const DIRECTIONS: Record<string, Direction> = {
   ArrowLeft: "left",
@@ -7,9 +16,6 @@ const DIRECTIONS: Record<string, Direction> = {
   ArrowUp: "up",
   ArrowDown: "down",
 };
-
-/** Anything open over the page, like the photo view or a sheet; the details pane doesn't count. */
-const COVERED = "[role='dialog'][data-state='open']:not(.pane), [role='alertdialog'][data-state='open']";
 
 /**
  * The arrow keys on a desktop: from a card tile they move to the next one, left and right in reading
@@ -22,7 +28,7 @@ export function useTileKeys(enabled: boolean): void {
     const onKey = (e: KeyboardEvent) => {
       const dir = DIRECTIONS[e.key];
       if (!dir || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
-      if (document.querySelector(COVERED)) return;
+      if (pageCovered()) return;
       const shown = paneCard();
       const from =
         focusedTile() ??

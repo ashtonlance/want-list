@@ -8,6 +8,7 @@ import { AddSheet } from "~/features/list/AddSheet";
 import { CollectionsSheet } from "~/features/list/CollectionsSheet";
 import { OptionsSheet } from "~/features/list/OptionsSheet";
 import { useDesktop } from "~/lib/useMediaQuery";
+import { KeysSheet } from "./KeysSheet";
 import { useOverlayNav } from "./overlayNav";
 import { detailOf } from "./search";
 
@@ -28,6 +29,7 @@ export function OverlayHost() {
       {search.panel === "options" ? <OptionsSheet onClose={close} /> : null}
       {search.panel === "collections" ? <CollectionsSheet onClose={close} /> : null}
       {search.panel === "sets" ? <SetsSheet onClose={close} /> : null}
+      {search.panel === "keys" ? <KeysSheet onClose={close} /> : null}
     </>
   );
 }

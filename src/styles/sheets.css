@@ -104,6 +104,13 @@ body {
   padding-right: var(--pane-w);
 }
 @media (min-width: 1024px) {
+  /* A sheet's scroll lock (Radix) clears the body's padding; keep room for the side bar and the pane. */
+  body[data-scroll-locked] {
+    padding-left: var(--side-w) !important;
+    padding-right: var(--pane-w) !important;
+  }
+}
+@media (min-width: 1024px) {
   :root:has(.pane) {
     --pane-w: clamp(340px, 30vw, 440px);
   }

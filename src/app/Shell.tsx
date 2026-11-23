@@ -16,6 +16,7 @@ import { TabBar } from "./TabBar";
 import { UpdatePrompt } from "./UpdatePrompt";
 import { Topbar } from "./Topbar";
 import { useSectionMemory } from "./useSectionMemory";
+import { useShortcuts } from "./useShortcuts";
 import { useTileKeys } from "./useTileKeys";
 import { isSharePath } from "./sections";
 
@@ -51,6 +52,7 @@ function AppFrame() {
   usePriceBackfill();
   const desktop = useDesktop();
   useTileKeys(desktop);
+  useShortcuts(desktop);
   const [slot, setSlot] = useState<HTMLDivElement | null>(null);
   return (
     <SideSlot value={desktop ? slot : null}>

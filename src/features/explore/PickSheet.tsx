@@ -162,7 +162,13 @@ function PickActions({ pick: p }: { pick: PickCard }) {
         </NativeSelect>
       </Label>
       <div className="detail-acts" style={{ marginTop: 4 }}>
-        <Button variant="default" className="col-span-full" disabled={busy} onClick={() => void add("want")}>
+        <Button
+          variant="default"
+          className="col-span-full"
+          data-act="want"
+          disabled={busy}
+          onClick={() => void add("want")}
+        >
           Want it
         </Button>
         <Button disabled={busy} onClick={() => void add("got")}>
@@ -171,7 +177,9 @@ function PickActions({ pick: p }: { pick: PickCard }) {
         {p.status === "passed" ? (
           <Button onClick={() => void setStatus("new")}>Bring back</Button>
         ) : (
-          <Button onClick={() => void setStatus("passed")}>Not for me</Button>
+          <Button data-act="pass" onClick={() => void setStatus("passed")}>
+            Not for me
+          </Button>
         )}
       </div>
     </div>

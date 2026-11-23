@@ -11,6 +11,21 @@ export type Direction = "left" | "right" | "up" | "down";
 
 const OPEN = ":scope > .card-open";
 
+/** Anything open over the page, like the photo view, a sheet or a menu; the details pane doesn't count. */
+const COVERED = [
+  "[role='dialog'][data-state='open']:not(.pane)",
+  "[role='alertdialog'][data-state='open']",
+  "[role='menu'][data-state='open']",
+  "[role='listbox'][data-state='open']",
+].join(", ");
+
+/** Whether a sheet, menu or the photo view covers the page, so keys meant for the page leave it be. */
+export const pageCovered = (): boolean => document.querySelector(COVERED) !== null;
+
+/** Whether `el` takes typing: a field, a select or editable text. */
+export const isField = (el: EventTarget | null): boolean =>
+  el instanceof HTMLElement && el.matches("input, textarea, select, [contenteditable='true']");
+
 /** The tiles on the screen, in reading order. */
 function tiles(): HTMLElement[] {
   return [...document.querySelectorAll<HTMLElement>("main [data-sr]")].filter(
@@ -27,8 +42,7 @@ export function tileOf(id: string): HTMLElement | null {
 /** The tile focus is on or inside (its photo button, say), if any. Never one with a field focused. */
 export function focusedTile(): HTMLElement | null {
   const el = document.activeElement;
-  if (!(el instanceof HTMLElement) || el.matches("input, textarea, select, [contenteditable='true']"))
-    return null;
+  if (!(el instanceof HTMLElement) || isField(el)) return null;
   const tile = el.closest<HTMLElement>("main [data-sr]");
   return tile?.querySelector(OPEN) ? tile : null;
 }
@@ -74,9 +88,11 @@ export function openTile(el: HTMLElement): void {
   el.querySelector<HTMLElement>(OPEN)?.click();
 }
 
+/** The desktop details pane, if one is open. */
+export const paneOf = (): HTMLElement | null => document.querySelector<HTMLElement>(".pane[data-for]");
+
 /** The card shown in the desktop details pane, if one is open. */
-export const paneCard = (): string | undefined =>
-  document.querySelector<HTMLElement>(".pane[data-for]")?.dataset.for;
+export const paneCard = (): string | undefined => paneOf()?.dataset.for;
 
 /**
  * Shows the card next to the one in the details pane, and moves to its tile. Does nothing at either

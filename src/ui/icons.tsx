@@ -4,6 +4,7 @@ import {
   Compass,
   GalleryVerticalEnd,
   Grid2x2,
+  Keyboard,
   Plus,
   Share,
   SlidersHorizontal,
@@ -38,3 +39,4 @@ export const BinderIcon = (p: LucideProps) => <Grid2x2 strokeWidth={1.8} {...p} 
 /** The iPhone share mark: a box with an arrow out of the top. */
 export const ShareIcon = (p: LucideProps) => <Share strokeWidth={1.9} {...p} />;
 export const CameraIcon = (p: LucideProps) => <Camera strokeWidth={1.8} {...p} />;
+export const KeyboardIcon = (p: LucideProps) => <Keyboard strokeWidth={1.8} {...p} />;

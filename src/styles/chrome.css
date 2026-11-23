@@ -221,6 +221,56 @@ body {
   transition: transform var(--t) var(--ease);
 }
 
+/* The keyboard shortcuts, kept at the foot of the side bar as its list scrolls. */
+.side-foot {
+  position: sticky;
+  bottom: -24px;
+  flex: none;
+  margin: auto -12px -24px;
+  padding: 8px 12px 16px;
+  background: var(--bg);
+  border-top: 0.5px solid var(--line);
+}
+.side-foot > [data-slot="button"] {
+  width: 100%;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 0 12px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* ---------- keyboard shortcuts (app/KeysSheet.tsx) ---------- */
+.keys {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-bottom: 8px;
+}
+.keys-head {
+  margin: 0 0 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+.keys dl {
+  margin: 0;
+}
+.keys-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 40px;
+  border-bottom: 0.5px solid var(--line);
+}
+.keys-row:last-child {
+  border-bottom: 0;
+}
+.keys-row dd {
+  margin: 0;
+}
+
 /* ---------- summary ---------- */
 .stats {
   display: flex;
