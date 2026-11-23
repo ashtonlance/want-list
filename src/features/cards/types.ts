@@ -57,6 +57,12 @@ export interface Owned {
   value: number | null;
 }
 
+/** Why the automatic price check found no price, and when it last looked. */
+export interface NoPrice {
+  reason: string;
+  at: string;
+}
+
 /** A card on the want list. `slots` holds the card's position in each collection, by collection name. */
 export interface Card {
   id: string;
@@ -75,7 +81,14 @@ export interface Card {
   imgSource: string;
   priority: boolean;
   status: CardStatus;
+  /**
+   * The old "Check price" queue, which waited for someone to price the card by hand. Read only so the
+   * automatic price check can clear it; nothing sets it any more.
+   */
   checkRequested: boolean;
+  /** The card's TCGplayer product, once the price check has matched it in the catalog. */
+  tcgProduct: number | null;
+  noPrice: NoPrice | null;
   order: number | null;
   collections: string[];
   slots: Record<string, number>;
@@ -86,6 +99,13 @@ export interface Card {
 
 /** What gets stored for a card: everything but its id and the price the app works out at load. */
 export type CardData = Omit<Card, "id" | "tcg">;
-export type CardPatch = Partial<CardData>;
+/**
+ * Changes to a card. `tcg` can only be cleared: older cards store a TCGplayer price block whose product
+ * id outranks `tcgProduct`, so an edit that makes the card a different card drops it.
+ */
+export type CardPatch = Partial<CardData> & { tcg?: null };
 
 export const NO_ASK: Ask = { kind: "none", amount: null, source: "", asOf: "" };
+
+/** Where a price typed in by hand is said to come from. */
+export const MANUAL_SOURCE = "Entered by hand";

@@ -2,6 +2,7 @@ import { isRecord, num, str } from "~/lib/json";
 import { createLimiter } from "~/lib/limit";
 import { numberSortKey } from "~/lib/format";
 import { tcgImage } from "~/lib/images";
+import type { SubPrices } from "~/features/cards/prices";
 
 /** Live card data from TCGdex: pictures, artists and today's TCGplayer prices. */
 const TD = "https://api.tcgdex.net/v2/en";
@@ -102,6 +103,60 @@ export function normalizeTdCard(j: unknown): LiveCard {
     upd: (str(pricing.updated) ?? "").slice(0, 10),
     jp: false,
   };
+}
+
+/** TCGdex's names for TCGplayer's price sub-types, mapped to TCGplayer's own. */
+const TD_SUBS: Record<string, string> = {
+  normal: "Normal",
+  holofoil: "Holofoil",
+  "reverse-holofoil": "Reverse Holofoil",
+  reverseHolofoil: "Reverse Holofoil",
+  "1stEditionHolofoil": "1st Edition Holofoil",
+  "1stEdition": "1st Edition",
+  "1stEditionNormal": "1st Edition",
+  "1st-edition-holofoil": "1st Edition Holofoil",
+  "1st-edition": "1st Edition",
+  "1st-edition-normal": "1st Edition",
+  unlimitedHolofoil: "Unlimited Holofoil",
+  "unlimited-holofoil": "Unlimited Holofoil",
+  unlimited: "Unlimited",
+  unlimitedNormal: "Unlimited",
+  "unlimited-normal": "Unlimited",
+};
+
+/** One card's TCGplayer prices from TCGdex, by TCGplayer's sub-type names, with its product id. */
+export interface TdPrices {
+  pid: number | null;
+  subs: SubPrices;
+  asOf: string;
+}
+
+/**
+ * TCGplayer's prices for a TCGdex card. Old sets list 1st Edition and Unlimited as separate TCGplayer
+ * products under one card, so with `pid` it keeps only the sub-types of that product.
+ */
+export function normalizeTdPrices(j: unknown, pid: number | null = null): TdPrices {
+  const d = isRecord(j) ? j : {};
+  const pricing = isRecord(d.pricing) && isRecord(d.pricing.tcgplayer) ? d.pricing.tcgplayer : {};
+  const subs: SubPrices = {};
+  let found: number | null = null;
+  for (const [k, v] of Object.entries(pricing)) {
+    const sub = TD_SUBS[k];
+    if (!sub || !isRecord(v)) continue;
+    const product = num(v.productId) ?? null;
+    if (pid != null && product !== pid) continue;
+    subs[sub] = [num(v.marketPrice) ?? null, num(v.lowPrice) ?? null];
+    found ??= product;
+  }
+  return { pid: found, subs, asOf: (str(pricing.updated) ?? "").slice(0, 10) };
+}
+
+/** A card's TCGplayer prices from TCGdex, or null when TCGdex has no card with that id. */
+export async function fetchTdPrices(id: string, pid: number | null = null): Promise<TdPrices | null> {
+  const r = await limit(() => fetch(TD + "/cards/" + encodeURIComponent(id)));
+  if (r.status === 404) return null;
+  if (!r.ok) throw new Error(`TCGdex card ${id}: HTTP ${r.status}`);
+  return normalizeTdPrices(await r.json(), pid);
 }
 
 export async function fetchTdCard(id: string): Promise<LiveCard> {

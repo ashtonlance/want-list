@@ -6,6 +6,7 @@ import { formatDate, formatMoney } from "~/lib/format";
 import { HeroImage } from "~/ui/CardImage";
 import { StarIcon } from "~/ui/icons";
 import { useCloseWhen } from "~/ui/useCloseWhen";
+import { useToast } from "~/ui/Toast";
 import { useLightbox } from "~/ui/Lightbox";
 import { Sheet, SheetHead } from "~/ui/Sheet";
 import { useCardWrites, useCards } from "./api";
@@ -16,7 +17,8 @@ import { lightboxItem } from "./lightboxItem";
 import { OwnedSection } from "./OwnedSection";
 import { marketLinks } from "./links";
 import { PriceBlock } from "./PriceBlock";
-import { isGot } from "./pricing";
+import { keepsAsk, usePriceCheck } from "./priceCheck";
+import { isGot, isManual } from "./pricing";
 import { TagPicker } from "./TagPicker";
 import type { Card } from "./types";
 import { usePhotoUpload } from "./usePhotoUpload";
@@ -55,6 +57,30 @@ function CardDetail({
   const toggle = (p: Panel) => setPanel((cur) => (cur === p ? null : p));
   const got = isGot(c);
   const src = cardImageSrc(c);
+  const checkPrice = usePriceCheck();
+  const { toast } = useToast();
+  const [checking, setChecking] = useState(false);
+  const runCheck = async () => {
+    setChecking(true);
+    const check = await checkPrice(c)
+      .catch(() => null)
+      .finally(() => setChecking(false));
+    if (!check || check.saved === "failed") {
+      toast(`Couldn't ${check ? "save" : "check"} the price. Try again.`);
+      return;
+    }
+    // A refused save was already reported; an unchanged card was edited or removed meanwhile.
+    const { result: r, saved } = check;
+    if (!r.found && r.transient) toast(r.reason);
+    else if (saved !== "saved") return;
+    else if (!r.found) toast(`No price found. ${r.reason}`);
+    else if (r.ask.amount != null)
+      toast(
+        keepsAsk(c.ask)
+          ? `Kept ${isManual(c.ask) ? "your price" : "the seller's ask"}. ${r.ask.source} is ${formatMoney(r.ask.amount)}`
+          : `${formatMoney(r.ask.amount)} · ${r.ask.source}`,
+      );
+  };
 
   return (
     <>
@@ -91,18 +117,8 @@ function CardDetail({
             {c.priority ? "Priority" : "Mark priority"}
           </button>
           {got ? null : (
-            <button
-              className="btn wide"
-              type="button"
-              onClick={() =>
-                void save(
-                  c,
-                  { checkRequested: !c.checkRequested },
-                  c.checkRequested ? "Price check cancelled" : "Queued for a price check",
-                )
-              }
-            >
-              {c.checkRequested ? "Cancel price check" : "Check price"}
+            <button className="btn wide" type="button" disabled={checking} onClick={() => void runCheck()}>
+              {checking ? "Checking price…" : "Check price"}
             </button>
           )}
         </div>
@@ -139,9 +155,8 @@ function CardDetail({
           <div className="meta">
             <span>Added {formatDate(c.addedAt)}</span>
           </div>
-          {(c.checkRequested && !got) || c.priority || c.collections.length ? (
+          {c.priority || c.collections.length ? (
             <div className="flags">
-              {c.checkRequested && !got ? <span className="flag">Price check queued</span> : null}
               {c.priority ? <span className="flag">★ Priority</span> : null}
               {c.collections.map((n) => (
                 <button

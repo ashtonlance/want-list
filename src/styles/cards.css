@@ -1044,3 +1044,18 @@ body.selecting:not(:has(.bulk .inner > .btn)) {
   font-size: 16px;
   font-weight: 700;
 }
+.manual-price {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+.manual-price input {
+  flex: 1;
+  min-width: 0;
+  max-width: 140px;
+}
+.manual-price-acts {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+}

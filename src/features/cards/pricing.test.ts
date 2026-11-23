@@ -79,8 +79,10 @@ describe("shortPrice", () => {
   it("labels deals, market prices and missing prices", () => {
     expect(shortPrice(testCard({ deal }))).toEqual({ amt: "$10.50", deal: true, label: "shipped" });
     expect(shortPrice(testCard({ tcg }))).toEqual({ amt: "$12.50", deal: false, label: "market" });
-    expect(shortPrice(testCard({ checkRequested: true }))?.label).toBe("Price coming");
-    expect(shortPrice(testCard())?.label).toBe("No listings");
+    expect(shortPrice(testCard())?.label).toBe("No price yet");
+    expect(shortPrice(testCard({ noPrice: { reason: "x", at: "2026-11-23" } }))?.label).toBe(
+      "No price found",
+    );
   });
   it("shows no price for a card you have", () => {
     expect(shortPrice(testCard({ status: "got", tcg }))).toBeNull();

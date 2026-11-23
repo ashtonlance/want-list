@@ -20,6 +20,8 @@ const card = (id: string, collections: string[]): Card => ({
   priority: false,
   status: "want",
   checkRequested: false,
+  tcgProduct: null,
+  noPrice: null,
   order: null,
   collections,
   slots: {},

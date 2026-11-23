@@ -11,6 +11,8 @@ import {
 import { cardDocId, useCardWrites, useCards } from "~/features/cards/api";
 import { collectionCards, knownSets } from "~/features/cards/collections";
 import { newCard, type WantOrGot } from "~/features/cards/create";
+import { parseCard } from "~/features/cards/parse";
+import { usePriceCheck } from "~/features/cards/priceCheck";
 import { useCatalog, type Catalog } from "~/features/catalog/catalog";
 import { addSearch } from "~/features/catalog/search";
 import { parseLink, parseQuick, type ParsedCard, type ParsedLink } from "~/features/cards/quickAdd";
@@ -94,6 +96,7 @@ function draftFrom(p: ParsedCard | ParsedLink, coll: string, note0: string): Dra
 export function AddSheet({ onClose }: { onClose: () => void }) {
   const { cards } = useCards();
   const { create } = useCardWrites();
+  const checkPrice = usePriceCheck();
   const { toast } = useToast();
   const coll = useActiveCollection();
   const sets = useMemo(() => knownSets(cards), [cards]);
@@ -154,7 +157,6 @@ export function AddSheet({ onClose }: { onClose: () => void }) {
       listing: pl?.listing ?? (link && !pl?.dhUrl ? { url: link, site: "", addedAt: today() } : null),
       dhUrl: pl?.dhUrl ?? null,
       status: got ? "got" : "want",
-      checkRequested: !got,
       ...(c ? { collections: [c], slots: { [c]: collectionCards(cards, c).length } } : {}),
     });
     let id = cardDocId([data.name, data.set, data.number, data.variant].join(" "));
@@ -167,7 +169,9 @@ export function AddSheet({ onClose }: { onClose: () => void }) {
       return;
     }
     onClose();
-    toast(`Added ${data.name}${c ? ` to ${c}` : ""}${got ? "" : " · queued for a price check"}`);
+    toast(`Added ${data.name}${c ? ` to ${c}` : ""}`);
+    // The price follows on its own; the card shows it, or why there isn't one, when the check is done.
+    void checkPrice(parseCard(id, data)).catch(() => undefined);
   };
 
   const field = <K extends keyof Draft>(key: K) => ({

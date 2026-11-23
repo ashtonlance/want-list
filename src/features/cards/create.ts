@@ -11,6 +11,8 @@ import { bigImage } from "~/lib/images";
 import { useToast } from "~/ui/Toast";
 import { cardDocId, useCardWrites, useCards } from "./api";
 import { addToCollection, collectionCards } from "./collections";
+import { parseCard } from "./parse";
+import { usePriceCheck } from "./priceCheck";
 import { tcgProductUrl } from "./links";
 import { isGot, pidOf } from "./pricing";
 import { NO_ASK, type Card, type CardData, type CardPatch } from "./types";
@@ -34,7 +36,9 @@ export function newCard(f: NewCardFields): CardData {
     imgSource: "",
     priority: false,
     status: "want",
-    checkRequested: true,
+    checkRequested: false,
+    tcgProduct: null,
+    noPrice: null,
     order: -Date.now(),
     collections: [],
     slots: {},
@@ -81,6 +85,7 @@ export function useAddCards() {
   const qc = useQueryClient();
   const { cards } = useCards();
   const { save, create } = useCardWrites();
+  const checkPrice = usePriceCheck();
   const { toast } = useToast();
 
   const slotIn = useCallback((coll: string) => collectionCards(cards, coll).length, [cards]);
@@ -90,10 +95,20 @@ export function useAddCards() {
     async (c: Card, got: boolean, coll: string) => {
       let patch: CardPatch = {};
       if (coll && !c.collections.includes(coll)) patch = addToCollection(c, coll, slotIn(coll));
-      if (got && !isGot(c)) patch = { ...patch, status: "got", checkRequested: false };
+      if (got && !isGot(c)) patch = { ...patch, status: "got" };
       return Object.keys(patch).length ? save(c, patch, undefined, true) : true;
     },
     [save, slotIn],
+  );
+
+  /** Adds a card, then runs the price check in the background if it came without a price. */
+  const createPriced = useCallback(
+    async (id: string, data: CardData): Promise<boolean> => {
+      const ok = await create(id, data);
+      if (ok && data.ask?.amount == null) void checkPrice(parseCard(id, data)).catch(() => undefined);
+      return ok;
+    },
+    [create, checkPrice],
   );
 
   const inColl = useCallback(
@@ -108,7 +123,7 @@ export function useAddCards() {
       const existing = cards.find((c) => c.id === id);
       const ok = existing
         ? await updateExisting(existing, got, coll)
-        : await create(
+        : await createPriced(
             id,
             newCard({
               name: p.name,
@@ -120,7 +135,7 @@ export function useAddCards() {
               img: p.img,
               imgSource: "tcgdex",
               status: got ? "got" : "want",
-              checkRequested: !got,
+              tcgProduct: p.tcgProduct ?? null,
               ...inColl(coll),
             }),
           );
@@ -137,7 +152,7 @@ export function useAddCards() {
       toast(addedMessage(p.name, got, coll));
       return true;
     },
-    [cards, create, updateExisting, inColl, qc, toast],
+    [cards, createPriced, updateExisting, inColl, qc, toast],
   );
 
   const catalogSoon = useCallback(async (): Promise<Catalog | undefined> => {
@@ -154,7 +169,7 @@ export function useAddCards() {
       const existing = cards.find((c) => c.id === id) ?? findOnList(cards, d);
       const ok = existing
         ? await updateExisting(existing, got, coll)
-        : await create(
+        : await createPriced(
             id,
             newCard({
               name: who.name,
@@ -166,7 +181,7 @@ export function useAddCards() {
               img: d.pid || !d.img ? null : bigImage(d.img),
               imgSource: d.pid ? "tcgplayer" : "tcgdex",
               status: got ? "got" : "want",
-              checkRequested: !got && d.market == null,
+              tcgProduct: d.pid,
               ...inColl(coll),
             }),
           );
@@ -177,7 +192,7 @@ export function useAddCards() {
       toast(addedMessage(d.name, got, coll));
       return true;
     },
-    [cards, create, updateExisting, inColl, catalogSoon, toast],
+    [cards, createPriced, updateExisting, inColl, catalogSoon, toast],
   );
 
   return { fromPick, fromLive, updateExisting, create, slotIn };

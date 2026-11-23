@@ -136,6 +136,51 @@ export async function patchExistingDoc(table: DocTableName, id: string, patch: J
   throw new WriteError("failed", "kept changing while being updated");
 }
 
+async function readDoc(table: DocTableName, id: string): Promise<{ data: JsonRecord; at: string } | null> {
+  const { data: row, error } = await supabase
+    .from(table)
+    .select("data,updated_at")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw writeError(error, "read refused");
+  return row ? { data: isRecord(row.data) ? row.data : {}, at: row.updated_at } : null;
+}
+
+/**
+ * Changes a stored document only if it is still there. `build` gets the latest stored copy and returns
+ * the fields to change, or null to leave it as it is, so the decision is made on what's stored now, not
+ * on a copy that may be stale. Returns the document as stored, or null when nothing changed.
+ */
+export async function updateDoc(
+  table: DocTableName,
+  id: string,
+  build: (data: JsonRecord) => JsonRecord | null,
+): Promise<JsonRecord | null> {
+  let row = await readDoc(table, id);
+  for (let tries = 0; row && tries < 3; tries++) {
+    const patch = build(row.data);
+    if (!patch) return null;
+    const data = { ...row.data, ...patch };
+    // An update, not an upsert, so a row deleted since the read stays deleted; and only of the copy that
+    // was read, so an edit saved in between isn't overwritten.
+    const { data: rows, error } = await supabase
+      .from(table)
+      .update({ data: asJson(data), updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .eq("updated_at", row.at)
+      .select("id");
+    if (error) throw writeError(error, "write refused");
+    if (rows.length) return data;
+    // No row changed: the row changed or went since the read (try again on the new copy), or the
+    // database refused the write, which it answers with no rows rather than an error.
+    const again = await readDoc(table, id);
+    if (again?.at === row.at) throw new WriteError("denied", "write refused");
+    row = again;
+  }
+  if (row) throw new WriteError("failed", "the card kept changing");
+  return null;
+}
+
 export async function deleteDoc(table: DocTableName, id: string): Promise<void> {
   const { error, count } = await withSession(() =>
     supabase.from(table).delete({ count: "exact" }).eq("id", id),

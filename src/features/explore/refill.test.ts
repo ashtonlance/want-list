@@ -25,6 +25,8 @@ const card = (over: Partial<Card>): Card => ({
   priority: false,
   status: "want",
   checkRequested: false,
+  tcgProduct: null,
+  noPrice: null,
   order: null,
   collections: ["Spooky"],
   slots: {},

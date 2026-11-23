@@ -40,3 +40,16 @@ export function numberSortKey(n: string | number | null | undefined): number {
 }
 
 export const plural = (n: number, one: string, many = one + "s"): string => `${n} ${n === 1 ? one : many}`;
+
+/**
+ * A typed-in dollar amount, or null when it isn't one. A comma is a thousands separator only before
+ * groups of three digits ("1,250"); otherwise it's taken as a decimal point ("12,50"), never dropped.
+ */
+export function parseMoney(raw: string): number | null {
+  let v = raw.replace(/[$\s]/g, "");
+  if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(v)) v = v.replace(/,/g, "");
+  else if (/^\d+,\d{1,2}$/.test(v)) v = v.replace(",", ".");
+  if (!/^\d+(\.\d+)?$|^\.\d+$/.test(v)) return null;
+  const n = Math.round(Number(v) * 100) / 100;
+  return n > 0 ? n : null;
+}

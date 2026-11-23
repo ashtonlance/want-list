@@ -2,8 +2,10 @@ import { useState, type SubmitEvent } from "react";
 import { SET_LIST } from "~/features/list/Datalists";
 import { today } from "~/lib/format";
 import { useCardWrites } from "./api";
+import { isAutoAsk, usePriceCheck } from "./priceCheck";
+import { isManual } from "./pricing";
 import { parseLink } from "./quickAdd";
-import type { Card, CardPatch, Lang } from "./types";
+import { NO_ASK, type Card, type CardPatch, type Lang } from "./types";
 
 interface Props {
   card: Card;
@@ -20,6 +22,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 export function EditForm({ card: c, knownSets, onPhoto, onSaved }: Props) {
   const { save } = useCardWrites();
   const [saving, setSaving] = useState(false);
+  const checkPrice = usePriceCheck();
   const d = c.deal;
 
   const submit = (e: SubmitEvent<HTMLFormElement>) => {
@@ -39,10 +42,25 @@ export function EditForm({ card: c, knownSets, onPhoto, onSaved }: Props) {
       dhUrl: v("dhUrl") || null,
     };
     const link = v("link");
-    if (link !== (c.listing?.url ?? "")) {
+    const linkChanged = link !== (c.listing?.url ?? "");
+    if (linkChanged) {
       patch.listing = link
         ? { url: link, site: parseLink(link, knownSets)?.site ?? "", addedAt: today() }
         : null;
+    }
+    // A different card, or a link to a different TCGplayer product, needs matching again: drop the old
+    // product and any price the check filled in for it, and check again once saved.
+    const tcgId = (url: string) => /tcgplayer\.com\/product\/(\d+)/.exec(url)?.[1] ?? "";
+    // Only a TCGplayer link to the same product is the same product.
+    const otherProduct = linkChanged && (!tcgId(link) || tcgId(link) !== tcgId(c.listing?.url ?? ""));
+    const moved =
+      (["name", "number", "variant", "set", "lang"] as const).some((k) => patch[k] !== c[k]) || otherProduct;
+    if (moved) {
+      patch.tcg = null;
+      patch.tcgProduct = null;
+      patch.noPrice = null;
+      // A seller's ask came with the old link, so it goes with it; a price typed in by hand stays.
+      if (isAutoAsk(c.ask) || (linkChanged && !isManual(c.ask))) patch.ask = NO_ASK;
     }
     const price = money(v("dPrice"));
     const ship = money(v("dShip")) ?? 0;
@@ -63,6 +81,7 @@ export function EditForm({ card: c, knownSets, onPhoto, onSaved }: Props) {
     void save(c, patch, "Saved").then((ok) => {
       setSaving(false);
       if (ok) onSaved();
+      if (ok && moved) void checkPrice({ ...c, ...patch, tcg: null }).catch(() => undefined);
     });
   };
 

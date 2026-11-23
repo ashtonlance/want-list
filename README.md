@@ -95,6 +95,16 @@ detail for cards on the list and in Explore) sit at the repo root. `tools/sync.m
 from tcgcsv.com every day in `.github/workflows/sync.yml` and commits them to `main`. The build
 copies them into `dist/`.
 
+### Price check
+
+Prices need no one in the loop (`src/features/cards/priceCheck.ts`). When a card is added without a
+price, when Check price is tapped, and once a visit for any card still without one, the app matches the
+card to its TCGplayer product in `catalog.json` by set, number and name, saves the product id on the
+card (`tcgProduct`), and takes today's price for its printing: from `prices.json` if the sync already
+tracks it, else live from TCGdex, else the catalog's market price. From then on the daily sync prices it
+along with every other card on the list, want or got. A card it can't match shows "No price found" with
+the reason, and a price can be typed in by hand.
+
 ## Deploy
 
 `.github/workflows/pages.yml` lints, tests, builds and publishes `dist/` to GitHub Pages on every

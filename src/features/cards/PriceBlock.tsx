@@ -1,6 +1,10 @@
-import { formatDate, formatMoney } from "~/lib/format";
-import { isGot, tcgMarket } from "./pricing";
-import type { Card } from "./types";
+import { useState } from "react";
+import { useAuth } from "~/features/auth/AuthProvider";
+import { formatDate, formatMoney, parseMoney, today } from "~/lib/format";
+import { useCardWrites } from "./api";
+import { keepsAsk, usePriceCheck } from "./priceCheck";
+import { isManual, tcgMarket } from "./pricing";
+import { MANUAL_SOURCE, NO_ASK, type Card } from "./types";
 
 /** The full price breakdown in a card's sheet. */
 export function PriceBlock({ card: c }: { card: Card }) {
@@ -31,8 +35,10 @@ export function PriceBlock({ card: c }: { card: Card }) {
   if (c.tcg && market != null) {
     const extra = [
       c.tcg.low != null ? `listings from ${formatMoney(c.tcg.low)}` : "",
-      c.ask?.kind === "ask" && c.ask.amount != null
-        ? `DoubleHolo ask ${formatMoney(c.ask.amount)}${c.ask.asOf ? ` (${formatDate(c.ask.asOf)})` : ""}`
+      // A seller's ask or a price typed in by hand stays beside the market price; one the check filled
+      // in is the same TCGplayer data shown above.
+      c.ask?.amount != null && keepsAsk(c.ask)
+        ? `${isManual(c.ask) ? "your price" : `${c.ask.source || "seller"} ask`} ${formatMoney(c.ask.amount)}${c.ask.asOf ? ` (${formatDate(c.ask.asOf)})` : ""}`
         : "",
     ]
       .filter(Boolean)
@@ -42,25 +48,103 @@ export function PriceBlock({ card: c }: { card: Card }) {
         <div className="ask mono">{formatMoney(market)}</div>
         <div className="ask-label">TCGplayer market{c.tcg.asOf ? ` · ${formatDate(c.tcg.asOf)}` : ""}</div>
         {extra ? <div className="ask-label">{extra}</div> : null}
+        <ManualPriceEdit card={c} />
       </div>
     );
   }
   const ASK_LABELS = {
-    ask: "lowest ask, before shipping",
+    ask:
+      c.ask?.source === "TCGplayer lowest listing"
+        ? "TCGplayer lowest listing"
+        : "lowest ask, before shipping",
     market: "TCGplayer market, before shipping",
-    price: "last price · none listed",
+    price: c.ask?.source === MANUAL_SOURCE ? "your price" : "last price · none listed",
   } as const;
   if (c.ask && c.ask.kind !== "none" && c.ask.amount != null) {
     return (
       <div className="price">
         <div className="ask mono">{formatMoney(c.ask.amount)}</div>
-        <div className="ask-label">{ASK_LABELS[c.ask.kind]}</div>
+        <div className="ask-label">
+          {ASK_LABELS[c.ask.kind]}
+          {c.ask.asOf ? ` · ${formatDate(c.ask.asOf)}` : ""}
+        </div>
+        <ManualPriceEdit card={c} />
       </div>
     );
   }
   return (
     <div className="price">
-      <div className="none">{isGot(c) ? "" : c.checkRequested ? "Price coming" : "No listings"}</div>
+      <div className="none">{c.noPrice ? "No price found" : "No price yet"}</div>
+      {c.noPrice ? <div className="ask-label">{c.noPrice.reason}</div> : null}
+      <ManualPrice card={c} />
+    </div>
+  );
+}
+
+/** A price typed in by hand, for a card the price check can't find. */
+function ManualPrice({ card, initial = "", onDone }: { card: Card; initial?: string; onDone?: () => void }) {
+  const { canWrite } = useAuth();
+  const { save } = useCardWrites();
+  const [value, setValue] = useState(initial);
+  if (!canWrite) return null;
+  const amount = parseMoney(value);
+  return (
+    <form
+      className="manual-price"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (amount == null) return;
+        onDone?.();
+        void save(
+          card,
+          { ask: { kind: "price", amount, source: MANUAL_SOURCE, asOf: today() }, noPrice: null },
+          "Price saved",
+        );
+      }}
+    >
+      <input
+        type="text"
+        inputMode="decimal"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="$0.00"
+        aria-label={`Price for ${card.name}`}
+        enterKeyHint="done"
+      />
+      <button className="btn" type="submit" disabled={amount == null}>
+        Set price
+      </button>
+    </form>
+  );
+}
+
+/** Lets an editor change or remove a price they typed in, since the price check never replaces it. */
+function ManualPriceEdit({ card }: { card: Card }) {
+  const { canWrite } = useAuth();
+  const { save } = useCardWrites();
+  const checkPrice = usePriceCheck();
+  const [editing, setEditing] = useState(false);
+  if (!canWrite || !isManual(card.ask)) return null;
+  if (editing)
+    return (
+      <ManualPrice card={card} initial={String(card.ask?.amount ?? "")} onDone={() => setEditing(false)} />
+    );
+  return (
+    <div className="manual-price-acts">
+      <button className="linkbtn" type="button" onClick={() => setEditing(true)}>
+        Change your price
+      </button>
+      <button
+        className="linkbtn"
+        type="button"
+        onClick={() =>
+          void save(card, { ask: NO_ASK }, "Price removed").then((ok) => {
+            if (ok) void checkPrice({ ...card, ask: NO_ASK }).catch(() => undefined);
+          })
+        }
+      >
+        Remove it
+      </button>
     </div>
   );
 }

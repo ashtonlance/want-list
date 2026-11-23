@@ -2,6 +2,7 @@ import { Outlet, useLocation } from "@tanstack/react-router";
 import { useRealtimeSync } from "~/data/realtime";
 import { AuthProvider } from "~/features/auth/AuthProvider";
 import { useSetNameCleanup } from "~/features/cards/useSetNameCleanup";
+import { usePriceBackfill } from "~/features/cards/usePriceBackfill";
 import { Datalists } from "~/features/list/Datalists";
 import { LightboxProvider } from "~/ui/Lightbox";
 import { ToastProvider } from "~/ui/Toast";
@@ -42,6 +43,7 @@ function AppFrame() {
   useRealtimeSync();
   useSectionMemory();
   useSetNameCleanup();
+  usePriceBackfill();
   return (
     <>
       <Topbar />

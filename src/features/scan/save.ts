@@ -43,8 +43,7 @@ export function useSaveScan() {
         const id = cardDocId([e.name, e.set, e.no].join(" "));
         const c = (e.mine ? byId(e.mine) : undefined) ?? cards.find((x) => pidOf(x) === e.pid) ?? byId(id);
         if (c) {
-          if (!isGot(c) && !(await save(c, { status: "got", checkRequested: false }, undefined, true)))
-            throw new Error("save");
+          if (!isGot(c) && !(await save(c, { status: "got" }, undefined, true))) throw new Error("save");
           done.set(e.pid, c.id);
           return c.id;
         }
@@ -58,7 +57,7 @@ export function useSaveScan() {
             ask: marketAsk(e.market, s.asOf),
             listing: { url: tcgProductUrl(e.pid), site: "TCGplayer", addedAt: today() },
             status: "got",
-            checkRequested: false,
+            tcgProduct: e.pid,
           }),
         );
         if (!ok) throw new Error("create");

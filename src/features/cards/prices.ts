@@ -32,6 +32,12 @@ async function fetchPrices(): Promise<PriceFile | null> {
   return r.ok ? parsePriceFile(await r.json()) : null;
 }
 
+export const pricesQuery = {
+  queryKey: queryKeys.prices,
+  queryFn: fetchPrices,
+  staleTime: 30 * 60_000,
+} as const;
+
 export function usePrices() {
-  return useQuery({ queryKey: queryKeys.prices, queryFn: fetchPrices, staleTime: 30 * 60_000 });
+  return useQuery(pricesQuery);
 }

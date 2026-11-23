@@ -108,10 +108,9 @@ export function CardRow({ card: c, selecting, selected, canWrite, onActivate, on
           {c.number ? <span className="num">#{c.number}</span> : null}
           <span>added {formatDate(c.addedAt)}</span>
         </div>
-        {got || c.checkRequested || c.collections.length ? (
+        {got || c.collections.length ? (
           <div className="flags">
             {got ? <span className="flag">{ownedBadge(ownedOf(c))}</span> : null}
-            {!got && c.checkRequested ? <span className="flag">Price check queued</span> : null}
             {c.collections.map((n) => (
               <button
                 key={n}

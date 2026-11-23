@@ -36,6 +36,8 @@ export function useCards(): CardsState {
   return { cards, loaded: docs.data !== undefined, failed: docs.isError && docs.data === undefined, retry };
 }
 
+export type UpdateResult = "saved" | "unchanged" | "denied" | "failed";
+
 export interface CardWrites {
   /** Changes some of a card's fields. Resolves false if the write didn't go through. */
   save: (card: Card, patch: CardPatch, message?: string, quiet?: boolean) => Promise<boolean>;
@@ -48,6 +50,12 @@ export interface CardWrites {
     message?: string,
     undo?: { after?: () => Promise<unknown> },
   ) => Promise<void>;
+  /**
+   * Changes the card as it's stored now: `build` gets the server's latest copy and returns the fields to
+   * change, or null to leave it, so a write made after a slow lookup can't undo an edit made meanwhile.
+   * A card removed meanwhile stays removed. A refused write is reported to the user here.
+   */
+  update: (card: Pick<Card, "id">, build: (now: Card) => CardPatch | null) => Promise<UpdateResult>;
   create: (id: string, data: CardData) => Promise<boolean>;
   remove: (card: Card) => Promise<boolean>;
 }
@@ -109,6 +117,23 @@ export function useCardWrites(): CardWrites {
     [qc, save, write, toast, toastUndo, failed],
   );
 
+  const update = useCallback<CardWrites["update"]>(
+    async (card, build) => {
+      try {
+        const stored = await write.mutateAsync({
+          kind: "update",
+          id: card.id,
+          build: (data) => build(parseCard(card.id, data)),
+        });
+        return stored ? "saved" : "unchanged";
+      } catch (e) {
+        failed(e, true, "");
+        return e instanceof WriteError && e.code === "denied" ? "denied" : "failed";
+      }
+    },
+    [write, failed],
+  );
+
   const create = useCallback<CardWrites["create"]>(
     async (id, data) => {
       try {
@@ -145,5 +170,5 @@ export function useCardWrites(): CardWrites {
     [qc, write, toast, toastUndo, failed],
   );
 
-  return { save, saveMany, create, remove };
+  return { save, saveMany, update, create, remove };
 }

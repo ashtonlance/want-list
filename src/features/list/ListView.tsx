@@ -86,7 +86,7 @@ export function ListView() {
           key: c.id,
           label: "Got it",
           doneLabel: "Got it ✓",
-          run: () => save(c, { status: "got", checkRequested: false }, "Marked as got"),
+          run: () => save(c, { status: "got" }, "Marked as got"),
         },
       };
     },

@@ -1,12 +1,16 @@
 import { formatMoney } from "~/lib/format";
-import type { Card } from "./types";
+import { MANUAL_SOURCE, type Card } from "./types";
 import type { PriceFile, SubPrices } from "./prices";
 
-/** The card's TCGplayer product id, from its saved price or a TCGplayer listing link. */
-export function pidOf(c: Pick<Card, "tcg" | "listing">): number | null {
+/**
+ * The card's TCGplayer product id: from its saved price, a TCGplayer link, or the price check's catalog
+ * match, in the same order as the daily sync (tools/sync.mjs), so both follow the same product.
+ */
+export function pidOf(c: Pick<Card, "tcg" | "listing"> & { tcgProduct?: number | null }): number | null {
   if (c.tcg?.productId) return c.tcg.productId;
   const m = /tcgplayer\.com\/product\/(\d+)/.exec(c.listing?.url ?? "");
-  return m ? Number(m[1]) : null;
+  if (m) return Number(m[1]);
+  return c.tcgProduct ?? null;
 }
 
 export interface SubPick {
@@ -38,6 +42,9 @@ export function withPrices(card: Card, prices: PriceFile | null | undefined): Ca
   return p && prices ? { ...card, tcg: { ...p, productId: pid, asOf: prices.asOf } } : card;
 }
 
+/** A price typed in by hand, which the price check leaves alone. */
+export const isManual = (ask: Card["ask"]): boolean => ask?.kind === "price" && ask.source === MANUAL_SOURCE;
+
 export const isGot = (c: Pick<Card, "status">): boolean => c.status === "got";
 
 export const tcgMarket = (c: Pick<Card, "tcg">): number | null => c.tcg?.market ?? null;
@@ -47,7 +54,7 @@ export function priceOf(c: Pick<Card, "deal" | "tcg" | "ask">): number | null {
   if (c.deal?.total != null) return c.deal.total;
   const market = tcgMarket(c);
   if (market != null) return market;
-  if (c.ask && (c.ask.kind === "ask" || c.ask.kind === "market")) return c.ask.amount;
+  if (c.ask && (c.ask.kind === "ask" || c.ask.kind === "market" || isManual(c.ask))) return c.ask.amount;
   return null;
 }
 
@@ -64,7 +71,11 @@ export function shortPrice(c: Card): ShortPrice | null {
   const p = priceOf(c);
   if (p != null) {
     const market = tcgMarket(c) != null || c.ask?.kind === "market";
-    return { amt: formatMoney(p), deal: false, label: market ? "market" : "ask" };
+    return {
+      amt: formatMoney(p),
+      deal: false,
+      label: market ? "market" : isManual(c.ask) ? "your price" : "ask",
+    };
   }
-  return { amt: null, deal: false, label: c.checkRequested ? "Price coming" : "No listings" };
+  return { amt: null, deal: false, label: c.noPrice ? "No price found" : "No price yet" };
 }
