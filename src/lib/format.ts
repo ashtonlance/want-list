@@ -1,16 +1,19 @@
+// Made once: toLocaleString with options builds a new formatter on every call, which adds up over a
+// screenful of prices.
+const money = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const longDate = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
+
 /** "$1,234.50", or "" when there's no number. */
 export function formatMoney(n: number | null | undefined): string {
   if (n == null || Number.isNaN(n)) return "";
-  return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return "$" + money.format(n);
 }
 
 /** "Nov 22, 2026" from a YYYY-MM-DD date (or anything Date can read). */
 export function formatDate(s: string | null | undefined): string {
   if (!s) return "";
   const d = new Date(s.length === 10 ? s + "T12:00:00" : s);
-  return Number.isNaN(d.getTime())
-    ? s
-    : d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  return Number.isNaN(d.getTime()) ? s : longDate.format(d);
 }
 
 /** Today as YYYY-MM-DD in local time. */

@@ -6,9 +6,9 @@ const W = 300;
 const H = 64;
 const PAD = 4;
 
+const dayFormat = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric" });
 /** "Aug 25". */
-const shortDay = (d: string) =>
-  new Date(d + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" });
+const shortDay = (d: string) => dayFormat.format(new Date(d + "T12:00:00"));
 
 const dayNum = (d: string) => Date.parse(d + "T00:00:00Z") / 86_400_000;
 
