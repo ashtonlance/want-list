@@ -39,7 +39,7 @@ export function textMatcher(query: string): ((text: string) => boolean) | null {
     if (/^\d+$/.test(w)) {
       const n = escape(w.replace(/^0+(?=\d)/, ""));
       const own = new RegExp(`${TAG}[a-z]{0,4}0*${n}[a-z]?(?=$|\\s)`);
-      const loose = new RegExp(`(^|[\\s(])0*${n}(?=$|[^a-z0-9:+])`);
+      const loose = new RegExp(`(^|[\\s(])0*${n}(?=$|[\\s),.;!?/])`);
       return (t: string) => own.test(t) || loose.test(t);
     }
     return (t: string) => t.includes(w);

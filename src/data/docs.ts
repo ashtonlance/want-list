@@ -109,7 +109,8 @@ export async function patchExistingDoc(table: DocTableName, id: string, patch: J
       .eq("id", id)
       .maybeSingle();
     if (error) throw writeError(error, "read refused");
-    return row ? { data: isRecord(row.data) ? row.data : {}, at: row.updated_at } : null;
+    // A row whose data isn't a document is left alone, as if gone, rather than overwritten.
+    return row && isRecord(row.data) ? { data: row.data, at: row.updated_at } : null;
   };
   let row = await read();
   for (let attempt = 0; row && attempt < 3; attempt++) {
@@ -123,9 +124,10 @@ export async function patchExistingDoc(table: DocTableName, id: string, patch: J
       .eq("updated_at", row.at);
     if (error) throw writeError(error, "write refused");
     if (count) return true;
-    // Nothing updated: deleted or changed since the read (or refused). Reading again tells which.
+    // Nothing updated. If the row is unchanged the write was refused (any write moves updated_at,
+    // which is never null); otherwise it was deleted or edited since the read, so try again.
     const next = await read();
-    if (next?.at === row.at) throw new WriteError("failed", "write had no effect");
+    if (next?.at === row.at) throw writeError(null, "write refused");
     row = next;
   }
   if (!row) return false;
