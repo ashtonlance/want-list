@@ -5,16 +5,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          curl -s https://tcgcsv.com/tcgplayer/3/24380/products | python3 -c "
-          import json,sys;d=json.load(sys.stdin)['results']
-          names=set()
-          for x in d:
-            for e in x['extendedData']: names.add(e['name'])
-          print(sorted(names))
-          print(json.dumps(d[40])[:1500])"
-          curl -s https://tcgcsv.com/tcgplayer/85/groups | head -c 300; echo
-          curl -s https://api.tcgdex.net/v2/en/cards/me01-001 | head -c 2500; echo
-          curl -s "https://api.tcgdex.net/v2/en/sets/me01" | head -c 800; echo
-          curl -sI https://tcgplayer-cdn.tcgplayer.com/product/726512_200w.jpg | head -5
-          curl -s https://api.pokemontcg.io/v2/cards/sv1-1 | head -c 1500; echo
-          nproc
+          curl -s -X POST https://api.tcgdex.net/v2/graphql -H 'content-type: application/json' -d '{"query":"{ cards(pagination:{page:1,itemsPerPage:3}) { id illustrator variants_detailed { thirdParty { tcgplayer } } } }"}' | head -c 800; echo
+          curl -s -X POST https://api.tcgdex.net/v2/graphql -H 'content-type: application/json' -d '{"query":"{ cards(pagination:{page:1,itemsPerPage:3}) { id illustrator } }"}' | head -c 800; echo
+          curl -s https://api.tcgdex.net/v2/en/sets | python3 -c "import json,sys;d=json.load(sys.stdin);print(len(d), sum(s['cardCount']['total'] for s in d), d[-1])"
+          curl -s https://api.tcgdex.net/v2/ja/sets | python3 -c "import json,sys;d=json.load(sys.stdin);print(len(d), sum(s['cardCount']['total'] for s in d), d[-1])"
+          curl -s https://api.tcgdex.net/v2/ja/sets/SV2a | head -c 400; echo
+          curl -s https://api.tcgdex.net/v2/ja/cards/SV2a-201 | head -c 1200; echo
+          curl -s https://api.tcgdex.net/v2/en/cards/base1-4 | head -c 1500; echo
+          curl -s https://api.tcgdex.net/v2/en/cards/swsh7-215 | python3 -c "import json,sys;d=json.load(sys.stdin);print(d.get('illustrator'), [v.get('thirdParty') for v in d.get('variants_detailed',[])], d.get('pricing',{}).keys() if d.get('pricing') else None)"
+          time (for i in $(seq -w 1 40); do curl -s -o /dev/null https://api.tcgdex.net/v2/en/cards/sv03-0$i & done; wait)
+          curl -s "https://api.tcgdex.net/v2/en/cards?illustrator=eq:HYOGONOSUKE&pagination:itemsPerPage=3" | head -c 400; echo
