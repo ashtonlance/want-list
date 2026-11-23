@@ -382,14 +382,14 @@
   position: absolute;
   left: 5px;
   bottom: 5px;
-  background: rgba(17, 17, 19, 0.78);
+  /* Solid rather than a backdrop blur: a blur behind every price badge in the grid is redrawn on each
+     frame of a scroll, and at this size and darkness it looked the same. */
+  background: rgba(17, 17, 19, 0.84);
   color: #fff;
   font: 600 12px/1 var(--f-num);
   font-variant-numeric: tabular-nums;
   border-radius: 6px;
   padding: 4px 6px;
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
 }
 .tile-badge.deal {
   background: #fff;

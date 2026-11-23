@@ -50,7 +50,9 @@
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  :is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img, .cmp-img):has(.fade-img:not(.ready))::after,
+  :is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img, .cmp-img):has(
+      .fade-img:not(.ready)
+    )::after,
   .lb-photo::before {
     animation: none;
   }

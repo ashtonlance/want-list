@@ -197,9 +197,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
           // Inside a transition the picture flies in, so the photo view skips its own fade.
           const enter = !isTransitioning();
           setOpened(
-            index >= 0
-              ? { seq, index, href, enter }
-              : { seq: arraySequence([next]), index: 0, href, enter },
+            index >= 0 ? { seq, index, href, enter } : { seq: arraySequence([next]), index: 0, href, enter },
           );
         },
         to: () => photo.current,
