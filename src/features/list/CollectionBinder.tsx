@@ -101,11 +101,17 @@ export function CollectionBinder({ cards, coll, pockets, canWrite }: Props) {
         </p>
       ) : null}
       {spreads.map((s) => (
-        <div key={s} className="spread" role="group" aria-label={`Pages ${s + 1} and ${s + 2}`}>
+        <div
+          key={s}
+          className="spread"
+          role="group"
+          aria-label={`Pages ${s + 1} and ${s + 2}`}
+          style={{ "--cols": cols, "--rows": pockets / cols } as CSSProperties}
+        >
           {[s, s + 1].map((p) => (
             <div key={p} className="page">
               <div className="page-label">Page {p + 1}</div>
-              <div className="pockets" style={{ "--cols": cols } as CSSProperties}>
+              <div className="pockets">
                 {Array.from({ length: pockets }, (_, k) => pocket(p * pockets + k))}
               </div>
             </div>

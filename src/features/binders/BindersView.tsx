@@ -57,6 +57,7 @@ export function BindersView() {
   const [moving, setMoving] = useState<number | null>(null);
   const { sheet, open: openSheet, close: closeSheet } = useBinderSheet();
   const per = useMediaQuery("(max-width:620px)") ? 1 : 2;
+  const mouse = useMediaQuery("(hover: hover) and (pointer: fine)");
   useScrollRestoration(`binders:${binder?.id ?? ""}`, loaded);
 
   const cardsById = useMemo(() => new Map(cards.map((c) => [c.id, c])), [cards]);
@@ -133,9 +134,14 @@ export function BindersView() {
       return;
     }
     setMoving(null);
-    if (moving === i) return;
-    const slots = swapSlots(binder.slots, moving, i);
-    changeSlots(binder, slots, slots[moving] ? "Swapped" : "Moved");
+    onMove(moving, i);
+  };
+
+  /** Moves the card in pocket `from` to pocket `to`, swapping it with any card there. */
+  const onMove = (from: number, to: number) => {
+    if (!binder || from === to) return;
+    const slots = swapSlots(binder.slots, from, to);
+    changeSlots(binder, slots, slots[from] ? "Swapped" : "Moved");
   };
 
   const pages = binder ? pageCount(binder) : 1;
@@ -207,6 +213,7 @@ export function BindersView() {
             moving={moving}
             onPage={setPage}
             onPocket={onPocket}
+            onMove={mouse ? onMove : undefined}
           />
           <div className="binder-tools">
             <Button
@@ -221,7 +228,9 @@ export function BindersView() {
               Add a page
             </Button>
             <span className="hint m-0">
-              Tap an empty pocket to add a card. Tap a card to move, swap or remove it.
+              {mouse
+                ? "Click an empty pocket to add a card. Drag a card to move or swap it, or click it for more."
+                : "Tap an empty pocket to add a card. Tap a card to move, swap or remove it."}
             </span>
           </div>
         </>
