@@ -599,8 +599,8 @@ export function usePhotoFeed<T>(
   const open = useLightbox();
   const seq = useMemo((): PhotoSequence => {
     const built = new Map<number, LightboxItem | null>();
-    // Found the way sameCard matches: by id, else by picture. A card opened from its sheet is a new
-    // object for the same card, and still opens in place in the feed.
+    // Found the way sameCard matches: by id when there is one, else by picture. A card opened from its
+    // sheet is a new object for the same card, and still opens in place in the feed.
     const byId = new Map<string, number>();
     const bySrc = new Map<string, number>();
     const at = (i: number): LightboxItem | undefined => {
@@ -617,7 +617,7 @@ export function usePhotoFeed<T>(
       return it ?? undefined;
     };
     const indexOf = (item: LightboxItem) =>
-      (item.id ? byId.get(item.id) : undefined) ?? bySrc.get(bigImage(item.src)) ?? -1;
+      (item.id ? byId.get(item.id) : bySrc.get(bigImage(item.src))) ?? -1;
     return { length: rows.length, at, indexOf };
   }, [rows, toItem]);
   useLightboxSequence(seq);

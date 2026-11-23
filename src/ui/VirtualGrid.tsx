@@ -88,9 +88,9 @@ export function VirtualGrid<T>({ items, renderItem, className, scrollKey, ref }:
       {/* An empty copy of the grid, only to read its columns and gap from the stylesheet. */}
       <div ref={probe} className={className} aria-hidden="true" style={{ height: 0, overflow: "hidden" }} />
       {layout ? (
-        // A new column count regroups every row, so it starts afresh with that count's own sizes.
+        // Another list, or a new column count that regroups every row, starts afresh with its own sizes.
         <Rows
-          key={layout.cols}
+          key={`${String(layout.cols)}|${scrollKey}`}
           layout={layout}
           items={items}
           renderItem={renderItem}
@@ -171,7 +171,9 @@ function RowImpl<T>({ index, y, items, cols, renderItem, className, measure }: R
   const tiles: ReactNode[] = [];
   for (let i = start; i < Math.min(start + cols, items.length); i++) {
     const item = items[i];
-    if (item !== undefined) tiles.push(renderItem(item, i));
+    // Every place gets a cell, even an empty one, so tiles keep their columns (and lib/scroll.ts can
+    // tell an anchor's place from its cell).
+    tiles.push((item === undefined ? null : renderItem(item, i)) ?? <div key={`empty-${String(i)}`} />);
   }
   return (
     <div

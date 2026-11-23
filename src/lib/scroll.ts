@@ -23,7 +23,10 @@ interface Spot {
   item?: number;
 }
 
-const isSpot = (v: unknown): v is Spot => isRecord(v) && typeof v.y === "number";
+const isSpot = (v: unknown): v is Spot =>
+  isRecord(v) &&
+  typeof v.y === "number" &&
+  (v.item === undefined || (typeof v.item === "number" && Number.isInteger(v.item) && v.item >= 0));
 
 /**
  * Lists that only draw the rows near the screen (ui/VirtualGrid), by scroll key: where the row holding
@@ -46,9 +49,8 @@ function itemOf(el: HTMLElement): number | undefined {
   let tile: Element = el;
   while (row && tile.parentElement && tile.parentElement !== row) tile = tile.parentElement;
   const first = Number(row?.dataset.item);
-  return row && Number.isInteger(first)
-    ? first + Array.prototype.indexOf.call(row.children, tile)
-    : undefined;
+  const at = row ? Array.prototype.indexOf.call(row.children, tile) : -1;
+  return Number.isInteger(first) && at >= 0 ? first + at : undefined;
 }
 
 const STORE_KEY = "wl-scroll";
