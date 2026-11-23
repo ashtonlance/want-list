@@ -19,11 +19,12 @@ function readSupabaseConfig(): { url: string; anonKey: string } {
 }
 
 /**
- * catalog.json, prices.json and art.bin sit at the repo root because the daily jobs rewrite them there.
+ * catalog.json, prices.json, prices-history.json and art.bin sit at the repo root because the daily jobs
+ * rewrite them there.
  * Serve them in dev and ship them next to the app in the build. art.bin is optional: picks work without it,
  * and it doesn't exist until the art workflow's first run.
  */
-const DATA_FILES = ["catalog.json", "prices.json", "art.bin"];
+const DATA_FILES = ["catalog.json", "prices.json", "prices-history.json", "art.bin"];
 const OPTIONAL_DATA = new Set(["art.bin"]);
 const contentType = (name: string) =>
   name.endsWith(".json") ? "application/json" : "application/octet-stream";
@@ -122,6 +123,12 @@ const offline = VitePWA({
         urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.endsWith("/prices.json"),
         handler: "NetworkFirst",
         options: { cacheName: "prices", networkTimeoutSeconds: 3, expiration: { maxEntries: 1 } },
+      },
+      {
+        // 90 days of prices for the list's cards: from the cache at once, refreshed in the background.
+        urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.endsWith("/prices-history.json"),
+        handler: "StaleWhileRevalidate",
+        options: { cacheName: "price-history", expiration: { maxEntries: 1 } },
       },
       {
         urlPattern: ({ url }) => url.origin === "https://api.tcgdex.net",

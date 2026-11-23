@@ -17,6 +17,7 @@ import { lightboxItem } from "./lightboxItem";
 import { OwnedSection } from "./OwnedSection";
 import { marketLinks } from "./links";
 import { PriceBlock } from "./PriceBlock";
+import { PriceTrend } from "./PriceTrend";
 import { keepsAsk, usePriceCheck } from "./priceCheck";
 import { isGot, isManual } from "./pricing";
 import { TagPicker } from "./TagPicker";
@@ -184,6 +185,7 @@ function CardDetail({
       ) : null}
 
       {got ? <OwnedSection card={c} canWrite={canWrite} /> : null}
+      <PriceTrend card={c} />
 
       <div className="sec">
         <h4 className="sec-title">Shop</h4>

@@ -1,11 +1,13 @@
 // Daily sync: rebuilds catalog.json (every English and Japanese card with today's
 // TCGplayer market price) and prices.json (prices for every card on the list and in
-// Explore) from tcgcsv.com, the public daily mirror of TCGplayer's catalog.
+// Explore) from tcgcsv.com, the public daily mirror of TCGplayer's catalog, and adds
+// today to prices-history.json (the same cards' market prices over the last 90 days).
 // Artists come from TCGdex (see artists.mjs).
 // Runs in GitHub Actions (.github/workflows/sync.yml). Node 20+, no dependencies.
 // Existing cards keep their names, numbers and set names, so nothing on the list shifts.
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { fetchArtists } from "./artists.mjs";
+import { centsOf, readHistory, setDay, writeHistory } from "./lib/history.mjs";
 import { readListPids } from "./lib/listPids.mjs";
 
 const ROOT = new URL("..", import.meta.url);
@@ -155,9 +157,18 @@ const items = {};
 for (const pid of want) { const e = priceOf.get(+pid); if (e) items[pid] = e; else if (oldPrices && oldPrices.items[pid]) items[pid] = oldPrices.items[pid]; }
 const newPrices = { asOf: today, source: "TCGplayer via tcgcsv.com", items };
 
+// 6. prices-history.json: today's market price for the same products. Only prices fetched today go in, so a
+// group that failed leaves a gap rather than repeating yesterday's price as today's.
+const history = readHistory(await readJson("prices-history.json"));
+const todayRow = new Map();
+for (const pid of want) { const c = centsOf(priceOf.get(+pid)); if (c) todayRow.set(pid, c); }
+setDay(history, today, todayRow);
+const newHistory = writeHistory(history, Object.keys(items), today);
+
 await writeFile(new URL("catalog.json", ROOT), JSON.stringify(newCat));
 await writeFile(new URL("prices.json", ROOT), JSON.stringify(newPrices));
+await writeFile(new URL("prices-history.json", ROOT), JSON.stringify(newHistory));
 await mkdir(new URL("tools/cache/", ROOT), { recursive: true });
 await writeFile(new URL(ARTIST_SETS, ROOT), JSON.stringify(artistSets, null, 0) + "\n");
 const added = cards.filter(r => !oldByPid.has(r[0])).length;
-console.log(`catalog: ${sets.length} sets, ${cards.length} cards (${added} new). prices: ${Object.keys(items).length} products.`);
+console.log(`catalog: ${sets.length} sets, ${cards.length} cards (${added} new). prices: ${Object.keys(items).length} products. history: ${newHistory.days.length} days.`);

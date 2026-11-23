@@ -8,6 +8,7 @@ export const docKeys = {
 
 export const queryKeys = {
   prices: ["prices"],
+  priceHistory: ["priceHistory"],
   catalog: ["catalog"],
   art: ["art"],
   editor: (email: string) => ["editor", email] as const,

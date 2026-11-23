@@ -1,5 +1,6 @@
 import { useCardWrites } from "~/features/cards/api";
 import { cardImageSrc } from "~/features/cards/image";
+import { sharePct, usePriceDrop, type PriceDrop } from "~/features/cards/history";
 import { ownedBadge, ownedOf } from "~/features/cards/owned";
 import { isGot, shortPrice } from "~/features/cards/pricing";
 import type { Card } from "~/features/cards/types";
@@ -24,14 +25,24 @@ function Check({ on }: { on: boolean }) {
 }
 
 /** What a card's open button reads out: name, printing, set, and whether it's got or its price. */
-function cardLabel(c: Card): string {
+function cardLabel(c: Card, drop: PriceDrop | null): string {
   const sp = shortPrice(c);
   return (
     c.name +
     (c.variant ? `, ${c.variant}` : "") +
     (c.set ? `, ${c.set}` : "") +
-    (isGot(c) ? ", got it" : sp?.amt ? `, ${sp.amt}` : "")
+    (isGot(c) ? ", got it" : sp?.amt ? `, ${sp.amt}` : "") +
+    (drop ? `, down ${sharePct(drop.share)}` : "")
   );
+}
+
+/**
+ * A meaningful drop in the market price the tile or row shows. Only on wanted cards, and only when the price
+ * shown is that market price (not a shipped deal or an ask), so the two always agree.
+ */
+function useShownDrop(c: Card): PriceDrop | null {
+  const drop = usePriceDrop(c);
+  return !isGot(c) && shortPrice(c)?.label === "market" && c.tcg?.market != null ? drop : null;
 }
 
 /** The button over a tile's or row's picture that shows it full screen; none while selecting. */
@@ -51,14 +62,20 @@ function PhotoButton({ name, onPhoto }: { name: string; onPhoto: () => void }) {
 export function CardTile({ card: c, selecting, selected, onActivate, onPhoto }: ItemProps) {
   const got = isGot(c);
   const sp = shortPrice(c);
-  const label = cardLabel(c) + (selecting ? (selected ? ", selected" : ", not selected") : "");
+  const drop = useShownDrop(c);
+  const label = cardLabel(c, drop) + (selecting ? (selected ? ", selected" : ", not selected") : "");
   return (
     <article className={"tile" + (got ? " got" : "") + (selected ? " sel" : "")} data-sr={c.id}>
       <button className="card-open" type="button" aria-label={label} onClick={() => onActivate(c)} />
       <div className="tile-img">
         <CardImage src={cardImageSrc(c)} name={c.name} />
         {got ? <span className="tile-badge have">{ownedBadge(ownedOf(c))}</span> : null}
-        {!got && sp?.amt ? <span className={"tile-badge" + (sp.deal ? " deal" : "")}>{sp.amt}</span> : null}
+        {!got && sp?.amt ? (
+          <span className={"tile-badge" + (sp.deal ? " deal" : "")}>
+            {sp.amt}
+            {drop ? <span className="drop"> ↓{sharePct(drop.share)}</span> : null}
+          </span>
+        ) : null}
         {c.priority ? (
           <span className="tile-star" aria-hidden="true">
             <StarMark />
@@ -82,6 +99,7 @@ export function CardRow({ card: c, selecting, selected, canWrite, onActivate, on
   const { save } = useCardWrites();
   const got = isGot(c);
   const sp = shortPrice(c);
+  const drop = useShownDrop(c);
   const src = cardImageSrc(c);
   return (
     <article className={"row" + (got ? " got" : "") + (selected ? " sel" : "")} data-sr={c.id}>
@@ -89,7 +107,7 @@ export function CardRow({ card: c, selecting, selected, canWrite, onActivate, on
         className="card-open"
         type="button"
         aria-pressed={selecting ? selected : undefined}
-        aria-label={selecting ? (selected ? "Unselect " : "Select ") + c.name : cardLabel(c)}
+        aria-label={selecting ? (selected ? "Unselect " : "Select ") + c.name : cardLabel(c, drop)}
         onClick={() => onActivate(c)}
       />
       <div className={"thumb" + (src ? "" : " empty")}>
@@ -143,7 +161,11 @@ export function CardRow({ card: c, selecting, selected, canWrite, onActivate, on
           </span>
         ) : null}
         {sp?.amt ? <span className={"amt" + (sp.deal ? " deal" : "")}>{sp.amt}</span> : null}
-        {sp ? <small>{sp.label}</small> : null}
+        {drop ? (
+          <small className="drop">↓ {sharePct(drop.share)} this month</small>
+        ) : sp ? (
+          <small>{sp.label}</small>
+        ) : null}
       </div>
     </article>
   );

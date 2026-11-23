@@ -1,0 +1,48 @@
+/* Price history: the trend line in a card's sheet and the drop marks on tiles and rows. Ink only. */
+.trend {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.spark {
+  display: block;
+  width: 100%;
+  height: 64px;
+  color: var(--ink);
+  overflow: visible;
+}
+.spark polyline {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.spark circle {
+  fill: currentColor;
+}
+.trend-nums {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--muted);
+}
+.trend-nums .num {
+  font-variant-numeric: tabular-nums;
+}
+.trend-drop {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.tile-badge .drop {
+  font-weight: 700;
+}
+.rprice small.drop {
+  color: var(--ink);
+  font-weight: 700;
+}

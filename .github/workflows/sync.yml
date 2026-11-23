@@ -1,6 +1,6 @@
 name: Daily card sync
 # Refreshes catalog.json and prices.json from TCGplayer data (via tcgcsv.com) every day,
-# with each card's artist from TCGdex.
+# with each card's artist from TCGdex, and adds the day's prices to prices-history.json.
 on:
   schedule:
     - cron: "30 21 * * *" # 21:30 UTC, after tcgcsv's daily update
@@ -29,12 +29,12 @@ jobs:
         run: node tools/sync.mjs
       - name: Check the result
         run: |
-          node -e 'const c=require("./catalog.json"),p=require("./prices.json");if(!c.cards.length||!c.sets.length)process.exit(1);console.log(c.asOf,c.sets.length,"sets",c.cards.length,"cards",Object.keys(p.items).length,"prices")'
+          node -e 'const c=require("./catalog.json"),p=require("./prices.json"),h=require("./prices-history.json");const d=h.days.indexOf(c.asOf);if(d<0||!Object.values(h.items).some(s=>Object.values(s).some(v=>v[d]!=null)))process.exit(1);if(!c.cards.length||!c.sets.length)process.exit(1);console.log(c.asOf,c.sets.length,"sets",c.cards.length,"cards",Object.keys(p.items).length,"prices",h.days.length,"days of history")'
           git diff --stat
       - name: Publish (main only)
         if: github.ref == 'refs/heads/main'
         run: |
-          git add catalog.json prices.json tools/cache/artist-sets.json
+          git add catalog.json prices.json prices-history.json tools/cache/artist-sets.json
           if git diff --cached --quiet; then echo "No changes"; exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898299+github-actions[bot]@users.noreply.github.com"

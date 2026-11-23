@@ -1,0 +1,40 @@
+name: Price history backfill
+# Fills in the last 90 days of prices-history.json from tcgcsv.com's daily price archives. Run it by hand
+# once, and again whenever cards added later should get their older prices; the daily sync keeps it going.
+# Each run stops after about 45 minutes with what it has; another run picks up where it left off.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  # To start a deploy after publishing the history.
+  actions: write
+concurrency:
+  # Shares the daily sync's group, so the two never write prices-history.json at the same time. A backfill
+  # still waiting when another sync is queued is cancelled by GitHub (one pending run per group): run it again.
+  group: sync
+  cancel-in-progress: false
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fill in older days
+        run: node tools/history-backfill.mjs
+      - name: Publish (main only)
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git add prices-history.json
+          if git diff --cached --quiet; then echo "No changes"; exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898299+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Price history backfill $(date -u +%F)"
+          git pull --rebase origin main
+          git push origin HEAD:main
+          # A push with the Actions token starts no workflows, so ask for the deploy directly.
+          gh workflow run pages.yml --ref main
+        env:
+          GH_TOKEN: ${{ github.token }}
