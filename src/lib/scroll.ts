@@ -121,6 +121,43 @@ function findAnchor(id: string): HTMLElement | null {
 }
 
 /**
+ * Keeps the card anchored as `id` where it is on screen while the layout around it changes, as when the
+ * desktop details pane opens or closes and the grid gains or loses columns. Call it before the change;
+ * the returned settle() follows the card for a moment afterwards, scrolling so it stays put, into rows a
+ * virtual grid hasn't drawn yet if need be. Polls with timers, so it also runs inside a view transition.
+ */
+export function holdPlace(id: string): () => Promise<void> {
+  const el = findAnchor(id);
+  if (!el) return () => Promise.resolve();
+  const off = el.getBoundingClientRect().top;
+  const item = itemOf(el);
+  const key = el.closest<HTMLElement>("[data-scroll-key]")?.dataset.scrollKey;
+  return () =>
+    new Promise((resolve) => {
+      let tries = 0;
+      let still = 0;
+      const step = () => {
+        tries += 1;
+        const now = findAnchor(id);
+        const rowTop = !now && item !== undefined && key ? rowFinders.get(key)?.(item) : undefined;
+        const delta = now
+          ? now.getBoundingClientRect().top - off
+          : rowTop !== undefined
+            ? rowTop - off - window.scrollY
+            : 0;
+        if (Math.abs(delta) > 0.5) {
+          window.scrollBy(0, delta);
+          still = 0;
+        } else if (now) still += 1;
+        // Long enough for the grid to notice its new width and regroup its rows, then steady.
+        if (tries > 45 || (tries > 12 && still > 2)) resolve();
+        else setTimeout(step, 16);
+      };
+      step();
+    });
+}
+
+/**
  * Restores the scroll position saved for `key` once `ready` (the view's content is on screen),
  * and keeps saving it while the person scrolls. `shown` is the endless list's loaded row count.
  */

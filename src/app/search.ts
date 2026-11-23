@@ -27,3 +27,6 @@ export function validateRootSearch(s: Record<string, unknown>): RootSearch {
 }
 
 export const NO_OVERLAY: RootSearch = { card: undefined, pick: undefined, live: undefined, panel: undefined };
+
+/** The card whose details are open (a list card, a pick or a live card), if any. */
+export const detailOf = (s: RootSearch): string | undefined => s.card ?? s.pick ?? s.live;

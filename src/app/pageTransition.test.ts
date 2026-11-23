@@ -26,6 +26,16 @@ describe("transitionTypes", () => {
     expect(types(at("/", { card: "a" }), at("/", { card: "b" }))).toBe(false);
   });
 
+  it("leaves a docked details pane to its own slide on a desktop", () => {
+    vi.stubGlobal("matchMedia", (q: string) => ({ matches: q === "(min-width: 1024px)" }));
+    try {
+      expect(types(at("/", { card: "a" }), at("/"))).toBe(false);
+      expect(types(at("/binders", { sheet: "new" }), at("/binders"))).toEqual(["sheet-close"]);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("does nothing on the first load", () => {
     expect(types(undefined, at("/"))).toBe(false);
   });

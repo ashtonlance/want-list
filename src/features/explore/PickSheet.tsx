@@ -36,7 +36,7 @@ export function PickSheet({ id, onClose }: { id: string; onClose: () => void }) 
   useCloseWhen(loaded && !pick, onClose);
   if (!pick) return null;
   return (
-    <Sheet label="Card details" onClose={onClose} contentKey={id}>
+    <Sheet label="Card details" onClose={onClose} contentKey={id} dock>
       <PickDetail key={id} pick={pick} />
     </Sheet>
   );

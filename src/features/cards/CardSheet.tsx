@@ -48,7 +48,7 @@ export function CardSheet({ id, onClose }: { id: string; onClose: () => void }) 
   useCloseWhen(loaded && !card, onClose);
   if (!card) return null;
   return (
-    <Sheet label="Card details" onClose={onClose} contentKey={id}>
+    <Sheet label="Card details" onClose={onClose} contentKey={id} dock>
       <CardDetail key={id} card={card} cards={cards} onClose={onClose} />
     </Sheet>
   );

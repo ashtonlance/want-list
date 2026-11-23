@@ -16,6 +16,7 @@ import { TabBar } from "./TabBar";
 import { UpdatePrompt } from "./UpdatePrompt";
 import { Topbar } from "./Topbar";
 import { useSectionMemory } from "./useSectionMemory";
+import { useTileKeys } from "./useTileKeys";
 import { isSharePath } from "./sections";
 
 /** The frame around every screen: top bar, tab bar (side bar on a desktop), sheets, and the app-wide providers. */
@@ -49,6 +50,7 @@ function AppFrame() {
   useSetNameCleanup();
   usePriceBackfill();
   const desktop = useDesktop();
+  useTileKeys(desktop);
   const [slot, setSlot] = useState<HTMLDivElement | null>(null);
   return (
     <SideSlot value={desktop ? slot : null}>

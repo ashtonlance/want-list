@@ -494,6 +494,7 @@ body.selecting:not(:has(.bulk .inner > [data-slot="button"])) {
 @media (min-width: 1024px) {
   .bulk {
     left: var(--side-w);
+    right: var(--pane-w);
   }
   .bulk .inner {
     max-width: 1400px;

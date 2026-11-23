@@ -84,7 +84,7 @@ export function VirtualGrid<T>({ items, renderItem, className, scrollKey, ref }:
   }, []);
 
   return (
-    <div ref={ref}>
+    <div ref={ref} data-scroll-key={scrollKey}>
       {/* An empty copy of the grid, only to read its columns and gap from the stylesheet. */}
       <div ref={probe} className={className} aria-hidden="true" style={{ height: 0, overflow: "hidden" }} />
       {layout ? (

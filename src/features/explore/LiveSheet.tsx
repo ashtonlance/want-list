@@ -26,7 +26,7 @@ export function LiveSheet({ id, onClose }: { id: string; onClose: () => void }) 
   const { card, failed, missing, retry } = useLiveCard(id);
   useCloseWhen(missing, onClose);
   return (
-    <Sheet label="Card details" onClose={onClose} contentKey={id}>
+    <Sheet label="Card details" onClose={onClose} contentKey={id} dock>
       <SheetHead title={id.startsWith("cat:") ? "Card" : "Live card"} />
       {card ? (
         <LiveDetail key={id} card={card} />

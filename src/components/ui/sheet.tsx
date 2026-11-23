@@ -92,6 +92,26 @@ function SheetContent({ className, children, noEnter, onDragClose, ref, ...props
   );
 }
 
+/**
+ * The same sheet docked at the window's right edge, beside the content, on a desktop (ui/Sheet's `dock`).
+ * Not modal: the grid beside it stays live. `pane` is the hook for the layout (styles/sheets.css).
+ */
+function SheetPane({ className, children, ...props }: ComponentProps<typeof SheetPrimitive.Content>) {
+  return (
+    <SheetPrimitive.Content
+      data-slot="sheet-pane"
+      className={cn(
+        "pane fixed top-0 right-0 bottom-0 z-35 w-(--pane-w) overflow-y-auto overscroll-contain bg-card text-foreground outline-none",
+        "border-l-[0.5px] border-input px-5 pt-1.5 pb-6 animate-[pane-in_var(--t-slow)_var(--ease)]",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </SheetPrimitive.Content>
+  );
+}
+
 /** The sticky title row, with the close button. Dragging it closes the sheet too. */
 function SheetHeader({ className, children, ...props }: ComponentProps<"div">) {
   return (
@@ -140,4 +160,4 @@ function SheetDescription({ className, ...props }: ComponentProps<typeof SheetPr
   );
 }
 
-export { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetTitle };
+export { Sheet, SheetClose, SheetContent, SheetDescription, SheetHeader, SheetPane, SheetTitle };

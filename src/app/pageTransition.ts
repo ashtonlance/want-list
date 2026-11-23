@@ -1,12 +1,15 @@
 import type { ParsedLocation } from "@tanstack/react-router";
 import { canTransition, viewTransitionsSupported } from "~/lib/motion";
+import { isDesktop } from "~/lib/useMediaQuery";
+import { detailOf } from "./search";
 import { sectionOf } from "./sections";
 
 /**
  * Which view transition a navigation gets (styles/motion.css draws each one):
  * - "forward" / "back": a new screen, sliding the way the tab bar reads (My list, Explore, Binders).
  *   "within" is added for a move inside one section (Browse to For you), so its own tabs stay put.
- * - "sheet-close": a sheet kept in the address closing, by its button, a drag or the back button.
+ * - "sheet-close": a sheet kept in the address closing, by its button, a drag or the back button (not
+ *   the desktop details pane, which slides away by itself).
  * - none: anything else. Opening a sheet has its own entrance, and filters change in place.
  */
 
@@ -27,6 +30,9 @@ const hasOverlay = (loc: ParsedLocation): boolean => {
   return OVERLAY_KEYS.some((k) => s[k] != null && s[k] !== "");
 };
 
+/** Whether `loc` shows a card's details in the desktop pane rather than a sheet. */
+const docked = (loc: ParsedLocation): boolean => detailOf(loc.search) !== undefined && isDesktop();
+
 export function transitionTypes(info: {
   fromLocation?: ParsedLocation;
   toLocation: ParsedLocation;
@@ -40,7 +46,9 @@ export function transitionTypes(info: {
     if (sectionOf(from.pathname) === sectionOf(to.pathname)) types.push("within");
     return types;
   }
-  if (hasOverlay(from) && !hasOverlay(to)) return ["sheet-close"];
+  // The desktop details pane slides away by itself (app/overlayNav.ts), and the grid it narrowed has to
+  // regroup its rows as it widens, which a transition would hold back until it ended.
+  if (hasOverlay(from) && !hasOverlay(to)) return docked(from) ? false : ["sheet-close"];
   return false;
 }
 

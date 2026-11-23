@@ -22,3 +22,6 @@ export const DESKTOP_QUERY = "(min-width: 1024px)";
 
 /** Whether the window is wide enough for the desktop layout. */
 export const useDesktop = () => useMediaQuery(DESKTOP_QUERY);
+
+/** The same check outside React, read at the moment it's called. False where the window can't say. */
+export const isDesktop = (): boolean => typeof matchMedia === "function" && matchMedia(DESKTOP_QUERY).matches;

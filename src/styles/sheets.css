@@ -92,3 +92,36 @@
   font-size: 12.5px;
   white-space: nowrap;
 }
+
+/* ---------- desktop details pane ----------
+ * A card's details dock at the right of the window on a desktop (ui/Sheet.tsx's `dock`), and the content
+ * makes room for them: --pane-w is 0 until a pane is open.
+ */
+:root {
+  --pane-w: 0px;
+}
+body {
+  padding-right: var(--pane-w);
+}
+@media (min-width: 1024px) {
+  :root:has(.pane) {
+    --pane-w: clamp(340px, 30vw, 440px);
+  }
+  /* The tile the arrow keys land on clears the sticky top bar. */
+  main [data-sr] {
+    scroll-margin: 64px 0 16px;
+  }
+}
+@keyframes pane-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+/* The pane is narrower than a wide screen's sheet, so the details keep the phone's stacked layout. */
+.pane .detail-hero {
+  display: flex;
+}
+.pane .detail-img {
+  width: min(280px, 100%);
+}
