@@ -136,6 +136,14 @@
 .filter-row .count {
   margin-left: auto;
 }
+/* Stands in for the Want / Got switch while searching, at the same height so nothing jumps. */
+.search-scope {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  color: var(--muted);
+  font-size: 0.9em;
+}
 .opt-btn {
   position: relative;
 }

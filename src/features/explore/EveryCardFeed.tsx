@@ -25,10 +25,12 @@ interface FeedProps {
   lang: FeedLang;
   /** Names this exact feed (language, order, filters), so a position is only restored in the same feed. */
   scrollKey: string;
+  /** The search these rows answer, or "" for every card. */
+  q?: string;
 }
 
-/** "Every card": the daily catalog, loading another page as the end comes into view. */
-export function EveryCardFeed({ cat, rows, lang, scrollKey }: FeedProps) {
+/** "Every card", or a search of it: the daily catalog, loading another page as the end comes into view. */
+export function EveryCardFeed({ cat, rows, lang, scrollKey, q = "" }: FeedProps) {
   // Coming back to a feed loads as many pages as it had before, so its saved card is there to scroll to.
   const startShown = () => Math.min(Math.max(savedRowCount(scrollKey) ?? PAGE, PAGE), rows.length);
   const [page, setPage] = useState(() => ({ rows, shown: startShown() }));
@@ -109,7 +111,13 @@ export function EveryCardFeed({ cat, rows, lang, scrollKey }: FeedProps) {
             />
           );
         })}
-        {total ? null : <div className="empty-state">No cards match these filters.</div>}
+        {total ? null : (
+          <div className="empty-state">
+            {q
+              ? `No ${lang === "en" ? "English " : lang === "jp" ? "Japanese " : ""}cards match “${q}”.${lang === "both" ? "" : " Try another language under Filter and sort."}`
+              : "No cards match these filters."}
+          </div>
+        )}
       </div>
       <p className="hint lv-foot" ref={foot}>
         {more

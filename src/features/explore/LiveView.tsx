@@ -32,7 +32,8 @@ import { LiveResults } from "./LiveResults";
 import { CAP_OPTIONS, DEFAULT_LIVE_UI, patchLiveUi, useLiveUi, type LiveSort, type LiveUi } from "./state";
 import { useCollections } from "~/features/cards/useCollections";
 
-const DEBOUNCE_MS = 650;
+// Searches run on the phone, so they can follow typing closely.
+const DEBOUNCE_MS = 300;
 /** How many of the newest sets get a chip. */
 const SET_CHIPS = 10;
 
@@ -56,8 +57,8 @@ const FEED_SORTS: readonly { value: FeedSort; label: string }[] = [
   { value: "name", label: "Name: A to Z" },
 ];
 
-const liveSorts = (searching: boolean): readonly { value: LiveSort; label: string }[] => [
-  { value: "num", label: searching ? "Newest first" : "Chase cards first" },
+const SET_SORTS: readonly { value: LiveSort; label: string }[] = [
+  { value: "num", label: "Chase cards first" },
   { value: "high", label: "Price: high to low" },
   { value: "low", label: "Price: low to high" },
 ];
@@ -70,14 +71,17 @@ export function LiveView() {
   const { q = "", set = "" } = useSearch({ from: "/explore/" });
   const navigate = useNavigate({ from: "/explore/" });
   const all = !q && !set;
+  // Every card and searches both run over the daily catalog, with the same filters and sorts; a set
+  // chip lists that set live from TCGdex.
+  const feedMode = !set;
   const ui = useLiveUi();
   const { canWrite } = useAuth();
   const { open } = useOverlayNav();
   const sets = useTdSets();
-  const catalog = useCatalog(all);
+  const catalog = useCatalog(feedMode);
   const rows = useMemo(
     () =>
-      all && catalog.data
+      feedMode && catalog.data
         ? feedRows(catalog.data, {
             lang: ui.lang,
             sort: ui.feedSort,
@@ -85,14 +89,15 @@ export function LiveView() {
             rarity: ui.rarity,
             look: ui.look,
             era: ui.era,
+            q,
           })
         : null,
-    [all, catalog.data, ui.lang, ui.feedSort, ui.feedPrice, ui.rarity, ui.look, ui.era],
+    [feedMode, catalog.data, ui.lang, ui.feedSort, ui.feedPrice, ui.rarity, ui.look, ui.era, q],
   );
   // How many cards in the chosen language each look has, for its chip.
   const lookCounts = useMemo(() => {
     const cat = catalog.data;
-    if (!all || !cat) return null;
+    if (!feedMode || !cat) return null;
     const want = ui.lang === "en" ? false : ui.lang === "jp" ? true : null;
     const inLang = (jp: boolean) => want === null || jp === want;
     return new Map(
@@ -103,7 +108,7 @@ export function LiveView() {
         return [value, n] as const;
       }),
     );
-  }, [all, catalog.data, ui.lang]);
+  }, [feedMode, catalog.data, ui.lang]);
   const filtered = ui.look !== "any" || ui.rarity !== "" || ui.feedPrice !== "any" || ui.era !== "any";
   const rarityOptions = useMemo(() => {
     const cat = catalog.data;
@@ -160,7 +165,9 @@ export function LiveView() {
   const langWord = LANG_WORD[ui.lang];
   const title = q ? `Results for “${q}”` : all ? "Every card" : setName || "Newest cards";
   const intro = q
-    ? "Every printing, newest sets first. Prices are today's TCGplayer market."
+    ? rows
+      ? `${rows.length.toLocaleString()} ${langWord} ${rows.length === 1 ? "card matches" : "cards match"}, newest sets first.`
+      : `Every ${langWord} printing, newest sets first.`
     : all
       ? rows
         ? `${filtered ? "" : "All "}${rows.length.toLocaleString()} ${langWord} ${rows.length === 1 ? "card" : "cards"}${filtered ? " match" : " ever made"}. Keep scrolling.`
@@ -184,7 +191,7 @@ export function LiveView() {
 
   const label = <T,>(options: readonly { value: T; label: string }[], v: T) =>
     options.find((o) => o.value === v)?.label ?? String(v);
-  const active: ActiveFilter[] = all
+  const active: ActiveFilter[] = feedMode
     ? [
         ...(ui.look !== "any"
           ? [{ key: "look", label: label(LOOK_OPTIONS, ui.look), clear: () => feed("look")("any") }]
@@ -209,18 +216,18 @@ export function LiveView() {
     : ui.cap
       ? [{ key: "cap", label: label(CAP_OPTIONS, ui.cap), clear: () => patchLiveUi({ cap: 0 }) }]
       : [];
-  const sorted = all ? ui.feedSort !== DEFAULT_LIVE_UI.feedSort : ui.sort !== DEFAULT_LIVE_UI.sort;
+  const sorted = feedMode ? ui.feedSort !== DEFAULT_LIVE_UI.feedSort : ui.sort !== DEFAULT_LIVE_UI.sort;
   const clearFilters = () => {
     patchLiveUi(
-      all
+      feedMode
         ? { look: "any", rarity: "", feedPrice: "any", era: "any", lang: "en" }
         : { cap: DEFAULT_LIVE_UI.cap },
     );
-    if (all) toFeedTop();
+    if (feedMode) toFeedTop();
   };
   const resetAll = () => {
     clearFilters();
-    patchLiveUi(all ? { feedSort: DEFAULT_LIVE_UI.feedSort } : { sort: DEFAULT_LIVE_UI.sort });
+    patchLiveUi(feedMode ? { feedSort: DEFAULT_LIVE_UI.feedSort } : { sort: DEFAULT_LIVE_UI.sort });
   };
 
   return (
@@ -280,12 +287,12 @@ export function LiveView() {
           onReset={resetAll}
           changed={active.length > 0 || sorted}
           showLabel={
-            all && rows
+            feedMode && rows
               ? `Show ${rows.length.toLocaleString()} ${rows.length === 1 ? "card" : "cards"}`
               : "Done"
           }
         >
-          {all ? (
+          {feedMode ? (
             <>
               <Choices label="Sort" value={ui.feedSort} options={FEED_SORTS} onChange={feed("feedSort")} />
               <Choices
@@ -321,7 +328,7 @@ export function LiveView() {
               <Choices
                 label="Sort"
                 value={ui.sort}
-                options={liveSorts(Boolean(q))}
+                options={SET_SORTS}
                 onChange={(sort) => patchLiveUi({ sort })}
               />
               <Choices
@@ -347,8 +354,8 @@ export function LiveView() {
           ) : null}
         </FilterSheet>
       ) : null}
-      {!all ? (
-        <LiveResults key={q ? `q:${q}` : `set:${set}`} q={q} set={set} />
+      {set ? (
+        <LiveResults key={set} set={set} />
       ) : catalog.isError && !catalog.data ? (
         <LoadError
           text="Couldn't load every card. Check your connection and try again."
@@ -356,12 +363,16 @@ export function LiveView() {
         />
       ) : rows && catalog.data ? (
         <>
-          <ComingSoon cat={catalog.data} rows={rows} lang={ui.lang} showing={ui.era === "soon"} />
+          {q ? null : (
+            <ComingSoon cat={catalog.data} rows={rows} lang={ui.lang} showing={ui.era === "soon"} />
+          )}
           <EveryCardFeed
+            key={q}
             cat={catalog.data}
             rows={rows}
             lang={ui.lang}
-            scrollKey={`${FEED_SCROLL}${ui.lang}:${ui.feedSort}:${ui.feedPrice}:${ui.look}:${ui.era}:${ui.rarity}`}
+            q={q}
+            scrollKey={`${FEED_SCROLL}${q ? `q:${q}:` : ""}${ui.lang}:${ui.feedSort}:${ui.feedPrice}:${ui.look}:${ui.era}:${ui.rarity}`}
           />
         </>
       ) : (

@@ -140,14 +140,6 @@ function parseBriefs(v: unknown): TdBrief[] {
   }));
 }
 
-/** Every printing of a card name, newest sets first. */
-export async function searchTd(q: string, sets: TdSets): Promise<TdBrief[]> {
-  const rank = (b: TdBrief) => sets.rank.get(tdSetOf(b.id)) ?? 9999;
-  return parseBriefs(await tdJson("/cards?name=" + encodeURIComponent(q)))
-    .filter((c) => !isPocket(tdSetOf(c.id), c.image))
-    .sort((a, b) => rank(a) - rank(b) || numberSortKey(b.localId) - numberSortKey(a.localId));
-}
-
 /** A set's cards, chase cards (highest numbers) first. */
 export async function fetchTdSetCards(setId: string): Promise<TdBrief[]> {
   const st = await tdJson("/sets/" + encodeURIComponent(setId));

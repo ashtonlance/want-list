@@ -1,3 +1,4 @@
+import { textMatcher } from "~/lib/textSearch";
 import { priceOf } from "./pricing";
 import type { Card } from "./types";
 
@@ -36,15 +37,19 @@ const haystack = (c: Card): string =>
     .join(" ")
     .toLowerCase();
 
+/**
+ * The cards to show. A search looks through wanted and collected cards alike, since "do I have this
+ * already?" is the question it's usually asking; the collection still narrows it.
+ */
 export function visibleCards(cards: readonly Card[], f: ListFilter): Card[] {
-  const q = f.q.trim().toLowerCase();
+  const match = textMatcher(f.q);
   return cards
     .filter(
       (c) =>
-        (f.status === "all" || c.status === f.status) &&
+        (match !== null || f.status === "all" || c.status === f.status) &&
         (!f.coll || c.collections.includes(f.coll)) &&
         (!f.prio || c.priority) &&
-        (!q || haystack(c).includes(q)),
+        (!match || match(haystack(c))),
     )
     .sort(SORTS[f.sort]);
 }

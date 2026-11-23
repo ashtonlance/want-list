@@ -41,6 +41,10 @@ describe("feedRows", () => {
     expect(pids(feedRows(cat, { lang: "both", sort: "new", cap: 0, look: "fullart" }))).toEqual([]);
     expect(pids(feedRows(cat, { lang: "en", sort: "new", cap: 0, era: "2020s" }))).toEqual([2, 1, 3]);
   });
+  it("narrows to a search, leading with cards named what was typed", () => {
+    expect(pids(feedRows(cat, { lang: "en", sort: "new", cap: 0, q: "gengar" }))).toEqual([1, 3]);
+    expect(pids(feedRows(cat, { lang: "both", sort: "new", cap: 0, q: "set gengar 7" }))).toEqual([5]);
+  });
   it("puts unpriced cards last when sorting by price, low to high", () => {
     expect(pids(feedRows(cat, { lang: "en", sort: "low", cap: 0 }))).toEqual([2, 1, 3, 4]);
   });
@@ -50,6 +54,7 @@ describe("searchCatalog", () => {
   it("matches every word, names starting with the first word first", () => {
     expect(searchCatalog(cat, "gengar", false).map((c) => c.pid)).toEqual([1, 3]);
     expect(searchCatalog(cat, "gengar 100", false).map((c) => c.pid)).toEqual([3]);
+    expect(searchCatalog(cat, "older gengar #100", false).map((c) => c.pid)).toEqual([3]);
   });
   it("includes Japanese cards only when asked", () => {
     expect(searchCatalog(cat, "gengar", true).map((c) => c.pid)).toContain(5);

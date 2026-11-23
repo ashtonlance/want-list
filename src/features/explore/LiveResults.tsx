@@ -10,7 +10,7 @@ import { usePhotoGrid } from "~/ui/Lightbox";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { exploreLightbox } from "./display";
 import { AddedMark, ExCard, LoadError, PriceTag, QuickWant } from "./ExCard";
-import { useLiveCards, useTdList, useTdSets } from "./live";
+import { useLiveCards, useTdSetCards, useTdSets } from "./live";
 import { listLookup } from "./onList";
 import { useLiveUi } from "./state";
 import type { TdBrief } from "./tcgdex";
@@ -19,11 +19,11 @@ const PAGE = 24;
 /** Sorting or filtering by price needs each result's price, so that many are fetched up front. */
 const PRICED_MAX = 250;
 
-/** A search's results or one set's cards, from TCGdex. Give it a `key` per search or set. */
-export function LiveResults({ q, set }: { q: string; set: string }) {
-  const scrollKey = q ? `live:q:${q}` : `live:set:${set}`;
+/** One set's cards, from TCGdex. Give it a `key` per set. */
+export function LiveResults({ set }: { set: string }) {
+  const scrollKey = `live:set:${set}`;
   const sets = useTdSets();
-  const list = useTdList(q ? { q } : { set });
+  const list = useTdSetCards(set);
   const { sort, cap, addTo } = useLiveUi();
   const [shown, setShown] = useState(() => Math.max(savedRowCount(scrollKey) ?? PAGE, PAGE));
   useScrollRestoration(scrollKey, list.data !== undefined, shown);
@@ -62,7 +62,7 @@ export function LiveResults({ q, set }: { q: string; set: string }) {
   );
   const photoOf = usePhotoGrid(visible, toPhoto);
   const grid = useRef<HTMLDivElement>(null);
-  useEnterAnimation(grid, `${q}|${set}|${sort}|${String(cap)}`);
+  useEnterAnimation(grid, `${set}|${sort}|${String(cap)}`);
 
   if (sets.isError || list.isError)
     return (
@@ -118,13 +118,7 @@ export function LiveResults({ q, set }: { q: string; set: string }) {
           );
         })}
         {rows.length ? null : (
-          <div className="empty-state">
-            {progress
-              ? "Getting prices…"
-              : q
-                ? `No cards found for “${q}”. Check the spelling, or try just the Pokémon's name.`
-                : "No cards match these filters."}
-          </div>
+          <div className="empty-state">{progress ? "Getting prices…" : "No cards match these filters."}</div>
         )}
       </div>
       {rows.length > shown ? (

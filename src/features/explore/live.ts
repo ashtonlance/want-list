@@ -10,7 +10,7 @@ import {
   type Catalog,
   type CatalogCard,
 } from "~/features/catalog/catalog";
-import { fetchTdCard, fetchTdSetCards, fetchTdSets, searchTd, type LiveCard } from "./tcgdex";
+import { fetchTdCard, fetchTdSetCards, fetchTdSets, type LiveCard } from "./tcgdex";
 
 const HOUR = 60 * 60_000;
 
@@ -81,18 +81,14 @@ export function useLiveCards(ids: readonly string[], enabled = true) {
   });
 }
 
-/** Search results or one set's cards. */
-export function useTdList(source: { q: string } | { set: string }) {
+/** One set's cards, from TCGdex. Searches run over the daily catalog instead (catalog/feed.ts). */
+export function useTdSetCards(set: string) {
   const sets = useTdSets();
-  const key = "q" in source ? "q:" + source.q.toLowerCase() : "set:" + source.set;
   return useQuery({
-    queryKey: queryKeys.tdList(key),
+    queryKey: queryKeys.tdList("set:" + set),
     enabled: sets.data !== undefined,
     staleTime: HOUR,
-    queryFn: () => {
-      if (!sets.data) throw new Error("sets not loaded");
-      return "q" in source ? searchTd(source.q, sets.data) : fetchTdSetCards(source.set);
-    },
+    queryFn: () => fetchTdSetCards(set),
   });
 }
 

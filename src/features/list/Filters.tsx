@@ -39,7 +39,12 @@ export function Filters({ count }: { count: number }) {
         </button>
       </div>
       <div className="filter-row">
-        <Seg label="Show" value={status} options={STATUSES} onChange={(s) => patchListUi({ status: s })} />
+        {q.trim() ? (
+          // A search looks through wanted and collected cards together (see visibleCards).
+          <span className="search-scope">Searching Want and Got</span>
+        ) : (
+          <Seg label="Show" value={status} options={STATUSES} onChange={(s) => patchListUi({ status: s })} />
+        )}
         <span className="count">{plural(count, "card")}</span>
       </div>
     </div>

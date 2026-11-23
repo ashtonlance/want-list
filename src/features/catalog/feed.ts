@@ -1,7 +1,9 @@
 import { numberSortKey } from "~/lib/format";
 import { realPrice, type Catalog } from "./catalog";
 import { inEra, type Era } from "./era";
+import { textMatcher } from "~/lib/textSearch";
 import { lookCards, rarityTiers, type Look } from "./looks";
+import { hayOf, nameStartsWith } from "./search";
 
 export type FeedLang = "en" | "jp" | "both";
 export type FeedSort = "new" | "old" | "rare" | "high" | "low" | "name";
@@ -36,6 +38,8 @@ export interface FeedOptions {
   rarity?: string;
   look?: Look;
   era?: Era;
+  /** Only cards whose name, set and number hold every word of this search. */
+  q?: string;
 }
 
 /**
@@ -58,7 +62,7 @@ export function sanitizedDates(cat: Catalog): string[] {
 /** The "Every card" feed: indexes into `cat.cards`, filtered and sorted. */
 export function feedRows(
   cat: Catalog,
-  { lang, sort, cap, floor = 0, rarity = "", look = "any", era = "any" }: FeedOptions,
+  { lang, sort, cap, floor = 0, rarity = "", look = "any", era = "any", q = "" }: FeedOptions,
 ): number[] {
   const want = lang === "en" ? false : lang === "jp" ? true : null;
   const cs = cat.cards;
@@ -66,6 +70,8 @@ export function feedRows(
   const rarityIdx = rarity ? cat.rarities.indexOf(rarity) : -1;
   const setInEra = cat.sets.map((s, i) => inEra(era === "soon" ? s.date : (dates[i] ?? ""), era));
   const looks = lookCards(cat, look);
+  const match = textMatcher(q);
+  const hay = match ? hayOf(cat) : null;
   const idx: number[] = [];
   cs.forEach((c, i) => {
     const jp = cat.sets[c.set]?.jp ?? false;
@@ -75,7 +81,8 @@ export function feedRows(
       (!floor || realPrice(c.market) >= floor) &&
       (!rarity || c.rarity === rarityIdx) &&
       (!looks || looks.has(c)) &&
-      setInEra[c.set]
+      setInEra[c.set] &&
+      (!match || match(hay?.[i] ?? ""))
     )
       idx.push(i);
   });
@@ -103,7 +110,17 @@ export function feedRows(
     return v;
   };
   const dir = sort === "old" ? -1 : 1;
+  // A search's newest-first list leads with the cards named what was typed.
+  const starts = q && sort === "new" ? nameStartsWith(q) : null;
+  const lead = (i: number) => {
+    const c = cs[i];
+    return starts && c && starts(c) ? 1 : 0;
+  };
   return idx.sort((a, b) => {
+    if (starts) {
+      const d = lead(b) - lead(a);
+      if (d) return d;
+    }
     const sa = cs[a]?.set ?? 0;
     const sb = cs[b]?.set ?? 0;
     const da = dates[sa] ?? "";
