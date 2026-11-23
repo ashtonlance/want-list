@@ -26,7 +26,7 @@ import { SkeletonGrid } from "~/ui/Skeleton";
 import { ComingSoon } from "./ComingSoon";
 import { forgetScroll } from "~/lib/scroll";
 import { EveryCardFeed } from "./EveryCardFeed";
-import { LoadError } from "./ExCard";
+import { LoadError } from "~/ui/LoadError";
 import { useTdSets } from "./live";
 import { LiveResults } from "./LiveResults";
 import { CAP_OPTIONS, DEFAULT_LIVE_UI, patchLiveUi, useLiveUi, type LiveSort, type LiveUi } from "./state";

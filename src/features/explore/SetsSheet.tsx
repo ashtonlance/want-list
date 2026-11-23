@@ -1,7 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Sheet, SheetHead } from "~/ui/Sheet";
-import { LoadError } from "./ExCard";
+import { LoadError } from "~/ui/LoadError";
 import { useTdSets } from "./live";
 
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();

@@ -170,6 +170,3 @@ body.selecting .tabbar {
   box-shadow: var(--shadow);
   line-height: 1.45;
 }
-.banner.tap {
-  cursor: pointer;
-}

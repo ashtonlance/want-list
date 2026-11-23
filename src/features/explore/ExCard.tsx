@@ -64,9 +64,9 @@ export function ExCard({
   );
 }
 
-/** "✓ Have it" or "✓ On list" for a card already on the list. */
+/** "✓ Got it" or "✓ On list" for a card already on the list. */
 export const AddedMark = ({ have }: { have: boolean }) => (
-  <span className="ex-added">{have ? "✓ Have it" : "✓ On list"}</span>
+  <span className="ex-added">{have ? "✓ Got it" : "✓ On list"}</span>
 );
 
 /** The + on a tile: adds the card as wanted, showing a tick straight away and going back if it fails. */
@@ -120,13 +120,3 @@ export const PriceTag = ({ market, prefix = "" }: { market: number | null; prefi
   ) : (
     <span className="ex-meta">No price yet</span>
   );
-
-/** A failed load, with a way to try again. */
-export const LoadError = ({ text, onRetry }: { text: string; onRetry: () => void }) => (
-  <div className="empty-state">
-    {text}{" "}
-    <button className="btn small" type="button" onClick={onRetry}>
-      Try again
-    </button>
-  </div>
-);
