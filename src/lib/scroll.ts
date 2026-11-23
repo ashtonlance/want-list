@@ -4,7 +4,8 @@ import { storage } from "./storage";
 
 /**
  * Scroll restoration per view. Each view has a key (a collection, a search, a binder); leaving and
- * coming back, or reopening the app within half an hour, lands on the same card.
+ * coming back, or reopening the app within two hours (as when the phone closed it in the background),
+ * lands on the same card.
  *
  * The position is anchored to the first card on screen (any element with `data-sr`), not just a pixel
  * offset, so it survives images loading at different heights. Elements carry their own ids in `data-sr`.
@@ -23,7 +24,7 @@ interface Spot {
 const isSpot = (v: unknown): v is Spot => isRecord(v) && typeof v.y === "number";
 
 const STORE_KEY = "wl-scroll";
-const TTL = 30 * 60_000;
+const TTL = 2 * 60 * 60_000;
 
 function loadSpots(): Map<string, Spot> {
   try {
@@ -58,6 +59,12 @@ if (typeof window !== "undefined") {
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) persist();
   });
+}
+
+/** Forgets the positions saved for every view whose key starts with `prefix`, so they open at the top. */
+export function forgetScroll(prefix: string): void {
+  for (const key of [...spots.keys()]) if (key.startsWith(prefix)) spots.delete(key);
+  persistSoon();
 }
 
 /** How many rows an endless list had loaded when it was last seen under `key`. */

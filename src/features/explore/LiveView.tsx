@@ -24,6 +24,7 @@ import { Select } from "~/ui/Select";
 import { useFilterSheet } from "~/ui/useFilterSheet";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { ComingSoon } from "./ComingSoon";
+import { forgetScroll } from "~/lib/scroll";
 import { EveryCardFeed } from "./EveryCardFeed";
 import { LoadError } from "./ExCard";
 import { useTdSets } from "./live";
@@ -60,6 +61,9 @@ const liveSorts = (searching: boolean): readonly { value: LiveSort; label: strin
   { value: "high", label: "Price: high to low" },
   { value: "low", label: "Price: low to high" },
 ];
+
+/** The start of the Every card feed's scroll keys; the rest names the language, order and filters. */
+const FEED_SCROLL = "live:all:";
 
 /** Explore's live tab: search any card, browse the newest sets, or scroll every card ever made. */
 export function LiveView() {
@@ -163,7 +167,11 @@ export function LiveView() {
         : `Every ${langWord} card ever made. Keep scrolling.`
       : "Straight from the latest card data, chase cards first. Prices are today's TCGplayer market.";
 
-  const toFeedTop = () => window.scrollTo({ top: 0 });
+  // A changed feed starts from the top, so no other feed's position is kept to come back to.
+  const toFeedTop = () => {
+    forgetScroll(FEED_SCROLL);
+    window.scrollTo({ top: 0 });
+  };
   const { collections } = useCollections();
   const sheet = useFilterSheet();
   /** A change to the Every card feed, which starts it again from the top. */
@@ -349,7 +357,12 @@ export function LiveView() {
       ) : rows && catalog.data ? (
         <>
           <ComingSoon cat={catalog.data} rows={rows} lang={ui.lang} showing={ui.era === "soon"} />
-          <EveryCardFeed cat={catalog.data} rows={rows} lang={ui.lang} />
+          <EveryCardFeed
+            cat={catalog.data}
+            rows={rows}
+            lang={ui.lang}
+            scrollKey={`${FEED_SCROLL}${ui.lang}:${ui.feedSort}:${ui.feedPrice}:${ui.look}:${ui.era}:${ui.rarity}`}
+          />
         </>
       ) : (
         <SkeletonGrid className="ex-grid" count={6} />

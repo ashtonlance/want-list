@@ -16,7 +16,6 @@ import { catalogLiveCard } from "./live";
 import { listLookup } from "./onList";
 import { useLiveUi } from "./state";
 
-const SCROLL_KEY = "live:all";
 const PAGE = 60;
 
 interface FeedProps {
@@ -24,19 +23,20 @@ interface FeedProps {
   /** Indexes into `cat.cards`, already filtered and sorted. */
   rows: readonly number[];
   lang: FeedLang;
+  /** Names this exact feed (language, order, filters), so a position is only restored in the same feed. */
+  scrollKey: string;
 }
 
 /** "Every card": the daily catalog, loading another page as the end comes into view. */
-export function EveryCardFeed({ cat, rows, lang }: FeedProps) {
-  const [page, setPage] = useState(() => ({
-    rows,
-    shown: Math.min(Math.max(savedRowCount(SCROLL_KEY) ?? PAGE, PAGE), rows.length),
-  }));
-  // New filters or a new day's catalog start again from the first page.
-  if (page.rows !== rows) setPage({ rows, shown: Math.min(PAGE, rows.length) });
+export function EveryCardFeed({ cat, rows, lang, scrollKey }: FeedProps) {
+  // Coming back to a feed loads as many pages as it had before, so its saved card is there to scroll to.
+  const startShown = () => Math.min(Math.max(savedRowCount(scrollKey) ?? PAGE, PAGE), rows.length);
+  const [page, setPage] = useState(() => ({ rows, shown: startShown() }));
+  // New filters or a new day's catalog: as many pages as that feed had last time, or the first page.
+  if (page.rows !== rows) setPage({ rows, shown: startShown() });
   const { shown } = page;
   const more = shown < rows.length;
-  useScrollRestoration(SCROLL_KEY, true, shown);
+  useScrollRestoration(scrollKey, true, shown);
 
   const foot = useRef<HTMLParagraphElement>(null);
   // New filters or sort: the feed fades in afresh.
