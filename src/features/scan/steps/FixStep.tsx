@@ -39,7 +39,9 @@ export function FixStep({ cell, page, pocket, index, onChoose }: FixStepProps) {
         </figure>
         <figure>
           {cur ? (
-            <CardImage src={tcgImage(cur.pid)} name={cur.name} alt={cur.name} />
+            <span className="cmp-img">
+              <CardImage key={cur.pid} src={tcgImage(cur.pid)} name={cur.name} alt={cur.name} />
+            </span>
           ) : (
             <span className="scan-blank">{cell.state === "empty" ? "Empty" : "No match"}</span>
           )}

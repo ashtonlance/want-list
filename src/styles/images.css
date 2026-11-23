@@ -2,7 +2,7 @@
    Every frame a card picture sits in keeps the card's 63:88 shape (tile, row thumb, pocket, pick, card sheet),
    so nothing moves when the picture arrives. Until then the frame shimmers; the picture fades in over it
    (.fade-img in motion.css). A picture that fails shows the card's name instead (.noimg). */
-:is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img):has(.fade-img:not(.ready)) {
+:is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img, .cmp-img):has(.fade-img:not(.ready)) {
   background-image: linear-gradient(
     100deg,
     transparent 20%,
@@ -22,8 +22,22 @@
     background-position: -30% 0;
   }
 }
+/* The full-screen photo shimmers on the dark backdrop until its first picture arrives; the large
+   picture then fades in over the small one. On a layer of its own, so a swipe's slide-in doesn't
+   replace it. */
+.lb-photo:not(:has(.fade-img.ready, .noimg))::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.1) 50%, transparent 80%);
+  background-color: rgba(255, 255, 255, 0.07);
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: img-shimmer 1.4s infinite ease-in-out;
+}
 @media (prefers-reduced-motion: reduce) {
-  :is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img):has(.fade-img:not(.ready)) {
+  :is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img, .cmp-img):has(.fade-img:not(.ready)),
+  .lb-photo::before {
     animation: none;
   }
 }

@@ -1,11 +1,6 @@
-import { useState, type ImgHTMLAttributes, type SyntheticEvent } from "react";
+import { useState, type ImgHTMLAttributes } from "react";
+import { markReady, onArrive } from "./fadeIn";
 import { useProgressiveSrc } from "./useProgressiveSrc";
-
-/** Pictures fade in once they've arrived (styles/motion.css). Set on the element, so no re-render. */
-const markReady = (img: HTMLImageElement | null) => {
-  if (img?.complete && img.naturalWidth > 0) img.classList.add("ready");
-};
-const onArrive = (e: SyntheticEvent<HTMLImageElement>) => e.currentTarget.classList.add("ready");
 
 interface CardImageProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "alt"> {
   src: string | null | undefined;

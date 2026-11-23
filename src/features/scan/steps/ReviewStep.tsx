@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { cleanName, plural } from "~/lib/format";
 import { tcgImage } from "~/lib/images";
+import { markReady, onArrive } from "~/ui/fadeIn";
 import { DEFAULT_NAME, willSave, type ScanCell } from "../session";
 
 interface ReviewStepProps {
@@ -86,7 +87,8 @@ interface ScanTileProps {
 }
 
 function ScanTile({ cell, pocket, onClick }: ScanTileProps) {
-  const [failed, setFailed] = useState(false);
+  // The match picture that wouldn't load, so picking another card tries again.
+  const [failed, setFailed] = useState<string | null>(null);
   const { state, pick, photo } = cell;
   const label =
     state === "empty"
@@ -95,7 +97,8 @@ function ScanTile({ cell, pocket, onClick }: ScanTileProps) {
         ? `${pick.name}${state === "check" ? ", check this" : ""}`
         : "Couldn't read, pick a card";
   // The match's picture where there is one; the pocket's own photo otherwise, or if that picture won't load.
-  const src = pick && state !== "none" && !failed ? tcgImage(pick.pid) : photo;
+  const match = pick && state !== "none" ? tcgImage(pick.pid) : null;
+  const src = match && failed !== match ? match : photo;
   return (
     <button
       className={"pocket bpocket scan-tile" + (state === "empty" ? " empty" : "")}
@@ -107,7 +110,17 @@ function ScanTile({ cell, pocket, onClick }: ScanTileProps) {
         <span className="plus">Empty</span>
       ) : (
         <>
-          <img src={src} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} />
+          <img
+            key={src}
+            src={src}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="fade-img"
+            ref={markReady}
+            onLoad={onArrive}
+            onError={() => setFailed(match)}
+          />
           {state === "check" ? <span className="scan-flag">Check</span> : null}
           {state === "none" ? <span className="scan-flag">Pick</span> : null}
         </>

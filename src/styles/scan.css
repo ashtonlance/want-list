@@ -180,6 +180,25 @@
   font-size: 14px;
   box-shadow: var(--card-shadow);
 }
+/* The match's picture sits in a card-shaped frame that shimmers until it arrives (images.css). */
+.scan-cmp .cmp-img {
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 63/88;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--sunk);
+  box-shadow: var(--card-shadow);
+}
+.scan-cmp .cmp-img img,
+.scan-cmp .cmp-img .noimg {
+  position: absolute;
+  inset: 0;
+  height: 100%;
+  border-radius: 0;
+  box-shadow: none;
+}
 .scan-cmp figcaption {
   font-size: 13px;
   color: var(--muted);

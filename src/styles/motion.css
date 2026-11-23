@@ -148,10 +148,10 @@
 }
 
 /* Photo view: swiping brings the next card in from the side it was pulled from. */
-.lightbox img.from-next {
+.lightbox .lb-photo.from-next {
   animation: lb-from-next var(--t) var(--ease) backwards;
 }
-.lightbox img.from-prev {
+.lightbox .lb-photo.from-prev {
   animation: lb-from-prev var(--t) var(--ease) backwards;
 }
 @keyframes lb-from-next {

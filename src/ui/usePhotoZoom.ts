@@ -56,7 +56,7 @@ export interface PhotoZoom {
  */
 export function usePhotoZoom(
   box: RefObject<HTMLElement | null>,
-  photo: RefObject<HTMLImageElement | null>,
+  photo: RefObject<HTMLElement | null>,
   resetKey: unknown,
 ): PhotoZoom {
   const [zoomer] = useState(() => new Zoomer(box, photo));
@@ -76,7 +76,7 @@ class Zoomer implements PhotoZoom {
 
   constructor(
     private readonly box: RefObject<HTMLElement | null>,
-    private readonly photo: RefObject<HTMLImageElement | null>,
+    private readonly photo: RefObject<HTMLElement | null>,
   ) {}
 
   down = (e: PointerEvent): boolean => {
@@ -164,7 +164,7 @@ class Zoomer implements PhotoZoom {
   };
 
   tap = (e: PointerEvent): void => {
-    if (e.target !== this.photo.current) return;
+    if (!(e.target instanceof Node) || !this.photo.current?.contains(e.target)) return;
     const p = this.local(e.clientX, e.clientY);
     const prev = this.lastTap;
     const now = performance.now();

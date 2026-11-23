@@ -143,7 +143,9 @@ export function morph({ from, update, to, wait = 300 }: MorphOptions): void {
     await until(() => (target = to()) !== null, wait);
     if (!target) return;
     setName(target, MORPH);
-    if (target instanceof HTMLImageElement) await decoded(target);
+    // A picture, or a frame holding one, is shown only once decoded, so it doesn't fly in blank.
+    const pic = target instanceof HTMLImageElement ? target : target.querySelector("img");
+    if (pic) await decoded(pic);
   }, ["morph"]);
   void vt.finished
     .catch(() => undefined)

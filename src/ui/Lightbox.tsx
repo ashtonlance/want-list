@@ -10,6 +10,7 @@ import {
   type PointerEvent,
   type ReactNode,
   type Ref,
+  type SyntheticEvent,
 } from "react";
 import { bigImage } from "~/lib/images";
 import {
@@ -22,7 +23,7 @@ import {
   sheetPicture,
 } from "~/lib/motion";
 import { usePhotoZoom } from "./usePhotoZoom";
-import { useProgressiveSrc } from "./useProgressiveSrc";
+import { markReady, onArrive } from "./fadeIn";
 import { useOverlay } from "./overlay";
 
 export interface LightboxItem {
@@ -108,7 +109,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
   const lastFocus = useRef<Element | null>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
   const box = useRef<HTMLDivElement>(null);
-  const photo = useRef<HTMLImageElement>(null);
+  const photo = useRef<HTMLDivElement>(null);
   const back = useRef<HTMLDivElement>(null);
   const href = useLocation({ select: (l) => l.href });
   // Navigating anywhere closes the photo.
@@ -413,14 +414,58 @@ function ActionButton({ action, done, busy, onRun }: ActionButtonProps) {
 
 interface PhotoProps {
   item: LightboxItem;
-  ref: Ref<HTMLImageElement>;
+  ref: Ref<HTMLDivElement>;
   className: string | undefined;
 }
 
-/** The big picture: the grid's small image at once, so it can fly in, then the large one. */
+/** The frame takes the picture's own shape once it arrives, so a photo that isn't card-shaped shows whole. */
+const takeShape = (img: HTMLImageElement) => {
+  const frame = img.parentElement;
+  if (frame && img.naturalWidth > 0)
+    frame.style.aspectRatio = `${String(img.naturalWidth)} / ${String(img.naturalHeight)}`;
+};
+const readyRef = (img: HTMLImageElement | null) => {
+  markReady(img);
+  if (img?.classList.contains("ready")) takeShape(img);
+};
+const onShown = (e: SyntheticEvent<HTMLImageElement>) => {
+  onArrive(e);
+  takeShape(e.currentTarget);
+};
+
+/**
+ * The big picture, in a card-shaped frame that holds its place and shimmers until a picture arrives:
+ * the grid's small image first (usually cached, so it can fly in), then the large one fading in over
+ * it. The frame is what moves, zooms and flies. Give it `key={item.src}` so a new card starts fresh.
+ */
 function Photo({ item, ref, className }: PhotoProps) {
-  const src = useProgressiveSrc(item.src);
-  return <img ref={ref} src={src} alt={`${item.name} card`} draggable={false} className={className} />;
+  const big = bigImage(item.src);
+  const [smallFailed, setSmallFailed] = useState(false);
+  const [bigFailed, setBigFailed] = useState(false);
+  const pic = (src: string, onError: () => void) => (
+    <img
+      src={src}
+      alt=""
+      decoding="async"
+      draggable={false}
+      className="fade-img"
+      ref={readyRef}
+      onLoad={onShown}
+      onError={onError}
+    />
+  );
+  return (
+    <div
+      ref={ref}
+      role="img"
+      aria-label={`${item.name} card`}
+      className={"lb-photo" + (className ? " " + className : "")}
+    >
+      {smallFailed ? null : pic(item.src, () => setSmallFailed(true))}
+      {big !== item.src && !bigFailed ? pic(big, () => setBigFailed(true)) : null}
+      {smallFailed && (bigFailed || big === item.src) ? <span className="noimg">{item.name}</span> : null}
+    </div>
+  );
 }
 
 function useLightboxApi(): LightboxApi {

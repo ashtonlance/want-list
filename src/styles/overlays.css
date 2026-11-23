@@ -43,14 +43,36 @@ body.selecting .toast {
   padding: calc(16px + env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-right, 0px))
     calc(16px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px));
 }
-.lightbox img {
-  max-width: min(440px, 100%);
+/* Card-shaped from the start, so nothing shifts as the picture arrives. */
+.lb-photo {
+  position: relative;
+  flex: none;
+  width: min(440px, 100%, calc(76vh * 63 / 88));
+  width: min(440px, 100%, calc(76dvh * 63 / 88));
+  aspect-ratio: 63 / 88;
   max-height: 76vh;
   max-height: 76dvh;
-  width: auto;
-  height: auto;
   border-radius: 16px;
+  overflow: hidden;
   box-shadow: 0 12px 50px rgba(0, 0, 0, 0.6);
+}
+.lb-photo img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  -webkit-user-drag: none;
+}
+.lb-photo .noimg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  text-align: center;
+  color: #ededf0;
+  background: rgba(255, 255, 255, 0.07);
 }
 .lightbox .cap {
   color: #ededf0;
@@ -103,16 +125,15 @@ body.selecting .toast {
   background: var(--lb);
   transition: opacity var(--t) var(--ease);
 }
-.lightbox img {
+.lb-photo {
   transition: transform var(--t) var(--ease);
-  -webkit-user-drag: none;
 }
-.lightbox.dragging img,
+.lightbox.dragging .lb-photo,
 .lightbox.dragging .lb-back {
   transition: none;
 }
 /* Only while a finger moves it: a held layer would stay drawn at its first size, soft when zoomed. */
-.lightbox.dragging img {
+.lightbox.dragging .lb-photo {
   will-change: transform;
 }
 .lightbox > .cap,
@@ -142,10 +163,10 @@ body.selecting .toast {
     opacity var(--t-fast) var(--ease),
     visibility var(--t-fast);
 }
-.lightbox.zoomed img {
+.lightbox.zoomed .lb-photo {
   cursor: grab;
 }
-.lightbox.zoomed.dragging img {
+.lightbox.zoomed.dragging .lb-photo {
   cursor: grabbing;
 }
 .lb-acts {
