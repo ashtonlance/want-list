@@ -3,10 +3,17 @@ import { parseCatalog } from "~/features/catalog/catalog";
 import { testCard } from "~/features/cards/testCard";
 import type { Card } from "~/features/cards/types";
 import type { PickCard } from "../picks";
-import { artWarmup, refillPicks } from "../refill";
+import { artWarmup, offThemePicks, refillPicks } from "../refill";
 import { matchSeeds, parseArt, percentiles, rowOf, type ArtIndex } from "./art";
 import { catalogFeatures, eraOf, priceBand, type CardFeatures } from "./features";
-import { buildTaste, distributionAffinity, identityAffinity, pokemonTheme, type Example } from "./taste";
+import {
+  buildTaste,
+  distributionAffinity,
+  identityAffinity,
+  knownSpecies,
+  pokemonTheme,
+  type Example,
+} from "./taste";
 
 // Rarities: 0 Common, 1 Rare, 2 Illustration Rare, 3 Special Illustration Rare.
 // Artists: 0 Aya, 1 Ben, 2 Cy.
@@ -208,6 +215,28 @@ describe("refill ranking", () => {
       keep,
     });
     expect(again.some((p) => p.coll === MM && p.name === "Milotic ex")).toBe(false);
+
+    // Its name says what it's about, so other Pokémon on its cards don't open it up to them, and a waiting
+    // pick of another Pokémon saved for it before goes out of sight, its place filled with a Mew.
+    const diluted = [
+      ...mine,
+      ...[0, 1, 2].map((i) =>
+        card({ id: `m${String(i)}`, name: "Milotic ex", number: String(300 + i), collections: [MM] }),
+      ),
+    ];
+    const stale = pick({
+      id: "zekrom",
+      coll: MM,
+      status: "new",
+      name: "Milotic ex",
+      number: "305",
+      tcgProduct: 305,
+    });
+    const input = { ...base, catalog: mixed, collections: [MM], cards: diluted, picks: [stale] };
+    const named = refillPicks(input).filter((p) => p.coll === MM);
+    expect(named).toHaveLength(8);
+    expect(named.every((p) => p.name === "Mew")).toBe(true);
+    expect([...offThemePicks(input)]).toEqual(["zekrom"]);
   });
 
   it("counts a pick he added once, as the card it put on the list", () => {
@@ -263,9 +292,28 @@ describe("taste", () => {
       const t = pokemonTheme(
         coll,
         cards.map((ss) => ex(...ss)),
+        known,
       );
       return t ? [...t].sort() : null;
     };
+    const known = knownSpecies(
+      [
+        "mew",
+        "mewtwo",
+        "ninetales",
+        "gengar",
+        "eevee",
+        "kyurem",
+        "black kyurem",
+        "mr. mime",
+        "ho-oh",
+        "nidoran f",
+        "nidoran (f)",
+        "tapu koko",
+        "farfetch'd",
+        "research",
+      ].map((s) => ({ species: [s] })),
+    );
     expect(theme(["mew"], ["mew"], ["mew"], ["mewtwo"], ["mewtwo"])).toEqual(["mew", "mewtwo"]);
     expect(theme(["gastly"], ["haunter"], ["gengar"], ["gengar"], ["haunter"], ["gastly"])).toEqual([
       "gastly",
@@ -275,8 +323,31 @@ describe("taste", () => {
     // Four Pokémon, or too few cards to tell.
     expect(theme(["squirtle"], ["squirtle"], ["charmeleon"], ["ivysaur"], ["venusaur"])).toBeNull();
     expect(theme(["mew"], ["mew"])).toBeNull();
-    // One card of a Pokémon counts when the name names it, not otherwise.
+    // The name decides once the Pokémon it names are on half the cards, whatever the rest are.
     expect(themeOf("Mew & Mewtwo", ["mew"], ["mew"], ["mew"], ["mewtwo"])).toEqual(["mew", "mewtwo"]);
+    expect(
+      themeOf("Mew & Mewtwo", ["mew"], ["milotic"], ["milotic"], ["mewtwo"], ["mew"], ["zekrom"]),
+    ).toEqual(["mew", "mewtwo"]);
+    expect(themeOf("MEW & MEWTWO", ["mew"], ["milotic"], ["zekrom"], ["meowth"])).toBeNull();
+    expect(themeOf("NINETALES", ["ninetales"])).toEqual(["ninetales"]);
+    // However it's spelled: punctuation, every spelling of a name, the longest name that fits.
+    expect(themeOf("Tapu Koko + Mr Mime", ["tapu koko"])).toEqual(["mr. mime", "tapu koko"]);
+    expect(themeOf("Rowan's Farfetch'd", ["farfetch'd"])).toEqual(["farfetch'd"]);
+    expect(themeOf("Ho Oh.", ["ho-oh"])).toEqual(["ho-oh"]);
+    expect(themeOf("Nidoran F", ["nidoran (f)"])).toEqual(["nidoran (f)", "nidoran f"]);
+    expect(themeOf("Black Kyurem", ["black kyurem"])).toEqual(["black kyurem"]);
+    // A line on the cards takes in the Pokémon the name names; a name that only mentions one doesn't decide.
+    expect(themeOf("Gengar line", ["gastly"], ["haunter"], ["gengar"], ["haunter"], ["gastly"])).toEqual([
+      "gastly",
+      "gengar",
+      "haunter",
+    ]);
+    expect(
+      themeOf("Eevee Evolutions", ["eevee"], ["vaporeon"], ["jolteon"], ["flareon"], ["umbreon"]),
+    ).toBeNull();
+    // A word that's also a card's name counts only with cards of it in; a part of a name never does.
+    expect(themeOf("Research binder", ["pikachu"], ["eevee"], ["snorlax"])).toBeNull();
+    expect(themeOf("Mewtwo", ["mew"], ["mew"], ["eevee"])).toBeNull();
     expect(theme(["mew"], ["mew"], ["mew"], ["mew"], ["pikachu"])).toEqual(["mew"]);
     // Three different Pokémon in a new collection aren't a theme yet.
     expect(theme(["oddish"], ["tangela"], ["paras"])).toBeNull();

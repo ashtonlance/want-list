@@ -5,7 +5,7 @@ import { WILDCARDS, type PickCard } from "./picks";
 import type { ArtIndex } from "./recs/art";
 import { catalogFeatures, type CardFeatures } from "./recs/features";
 import { artRows, artTaste, rankForCollection, rankWildcards, type Scored } from "./recs/rank";
-import { fitsTheme, pokemonTheme, type Example } from "./recs/taste";
+import { fitsTheme, knownSpecies, pokemonTheme, type Example } from "./recs/taste";
 
 /** Every collection keeps at least this many picks waiting for an answer. */
 export const MIN_OPEN = 8;
@@ -193,12 +193,15 @@ function contextOf({ catalog: cat, cards, picks, day }: RefillInput) {
         return [{ f, weight }];
       }),
     ];
+    const theme = pokemonTheme(coll, examples, knownSpecies(features));
+    // Waiting picks of other Pokémon are out of sight (see offThemePicks), so they say nothing about it.
+    const shown = theme ? examples.filter((e) => e.weight !== SUGGESTED || fitsTheme(theme, e.f)) : examples;
     return {
-      examples,
-      liked: examples.filter((e) => e.weight >= ADDED).map((e) => e.f),
-      passed: examples.filter((e) => e.weight < 0).map((e) => e.f),
+      examples: shown,
+      liked: shown.filter((e) => e.weight >= ADDED).map((e) => e.f),
+      passed: shown.filter((e) => e.weight < 0).map((e) => e.f),
       collected: new Set(),
-      theme: pokemonTheme(coll, examples),
+      theme,
     };
   };
   const examplesByColl = new Map<string, CollectionExamples>();
@@ -217,7 +220,7 @@ function contextOf({ catalog: cat, cards, picks, day }: RefillInput) {
 
   /** Every card worth suggesting for a collection, best first, remembered while its examples stay the same. */
   const rankedFor = (coll: string, art: ArtIndex | null): Scored[] => {
-    const { examples, collected } = examplesFor(coll);
+    const { examples, collected, theme } = examplesFor(coll);
     const rows = art ? artRows(art, cat, features) : null;
     const artOf = () => artFor(coll, art);
     return coll === WILDCARDS
@@ -233,10 +236,25 @@ function contextOf({ catalog: cat, cards, picks, day }: RefillInput) {
           }),
         )
       : remembered(features, art, `${day}|${coll}`, examples, () =>
-          rankForCollection({ coll, examples, features, art: artOf(), rows, day }),
+          rankForCollection({ coll, examples, theme, features, art: artOf(), rows, day }),
         );
   };
-  return { features, byPid, ofPick, onList, examplesFor, artFor, rankedFor };
+  /** A waiting pick saved for a collection that's about other Pokémon, as one saved before it was. */
+  const offTheme = (p: PickCard) => {
+    if (p.status !== "new") return false;
+    const f = ofPick(p);
+    return f !== undefined && !fitsTheme(examplesFor(p.coll).theme, f);
+  };
+  return { features, byPid, ofPick, onList, examplesFor, artFor, rankedFor, offTheme };
+}
+
+/**
+ * Saved picks waiting for an answer that no longer fit their collection: one about Mew and Mewtwo
+ * shows no N's Zekrom, even one picked for it before. They stay saved, just out of sight.
+ */
+export function offThemePicks(input: RefillInput): ReadonlySet<string> {
+  const { offTheme } = contextOf(input);
+  return new Set(input.picks.filter(offTheme).map((p) => p.id));
 }
 
 /**
@@ -260,11 +278,13 @@ export function artWarmup(input: RefillInput, art: ArtIndex): (() => void)[] {
  */
 export function refillPicks(input: RefillInput): PickCard[] {
   const { catalog: cat, picks, collections, art = null, keep = [] } = input;
-  const { features, byPid, ofPick, onList, examplesFor, rankedFor } = contextOf(input);
+  const { features, byPid, ofPick, onList, examplesFor, rankedFor, offTheme } = contextOf(input);
 
-  // Never suggest a card that's already a pick anywhere, or twice across collections.
+  // Never suggest a card that's already a pick anywhere, or twice across collections. A pick out of sight
+  // (see offThemePicks) frees its card for a collection that wants it.
   const taken = new Set<number>();
   for (const p of picks) {
+    if (offTheme(p)) continue;
     const f = ofPick(p);
     if (f) taken.add(f.c.pid);
   }
@@ -272,8 +292,10 @@ export function refillPicks(input: RefillInput): PickCard[] {
   const order = [...collections, WILDCARDS];
   const needOf = (coll: string) =>
     MIN_OPEN -
-    picks.filter((p) => p.coll === coll && p.status === "new" && !(p.tcgProduct && onList.has(p.tcgProduct)))
-      .length;
+    picks.filter(
+      (p) =>
+        p.coll === coll && p.status === "new" && !(p.tcgProduct && onList.has(p.tcgProduct)) && !offTheme(p),
+    ).length;
   // A kept Wildcard goes once its Pokémon joins a collection, and a kept pick of another Pokémon once its
   // collection turns out to be about its own Pokémon, as a fresh ranking would drop either.
   const collected = examplesFor(WILDCARDS).collected;
@@ -309,7 +331,7 @@ export function refillPicks(input: RefillInput): PickCard[] {
     // Kept picks were capped when they were first chosen, so only ranked picks are capped here.
     // Open picks already saved count toward the caps too.
     for (const p of picks) {
-      if (p.coll !== coll || p.status !== "new") continue;
+      if (p.coll !== coll || p.status !== "new" || offTheme(p)) continue;
       const f = ofPick(p);
       if (!f) continue;
       const sp = f.species[0] ?? f.name;

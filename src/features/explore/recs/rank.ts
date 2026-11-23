@@ -168,6 +168,8 @@ const titleCase = (s: string) =>
 export interface CollectionInput {
   coll: string;
   examples: readonly Example[];
+  /** The Pokémon the collection is about, or null (see pokemonTheme). Picks are only ever those Pokémon. */
+  theme: ReadonlySet<string> | null;
   /** Every catalog card's features, in catalog order. */
   features: readonly CardFeatures[];
   art: ArtTaste | null;
@@ -177,8 +179,16 @@ export interface CollectionInput {
 }
 
 /** Every candidate worth suggesting for a collection, best first, each with the reason it was picked. */
-export function rankForCollection({ coll, examples, features, art, rows, day }: CollectionInput): Scored[] {
-  const taste = buildTaste(examples, coll);
+export function rankForCollection({
+  coll,
+  examples,
+  theme,
+  features,
+  art,
+  rows,
+  day,
+}: CollectionInput): Scored[] {
+  const taste = buildTaste(examples, theme);
   if (!taste.yes) return [];
   const jpOk = examples.some((e) => e.weight > 0 && e.f.jp);
   const commonsOk = taste.commonShare >= COMMON_SHARE;

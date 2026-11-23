@@ -9,10 +9,11 @@ import { useStore } from "~/lib/store";
 import { parsePick, withSyncedPrice, type PickCard } from "./picks";
 import { keptToday, shownStore } from "./recs/shown";
 import { useArtIndex, useWarmedArt } from "./recs/useArtIndex";
-import { artWarmup, refillPicks, type RefillInput } from "./refill";
+import { artWarmup, offThemePicks, refillPicks, type RefillInput } from "./refill";
 
 /**
- * Every saved pick with today's synced prices, plus refill picks so no collection runs dry.
+ * Every saved pick with today's synced prices, but for waiting ones that no longer fit their collection,
+ * plus refill picks so no collection runs dry.
  * Refill picks show from the catalog alone; art fingerprints sharpen the ones that fill later gaps.
  */
 export function usePicks(): { picks: PickCard[]; loaded: boolean; refilled: boolean; day: string } {
@@ -44,7 +45,11 @@ export function usePicks(): { picks: PickCard[]; loaded: boolean; refilled: bool
   );
   const art = useWarmedArt(useArtIndex(), input, artWarmup);
   const refill = useMemo(() => (input ? refillPicks({ ...input, art }) : []), [input, art]);
-  const picks = useMemo(() => [...saved, ...refill], [saved, refill]);
+  const hidden = useMemo(() => (input ? offThemePicks(input) : null), [input]);
+  const picks = useMemo(
+    () => [...(hidden?.size ? saved.filter((p) => !hidden.has(p.id)) : saved), ...refill],
+    [saved, hidden, refill],
+  );
   return {
     picks,
     loaded: docs.data !== undefined && !catalog.isPending && (listLoaded || cardsFailed),

@@ -4,8 +4,8 @@ import type { CardFeatures } from "./features";
  * What a collection's cards say about taste, learned from examples: cards on the list and picks he
  * added count for a card's features, picks he passed on count against them.
  *
- * A collection is about its Pokémon when up to three of them are on most of its cards (Mew & Mewtwo,
- * a Gengar line). Picks for it then stay with those Pokémon.
+ * A collection is about its Pokémon when its name names them (Mew & Mewtwo, Ninetales), or up to three
+ * of them are on most of its cards (a Gengar line). Picks for it then stay with those Pokémon.
  *
  * Two kinds of feature:
  * - Identity (the Pokémon, the artist): any match counts, more matches count more.
@@ -58,8 +58,8 @@ const bump = (m: Map<string | number, number>, k: string | number, w: number) =>
   m.set(k, (m.get(k) ?? 0) + w);
 };
 
-/** A collection's taste, from its examples; given its name, also the Pokémon it's about. */
-export function buildTaste(examples: readonly Example[], coll?: string): Taste {
+/** A collection's taste, from its examples, and the Pokémon it's about, if any (see pokemonTheme). */
+export function buildTaste(examples: readonly Example[], theme: ReadonlySet<string> | null = null): Taste {
   const t: Taste = {
     identity: { species: counts(), artist: counts() },
     distribution: { tier: counts(), era: counts(), band: counts() },
@@ -68,7 +68,7 @@ export function buildTaste(examples: readonly Example[], coll?: string): Taste {
     artistCount: new Map(),
     speciesCount: new Map(),
     kept: 0,
-    theme: null,
+    theme,
     maxPrice: 0,
     commonShare: 0,
   };
@@ -95,7 +95,6 @@ export function buildTaste(examples: readonly Example[], coll?: string): Taste {
     }
   }
   t.commonShare = t.yes ? commons / t.yes : 0;
-  t.theme = coll === undefined ? null : pokemonTheme(coll, examples);
   for (const c of Object.values(t.distribution)) {
     c.topYes = topOf(c.yes);
     c.topNo = topOf(c.no);
@@ -103,33 +102,106 @@ export function buildTaste(examples: readonly Example[], coll?: string): Taste {
   return t;
 }
 
-/** A collection needs this many listed or added cards before it reads as being about its Pokémon. */
+/** A collection needs this many listed or added cards before its cards alone say it's about its Pokémon. */
 const THEME_MIN_CARDS = 3;
-/** A Pokémon is one it's about when its name names it, or it's on this many of its cards and this share. */
+/** A Pokémon is one it's about when it's on this many of its cards and this share... */
 const THEME_SPECIES_CARDS = 2;
 const THEME_SPECIES_SHARE = 0.2;
-/** It's about at most this many Pokémon, together on at least this share of its cards. */
+/** ...and it's about at most this many Pokémon, together on at least this share of its cards. */
 const THEME_MAX_SPECIES = 3;
 const THEME_SHARE = 0.75;
+/** The longest Pokémon name, in words (Tapu Koko, Mr. Mime Jr.). */
+const NAME_WORDS = 4;
+/** A name decides once the Pokémon it names are on at least this share of the collection's cards. */
+const NAMED_SHARE = 0.5;
+
+/** A name as words, lower case, letters and digits only, so "Mr Mime" and "Mr. Mime" read the same. */
+const words = (s: string): string[] =>
+  s
+    .toLowerCase()
+    .replace(/[^\p{L}\d]+/gu, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean);
+
+/** Pokémon by their names as words; one key may stand for spellings like "nidoran f" and "nidoran (f)". */
+export type KnownSpecies = ReadonlyMap<string, readonly string[]>;
+
+function speciesIndex(lists: Iterable<readonly string[]>): KnownSpecies {
+  const out = new Map<string, string[]>();
+  for (const list of lists)
+    for (const s of list) {
+      const key = words(s).join(" ");
+      const at = out.get(key);
+      if (!at) out.set(key, [s]);
+      else if (!at.includes(s)) at.push(s);
+    }
+  return out;
+}
+
+const knownCache = new WeakMap<object, KnownSpecies>();
+
+/** Every Pokémon the cards show, for finding the ones a collection's name names; worked out once per catalog. */
+export function knownSpecies(features: readonly { species: readonly string[] }[]): KnownSpecies {
+  let hit = knownCache.get(features);
+  if (!hit) knownCache.set(features, (hit = speciesIndex(features.map((f) => f.species))));
+  return hit;
+}
+
+/** The known Pokémon a collection's name names, longest name first: black kyurem, not also kyurem. */
+function namedSpecies(coll: string, known: KnownSpecies): Set<string> {
+  const w = words(coll);
+  const out = new Set<string>();
+  for (let i = 0; i < w.length;) {
+    let n = Math.min(NAME_WORDS, w.length - i);
+    for (; n > 0; n--) {
+      const hit = known.get(w.slice(i, i + n).join(" "));
+      if (hit) {
+        for (const s of hit) out.add(s);
+        break;
+      }
+    }
+    i += Math.max(n, 1);
+  }
+  return out;
+}
 
 /**
- * The Pokémon a collection is about: Mew and Mewtwo for "Mew & Mewtwo", Gastly, Haunter and Gengar for a
- * Gengar line. Null for a collection of many Pokémon (Kanto Starters) or a look (Forest, Dark Full Art),
- * whose picks may be any Pokémon. One card isn't a theme unless the name says so, so a stray card or a
- * new collection of three different Pokémon doesn't narrow the picks.
+ * The Pokémon a collection is about, or null for one whose picks may be any Pokémon.
+ * - Named: the Pokémon its name names, once they're on at least half its cards, so "Mew & Mewtwo" is
+ *   about Mew and Mewtwo, and only them, whatever else it picks up. A name that mentions a Pokémon
+ *   without being about it ("Eevee Evolutions", "Lillie's Pokémon") leaves the cards to decide.
+ * - From its cards: up to three Pokémon on most of them, like Gastly, Haunter and Gengar in a Gengar
+ *   line; with too few cards to tell, many Pokémon (Kanto Starters) or a look (Forest), none.
+ * Where its cards show a line, the Pokémon its name names that are on its cards join it ("Gengar line").
+ * `known` lists the Pokémon its name may name (see knownSpecies); without it, only those on its cards.
  */
-export function pokemonTheme(coll: string, examples: readonly Example[]): ReadonlySet<string> | null {
+export function pokemonTheme(
+  coll: string,
+  examples: readonly Example[],
+  known?: KnownSpecies,
+): ReadonlySet<string> | null {
   const kept = examples.filter((e) => e.weight >= 1).map((e) => new Set(e.f.species));
+  const fromCards = cardTheme(kept);
+  const named = namedSpecies(coll, known ?? speciesIndex(kept.map((ss) => [...ss])));
+  const withNamed = kept.filter((ss) => [...ss].some((s) => named.has(s))).length;
+  if (!withNamed) return fromCards;
+  if (withNamed >= kept.length * NAMED_SHARE)
+    return fromCards && [...named].every((s) => fromCards.has(s)) ? fromCards : named;
+  if (!fromCards) return null;
+  // Not enough to decide, but a named Pokémon on its cards still belongs with the line they show.
+  for (const ss of kept) for (const s of ss) if (named.has(s)) fromCards.add(s);
+  return fromCards;
+}
+
+/** The Pokémon most of a collection's cards share, as its cards alone tell (see pokemonTheme). */
+function cardTheme(kept: readonly ReadonlySet<string>[]): Set<string> | null {
   if (kept.length < THEME_MIN_CARDS) return null;
   const count = new Map<string, number>();
   for (const ss of kept) for (const s of ss) count.set(s, (count.get(s) ?? 0) + 1);
-  const words = ` ${coll.toLowerCase().replace(/[^\p{L}\d.-]+/gu, " ")} `;
   const theme = new Set(
     [...count]
-      .filter(
-        ([s, n]) =>
-          words.includes(` ${s} `) || (n >= THEME_SPECIES_CARDS && n >= kept.length * THEME_SPECIES_SHARE),
-      )
+      .filter(([, n]) => n >= THEME_SPECIES_CARDS && n >= kept.length * THEME_SPECIES_SHARE)
       .map(([s]) => s),
   );
   if (!theme.size || theme.size > THEME_MAX_SPECIES) return null;
