@@ -1,4 +1,4 @@
-import { queryWords, textMatcher } from "~/lib/textSearch";
+import { numberTag, queryWords, textMatcher } from "~/lib/textSearch";
 import { setOf, type Catalog, type CatalogCard } from "./catalog";
 
 const hayCache = new WeakMap<Catalog, string[]>();
@@ -9,7 +9,7 @@ export function hayOf(cat: Catalog): string[] {
   if (!hay) {
     hay = cat.cards.map((c) => {
       const st = setOf(cat, c);
-      return `${c.name} ${st.name} ${c.number} ${st.jp ? "japanese jp" : ""}`.toLowerCase();
+      return `${c.name} ${st.name} ${numberTag(c.number)} ${st.jp ? "japanese jp" : ""}`.toLowerCase();
     });
     hayCache.set(cat, hay);
   }

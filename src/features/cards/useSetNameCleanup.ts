@@ -39,6 +39,7 @@ export function useSetNameCleanup(): void {
     ran.current = true;
     void (async () => {
       let wrote = false;
+      let tried = false;
       let done = 0;
       try {
         const [cardDocs, layoutDocs] = await Promise.all([fetchDocs("cards"), fetchDocs("layouts")]);
@@ -54,6 +55,7 @@ export function useSetNameCleanup(): void {
         await setDoc("layouts", SET_NAMES_BACKUP_DOC, { cards: backup, savedAt: new Date().toISOString() });
         wrote = true;
         for (const f of fixes) {
+          tried = true;
           try {
             if (await patchExistingDoc("cards", f.card.id, { set: f.to })) done++;
           } catch (e) {
@@ -68,7 +70,7 @@ export function useSetNameCleanup(): void {
         if (done) toast(`Merged duplicate set names on ${plural(done, "card")}`);
         // The writes went straight to the server, so the list reloads to show them.
         if (wrote) void qc.invalidateQueries({ queryKey: docKeys.layouts });
-        if (done) void qc.invalidateQueries({ queryKey: docKeys.cards });
+        if (tried) void qc.invalidateQueries({ queryKey: docKeys.cards });
       }
     })();
   }, [ready, cat, priceFile, toast, markReadOnly, qc]);

@@ -102,26 +102,33 @@ export async function mergeDoc(table: DocTableName, id: string, patch: JsonRecor
  * and a document deleted meanwhile isn't brought back. Resolves false when the document is gone.
  */
 export async function patchExistingDoc(table: DocTableName, id: string, patch: JsonRecord): Promise<boolean> {
-  for (let attempt = 0; attempt < 3; attempt++) {
+  const read = async () => {
     const { data: row, error } = await supabase
       .from(table)
       .select("data,updated_at")
       .eq("id", id)
       .maybeSingle();
     if (error) throw writeError(error, "read refused");
-    if (!row || !isRecord(row.data)) return false;
-    const { error: upd, count } = await supabase
+    return row && isRecord(row.data) ? { data: row.data, at: row.updated_at } : null;
+  };
+  let row = await read();
+  for (let attempt = 0; row && attempt < 3; attempt++) {
+    const { error, count } = await supabase
       .from(table)
       .update(
         { data: asJson({ ...row.data, ...patch }), updated_at: new Date().toISOString() },
         { count: "exact" },
       )
       .eq("id", id)
-      .eq("updated_at", row.updated_at);
-    if (upd) throw writeError(upd, "write refused");
+      .eq("updated_at", row.at);
+    if (error) throw writeError(error, "write refused");
     if (count) return true;
-    // Nothing updated: changed or deleted since the read. The next read tells which.
+    // Nothing updated: deleted, changed, or this session may not write. Reading again tells which.
+    const next = await read();
+    if (next?.at === row.at) throw writeError(null, "write refused");
+    row = next;
   }
+  if (!row) return false;
   throw new WriteError("failed", "kept changing while being updated");
 }
 

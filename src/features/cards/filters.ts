@@ -1,4 +1,4 @@
-import { textMatcher } from "~/lib/textSearch";
+import { numberTag, textMatcher } from "~/lib/textSearch";
 import { priceOf } from "./pricing";
 import type { Card } from "./types";
 
@@ -33,7 +33,7 @@ const SORTS: Record<ListSort, (a: Card, b: Card) => number> = {
 };
 
 const haystack = (c: Card): string =>
-  [c.name, c.set, c.number, c.variant, c.note, c.lang === "JP" ? "japanese" : "", ...c.collections]
+  [c.name, c.set, numberTag(c.number), c.variant, c.note, c.lang === "JP" ? "japanese" : "", ...c.collections]
     .join(" ")
     .toLowerCase();
 

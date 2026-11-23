@@ -1,10 +1,19 @@
 /**
  * Search as people type it: every word must match, in any order. Words are matched anywhere in the
- * text ("chu" finds Pikachu); numbers must match a whole number, so "gengar 16" finds #16 or #016
- * but not #116 or "16th", and "49" finds the promo SV049. A leading # and a printed total ("16/99") are ignored.
+ * text ("chu" finds Pikachu). A number matches the card's own number, marked with `numberTag`,
+ * allowing promo letters and leading zeros ("49" finds SV049, "16" finds 016 but not 116). Elsewhere
+ * in the text it only matches a number standing on its own: "151" finds Scarlet & Violet 151, but
+ * "25" isn't "25th" and "2" isn't the "Pt2:" of a set code. A leading # and a printed total ("16/99")
+ * are ignored.
  */
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+/** Put in searchable text to mark the card's own number, so number searches can find it. */
+export function numberTag(number: string): string {
+  const n = number.trim().toLowerCase().split("/")[0] ?? "";
+  return n ? `~${n}` : "";
+}
 
 /** The words of a query, lowercased, with "#16" and "16/99" both read as 16. */
 export function queryWords(query: string): string[] {
@@ -22,12 +31,10 @@ export function textMatcher(query: string): ((text: string) => boolean) | null {
   if (!words.length) return null;
   const tests = words.map((w) => {
     if (/^\d+$/.test(w)) {
-      // A card number: a promo prefix (SV9, TG05, RC5, H05) or one letter after it (4a), but not
-      // "25th", and other digits may not touch it (16 isn't 116). A prefixed number right before ":"
-      // or "+" is a set code like "Pt2:" or "SM2+", not a card number.
       const n = escape(w.replace(/^0+(?=\d)/, ""));
-      const re = new RegExp(`(^|[^a-z0-9])(?:(?:[a-z]{2,4}|[hs])0*${n}(?![:+])|0*${n}[a-z]?)($|[^a-z0-9])`);
-      return (t: string) => re.test(t);
+      const own = new RegExp(`~[a-z]{0,4}0*${n}[a-z]?(?=$|\\s)`);
+      const loose = new RegExp(`(^|[\\s(])0*${n}(?=$|[\\s),.])`);
+      return (t: string) => own.test(t) || loose.test(t);
     }
     return (t: string) => t.includes(w);
   });
