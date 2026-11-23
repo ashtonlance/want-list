@@ -1,11 +1,13 @@
 import type { CardFeatures } from "./features";
+import evolutions from "./families.json";
 
 /**
  * What a collection's cards say about taste, learned from examples: cards on the list and picks he
  * added count for a card's features, picks he passed on count against them.
  *
  * A collection is about its Pokémon when its name names them (Mew & Mewtwo, Ninetales), or up to three
- * of them are on most of its cards (a Gengar line). Picks for it then stay with those Pokémon.
+ * evolution lines are on most of its cards (a Gengar line). Picks for it then stay with those Pokémon and
+ * what they evolve from and into: Ninetales takes Vulpix, Umbreon takes Eevee.
  *
  * Two kinds of feature:
  * - Identity (the Pokémon, the artist): any match counts, more matches count more.
@@ -45,8 +47,10 @@ export interface Taste {
   speciesCount: Map<string, number>;
   /** How many listed and added cards there are. */
   kept: number;
-  /** The Pokémon the collection is about, or null when it's about something else (see pokemonTheme). */
+  /** The Pokémon the collection is about, as speciesKey keys, or null when it's about something else (see pokemonTheme). */
   theme: ReadonlySet<string> | null;
+  /** How many evolution lines the theme holds; 0 without one. */
+  themeLines: number;
   /** The highest price among the positive examples, or 0. */
   maxPrice: number;
   /** Share of the positive examples that are commons or uncommons (tier 0). */
@@ -69,6 +73,7 @@ export function buildTaste(examples: readonly Example[], theme: ReadonlySet<stri
     speciesCount: new Map(),
     kept: 0,
     theme,
+    themeLines: theme ? new Set([...theme].map(baseOf)).size : 0,
     maxPrice: 0,
     commonShare: 0,
   };
@@ -104,11 +109,11 @@ export function buildTaste(examples: readonly Example[], theme: ReadonlySet<stri
 
 /** A collection needs this many listed or added cards before its cards alone say it's about its Pokémon. */
 const THEME_MIN_CARDS = 3;
-/** A Pokémon is one it's about when it's on this many of its cards and this share... */
-const THEME_SPECIES_CARDS = 2;
-const THEME_SPECIES_SHARE = 0.2;
-/** ...and it's about at most this many Pokémon, together on at least this share of its cards. */
-const THEME_MAX_SPECIES = 3;
+/** An evolution line is one it's about when it's on this many of its cards and this share... */
+const THEME_LINE_CARDS = 2;
+const THEME_LINE_SHARE = 0.2;
+/** ...and it's about at most this many lines, together on at least this share of its cards. */
+const THEME_MAX_LINES = 3;
 const THEME_SHARE = 0.75;
 /** The longest Pokémon name, in words (Tapu Koko, Mr. Mime Jr.). */
 const NAME_WORDS = 4;
@@ -123,6 +128,62 @@ const words = (s: string): string[] =>
     .trim()
     .split(" ")
     .filter(Boolean);
+
+/** Every card's Pokémon is keyed on each ranking, so keys are kept; there are a few thousand names. */
+const keyCache = new Map<string, string>();
+
+/**
+ * A Pokémon as one key: lower case, accents off, letters and digits only, ♀ and ♂ as f and m, so "Mr. Mime"
+ * is mrmime and "Nidoran ♀" and "nidoran (f)" are both nidoranf. Matches tools/families.mjs.
+ */
+export function speciesKey(s: string): string {
+  let k = keyCache.get(s);
+  if (k === undefined) {
+    k = s
+      .toLowerCase()
+      .replace(/♀/g, "f")
+      .replace(/♂/g, "m")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]/g, "");
+    keyCache.set(s, k);
+  }
+  return k;
+}
+const evolvesFrom = new Map(evolutions as [string, string][]);
+const evolvesInto = new Map<string, string[]>();
+for (const [to, from] of evolvesFrom) evolvesInto.set(from, [...(evolvesInto.get(from) ?? []), to]);
+
+/** The first Pokémon of a key's evolution line: vulpix for ninetales, eevee for umbreon. */
+function baseOf(k: string): string {
+  let at = k;
+  for (let up = evolvesFrom.get(at); up !== undefined; up = evolvesFrom.get(at)) at = up;
+  return at;
+}
+
+/**
+ * These keys and what each evolves from and into, but not its cousins: Umbreon takes Eevee, not Vaporeon;
+ * Eevee takes all eight.
+ */
+export function withLines(keys: Iterable<string>): Set<string> {
+  const out = new Set<string>();
+  const down: string[] = [];
+  for (const k of keys) {
+    for (let up = evolvesFrom.get(k); up !== undefined; up = evolvesFrom.get(up)) out.add(up);
+    down.push(k);
+  }
+  // Down from every key, even one an earlier key's line already passed through (Vileplume, then Oddish).
+  const seen = new Set(down);
+  for (let next = down.pop(); next !== undefined; next = down.pop()) {
+    out.add(next);
+    for (const into of evolvesInto.get(next) ?? [])
+      if (!seen.has(into)) {
+        seen.add(into);
+        down.push(into);
+      }
+  }
+  return out;
+}
 
 /** Pokémon by their names as words; one key may stand for spellings like "nidoran f" and "nidoran (f)". */
 export type KnownSpecies = ReadonlyMap<string, readonly string[]>;
@@ -148,7 +209,7 @@ export function knownSpecies(features: readonly { species: readonly string[] }[]
   return hit;
 }
 
-/** The known Pokémon a collection's name names, longest name first: black kyurem, not also kyurem. */
+/** The keys of the known Pokémon a collection's name names, longest name first: black kyurem, not also kyurem. */
 function namedSpecies(coll: string, known: KnownSpecies): Set<string> {
   const w = words(coll);
   const out = new Set<string>();
@@ -157,7 +218,7 @@ function namedSpecies(coll: string, known: KnownSpecies): Set<string> {
     for (; n > 0; n--) {
       const hit = known.get(w.slice(i, i + n).join(" "));
       if (hit) {
-        for (const s of hit) out.add(s);
+        for (const s of hit) out.add(speciesKey(s));
         break;
       }
     }
@@ -167,13 +228,14 @@ function namedSpecies(coll: string, known: KnownSpecies): Set<string> {
 }
 
 /**
- * The Pokémon a collection is about, or null for one whose picks may be any Pokémon.
- * - Named: the Pokémon its name names, once they're on at least half its cards, so "Mew & Mewtwo" is
- *   about Mew and Mewtwo, and only them, whatever else it picks up. A name that mentions a Pokémon
- *   without being about it ("Eevee Evolutions", "Lillie's Pokémon") leaves the cards to decide.
- * - From its cards: up to three Pokémon on most of them, like Gastly, Haunter and Gengar in a Gengar
+ * The Pokémon a collection is about, as speciesKey keys, with what they evolve from and into (see
+ * withLines), or null for one whose picks may be any Pokémon.
+ * - Named: the Pokémon its name names, once their lines are on at least half its cards, so "Mew & Mewtwo"
+ *   is about Mew and Mewtwo, and only them, whatever else it picks up, and "Ninetales" takes Vulpix. A
+ *   name that mentions a Pokémon without being about it ("Lillie's Pokémon") leaves the cards to decide.
+ * - From its cards: up to three evolution lines on most of them, like Gastly, Haunter and Gengar in a Gengar
  *   line; with too few cards to tell, many Pokémon (Kanto Starters) or a look (Forest), none.
- * Where its cards show a line, the Pokémon its name names that are on its cards join it ("Gengar line").
+ * Where its cards show a line, the Pokémon its name names that are on its cards join it.
  * `known` lists the Pokémon its name may name (see knownSpecies); without it, only those on its cards.
  */
 export function pokemonTheme(
@@ -181,37 +243,49 @@ export function pokemonTheme(
   examples: readonly Example[],
   known?: KnownSpecies,
 ): ReadonlySet<string> | null {
-  const kept = examples.filter((e) => e.weight >= 1).map((e) => new Set(e.f.species));
+  const keptCards = examples.filter((e) => e.weight >= 1);
+  const kept = keptCards.map((e) => new Set(e.f.species.map(speciesKey)));
   const fromCards = cardTheme(kept);
-  const named = namedSpecies(coll, known ?? speciesIndex(kept.map((ss) => [...ss])));
-  const withNamed = kept.filter((ss) => [...ss].some((s) => named.has(s))).length;
+  const named = withLines(namedSpecies(coll, known ?? speciesIndex(keptCards.map((e) => e.f.species))));
+  const withNamed = kept.filter((ks) => [...ks].some((k) => named.has(k))).length;
   if (!withNamed) return fromCards;
-  if (withNamed >= kept.length * NAMED_SHARE)
-    return fromCards && [...named].every((s) => fromCards.has(s)) ? fromCards : named;
+  if (withNamed >= kept.length * NAMED_SHARE) {
+    // Lines its cards show besides the named ones join them (Mewtwo cards in "Mew"), but within a named
+    // line the name decides: Eevee cards in "Umbreon" don't bring in Vaporeon.
+    const namedLines = new Set([...named].map(baseOf));
+    const cardLines = new Set(fromCards ? [...fromCards].map(baseOf) : []);
+    if (!fromCards || ![...namedLines].every((l) => cardLines.has(l))) return named;
+    for (const k of fromCards) if (!namedLines.has(baseOf(k))) named.add(k);
+    return named;
+  }
   if (!fromCards) return null;
-  // Not enough to decide, but a named Pokémon on its cards still belongs with the line they show.
-  for (const ss of kept) for (const s of ss) if (named.has(s)) fromCards.add(s);
+  // Not enough to decide, but a named Pokémon on its cards still belongs with the lines they show.
+  const onCards = kept.flatMap((ks) => [...ks].filter((k) => named.has(k)));
+  for (const k of withLines(onCards)) fromCards.add(k);
   return fromCards;
 }
 
-/** The Pokémon most of a collection's cards share, as its cards alone tell (see pokemonTheme). */
+/** The evolution lines most of a collection's cards share, as its cards alone tell (see pokemonTheme). */
 function cardTheme(kept: readonly ReadonlySet<string>[]): Set<string> | null {
   if (kept.length < THEME_MIN_CARDS) return null;
+  const lines = kept.map((ks) => new Set([...ks].map(baseOf)));
   const count = new Map<string, number>();
-  for (const ss of kept) for (const s of ss) count.set(s, (count.get(s) ?? 0) + 1);
+  for (const ls of lines) for (const l of ls) count.set(l, (count.get(l) ?? 0) + 1);
   const theme = new Set(
     [...count]
-      .filter(([, n]) => n >= THEME_SPECIES_CARDS && n >= kept.length * THEME_SPECIES_SHARE)
-      .map(([s]) => s),
+      .filter(([, n]) => n >= THEME_LINE_CARDS && n >= kept.length * THEME_LINE_SHARE)
+      .map(([l]) => l),
   );
-  if (!theme.size || theme.size > THEME_MAX_SPECIES) return null;
-  const covered = kept.filter((ss) => [...ss].some((s) => theme.has(s))).length;
-  return covered >= kept.length * THEME_SHARE ? theme : null;
+  if (!theme.size || theme.size > THEME_MAX_LINES) return null;
+  const covered = lines.filter((ls) => [...ls].some((l) => theme.has(l))).length;
+  if (covered < kept.length * THEME_SHARE) return null;
+  // The Pokémon on its cards from those lines, with what they evolve from and into.
+  return withLines(kept.flatMap((ks) => [...ks].filter((k) => theme.has(baseOf(k)))));
 }
 
 /** True when a card has one of the Pokémon a collection is about, or the collection isn't about any. */
 export const fitsTheme = (theme: ReadonlySet<string> | null, f: CardFeatures): boolean =>
-  !theme || f.species.some((s) => theme.has(s));
+  !theme || f.species.some((s) => theme.has(speciesKey(s)));
 
 const SMOOTH = 1.5;
 /** How much a pass counts against a Pokémon or artist that cards he kept also have... */

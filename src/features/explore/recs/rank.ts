@@ -6,6 +6,7 @@ import {
   distributionAffinity,
   fitsTheme,
   identityAffinity,
+  speciesKey,
   type Example,
   type Taste,
 } from "./taste";
@@ -218,7 +219,7 @@ function scoreCard(
   let species = 0;
   let speciesName = "";
   for (const s of f.species) {
-    if (theme && !theme.has(s)) continue;
+    if (theme && !theme.has(speciesKey(s))) continue;
     const a = identityAffinity(t, "species", s);
     if (a > species || !speciesName) {
       species = a;
@@ -268,8 +269,8 @@ function scoreCard(
   const seed = art?.seed;
   const mostly = (n: number | undefined) => (n ?? 0) >= t.kept * MOSTLY;
   const uncapped = {
-    // The Pokémon the refill's cap counts the card under. A collection about one Pokémon has no other to share with.
-    species: theme?.size === 1 || mostly(t.speciesCount.get(f.species[0] ?? "")),
+    // The Pokémon the refill's cap counts the card under. A collection about one line (Vulpix and Ninetales) has no other to share with.
+    species: t.themeLines === 1 || mostly(t.speciesCount.get(f.species[0] ?? "")),
     // One card by an artist isn't a theme yet.
     artist: t.kept >= 2 && mostly(t.artistCount.get(f.artist)),
   };

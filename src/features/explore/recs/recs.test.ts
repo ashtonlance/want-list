@@ -12,6 +12,7 @@ import {
   identityAffinity,
   knownSpecies,
   pokemonTheme,
+  withLines,
   type Example,
 } from "./taste";
 
@@ -303,6 +304,8 @@ describe("taste", () => {
         "ninetales",
         "gengar",
         "eevee",
+        "umbreon",
+        "gloom",
         "kyurem",
         "black kyurem",
         "mr. mime",
@@ -320,8 +323,34 @@ describe("taste", () => {
       "gengar",
       "haunter",
     ]);
-    // Four Pokémon, or too few cards to tell.
-    expect(theme(["squirtle"], ["squirtle"], ["charmeleon"], ["ivysaur"], ["venusaur"])).toBeNull();
+    // A line counts as one, with what its Pokémon evolve from and into, even ones not on the cards yet.
+    expect(theme(["haunter"], ["gengar"], ["gengar"], ["haunter"])).toEqual(["gastly", "gengar", "haunter"]);
+    expect(
+      theme(["squirtle"], ["wartortle"], ["charmander"], ["charizard"], ["ivysaur"], ["venusaur"]),
+    ).toEqual([
+      "blastoise",
+      "bulbasaur",
+      "charizard",
+      "charmander",
+      "charmeleon",
+      "ivysaur",
+      "squirtle",
+      "venusaur",
+      "wartortle",
+    ]);
+    // Four lines, or too few cards to tell.
+    expect(
+      theme(
+        ["squirtle"],
+        ["squirtle"],
+        ["charmander"],
+        ["charmander"],
+        ["oddish"],
+        ["oddish"],
+        ["pichu"],
+        ["pichu"],
+      ),
+    ).toBeNull();
     expect(theme(["mew"], ["mew"])).toBeNull();
     // The name decides once the Pokémon it names are on half the cards, whatever the rest are.
     expect(themeOf("Mew & Mewtwo", ["mew"], ["mew"], ["mew"], ["mewtwo"])).toEqual(["mew", "mewtwo"]);
@@ -329,14 +358,32 @@ describe("taste", () => {
       themeOf("Mew & Mewtwo", ["mew"], ["milotic"], ["milotic"], ["mewtwo"], ["mew"], ["zekrom"]),
     ).toEqual(["mew", "mewtwo"]);
     expect(themeOf("MEW & MEWTWO", ["mew"], ["milotic"], ["zekrom"], ["meowth"])).toBeNull();
-    expect(themeOf("NINETALES", ["ninetales"])).toEqual(["ninetales"]);
+    expect(themeOf("NINETALES", ["ninetales"])).toEqual(["ninetales", "vulpix"]);
+    // What it evolves from and into, not its cousins: Umbreon takes Eevee, not Vaporeon.
+    expect(themeOf("Umbreon", ["umbreon"], ["umbreon"], ["eevee"])).toEqual(["eevee", "umbreon"]);
+    // Other lines its cards show still join a name.
+    expect(themeOf("Mew", ["mew"], ["mew"], ["mewtwo"], ["mewtwo"])).toEqual(["mew", "mewtwo"]);
+    expect(themeOf("Gloom", ["vileplume"], ["vileplume"], ["mewtwo"], ["mewtwo"], ["vileplume"])).toEqual([
+      "bellossom",
+      "gloom",
+      "mewtwo",
+      "oddish",
+      "vileplume",
+    ]);
+    // Every branch, whichever Pokémon of a line comes first.
+    expect([...withLines(["vileplume", "oddish"])].sort()).toEqual([
+      "bellossom",
+      "gloom",
+      "oddish",
+      "vileplume",
+    ]);
     // However it's spelled: punctuation, every spelling of a name, the longest name that fits.
-    expect(themeOf("Tapu Koko + Mr Mime", ["tapu koko"])).toEqual(["mr. mime", "tapu koko"]);
-    expect(themeOf("Rowan's Farfetch'd", ["farfetch'd"])).toEqual(["farfetch'd"]);
-    expect(themeOf("Ho Oh.", ["ho-oh"])).toEqual(["ho-oh"]);
-    expect(themeOf("Nidoran F", ["nidoran (f)"])).toEqual(["nidoran (f)", "nidoran f"]);
-    expect(themeOf("Black Kyurem", ["black kyurem"])).toEqual(["black kyurem"]);
-    // A line on the cards takes in the Pokémon the name names; a name that only mentions one doesn't decide.
+    expect(themeOf("Tapu Koko + Mr Mime", ["tapu koko"])).toEqual(["mimejr", "mrmime", "mrrime", "tapukoko"]);
+    expect(themeOf("Rowan's Farfetch'd", ["farfetch'd"])).toEqual(["farfetchd", "sirfetchd"]);
+    expect(themeOf("Ho Oh.", ["ho-oh"])).toEqual(["hooh"]);
+    expect(themeOf("Nidoran F", ["nidoran (f)"])).toEqual(["nidoqueen", "nidoranf", "nidorina"]);
+    expect(themeOf("Black Kyurem", ["black kyurem"])).toEqual(["blackkyurem"]);
+    // A name about a line takes all of it.
     expect(themeOf("Gengar line", ["gastly"], ["haunter"], ["gengar"], ["haunter"], ["gastly"])).toEqual([
       "gastly",
       "gengar",
@@ -344,7 +391,17 @@ describe("taste", () => {
     ]);
     expect(
       themeOf("Eevee Evolutions", ["eevee"], ["vaporeon"], ["jolteon"], ["flareon"], ["umbreon"]),
-    ).toBeNull();
+    ).toEqual([
+      "eevee",
+      "espeon",
+      "flareon",
+      "glaceon",
+      "jolteon",
+      "leafeon",
+      "sylveon",
+      "umbreon",
+      "vaporeon",
+    ]);
     // A word that's also a card's name counts only with cards of it in; a part of a name never does.
     expect(themeOf("Research binder", ["pikachu"], ["eevee"], ["snorlax"])).toBeNull();
     expect(themeOf("Mewtwo", ["mew"], ["mew"], ["eevee"])).toBeNull();
