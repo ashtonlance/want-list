@@ -40,6 +40,7 @@ function PickDetail({ pick }: { pick: PickCard }) {
   const navigate = useNavigate();
   const src = pickImage(p, live ?? undefined);
   const why = p.reason.replace(` · ${p.rarity}`, "");
+  const mark = isPickAdded(cards, p) ? (p.status === "owned" ? "Got it" : "On your list") : undefined;
 
   // Replacing the sheet's own history entry, so going back from the artist's picks skips the sheet.
   const showArtist = (artist: string) =>
@@ -54,7 +55,7 @@ function PickDetail({ pick }: { pick: PickCard }) {
             className="detail-img"
             type="button"
             aria-label={`Show ${p.name} full screen`}
-            onClick={() => showPhoto(exploreLightbox(p, src))}
+            onClick={() => showPhoto(exploreLightbox(p, src, mark))}
           >
             <HeroImage key={src} src={src} name={p.name} />
           </button>
@@ -101,9 +102,9 @@ function PickDetail({ pick }: { pick: PickCard }) {
           {why}
         </p>
       ) : null}
-      {isPickAdded(cards, p) ? (
+      {mark ? (
         <div className="detail-note" style={{ marginTop: 16 }}>
-          {p.status === "owned" ? "✓ Got it" : "✓ On your list"}
+          ✓ {mark}
         </div>
       ) : canWrite ? (
         <PickActions pick={p} />

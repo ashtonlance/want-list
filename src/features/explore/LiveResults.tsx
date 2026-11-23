@@ -8,7 +8,7 @@ import { useEnterAnimation } from "~/lib/motion";
 import { savedRowCount, useScrollRestoration } from "~/lib/scroll";
 import { usePhotoGrid } from "~/ui/Lightbox";
 import { SkeletonGrid } from "~/ui/Skeleton";
-import { exploreLightbox } from "./display";
+import { catalogLightbox, exploreLightbox } from "./display";
 import { LoadError } from "~/ui/LoadError";
 import { AddedMark, ExCard, PriceTag, QuickWant } from "./ExCard";
 import { useLiveCards, useTdSetCards, useTdSets } from "./live";
@@ -58,10 +58,13 @@ export function LiveResults({ set }: { set: string }) {
       const d = tiles.map.get(b.id);
       const src = b.image ? `${b.image}/low.webp` : d?.img;
       if (!src) return null;
-      const about = d ?? { name: b.name, set: "", number: b.localId, market: null };
-      return { ...exploreLightbox(about, src), onDetails: () => open({ live: b.id }) };
+      // Until its details arrive the card can't be matched to the list or added, so it shows plain.
+      const item = d
+        ? catalogLightbox(d, src, onList(d), canWrite ? () => fromLive(d, "want", addTo) : null)
+        : exploreLightbox({ name: b.name, set: "", number: b.localId, market: null }, src);
+      return { ...item, onDetails: () => open({ live: b.id }) };
     },
-    [tiles.map, open],
+    [tiles.map, onList, canWrite, fromLive, addTo, open],
   );
   const photoOf = usePhotoGrid(visible, toPhoto);
   const grid = useRef<HTMLDivElement>(null);

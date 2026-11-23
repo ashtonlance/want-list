@@ -8,7 +8,7 @@ import type { Catalog } from "~/features/catalog/catalog";
 import type { FeedLang } from "~/features/catalog/feed";
 import { formatDate, formatMoney } from "~/lib/format";
 import { usePhotoGrid } from "~/ui/Lightbox";
-import { exploreLightbox } from "./display";
+import { catalogLightbox } from "./display";
 import { useEnterAnimation } from "~/lib/motion";
 import { savedRowCount, useScrollRestoration } from "~/lib/scroll";
 import { AddedMark, ExCard, PriceTag, QuickWant } from "./ExCard";
@@ -74,9 +74,11 @@ export function EveryCardFeed({ cat, rows, lang, scrollKey, q = "", filtered = f
       const row = cat.cards[i];
       if (!row) return null;
       const d = catalogLiveCard(cat, row);
-      return d.img ? { ...exploreLightbox(d, d.img), onDetails: () => open({ live: d.id }) } : null;
+      if (!d.img) return null;
+      const want = canWrite ? () => fromLive(d, "want", addTo) : null;
+      return { ...catalogLightbox(d, d.img, onList(d), want), onDetails: () => open({ live: d.id }) };
     },
-    [cat, open],
+    [cat, onList, canWrite, fromLive, addTo, open],
   );
   const photoOf = usePhotoGrid(visible, toPhoto);
 

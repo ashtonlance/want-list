@@ -10,7 +10,7 @@ import { useLightbox } from "~/ui/Lightbox";
 import { LoadError } from "~/ui/LoadError";
 import { Sheet, SheetHead } from "~/ui/Sheet";
 import { useCloseWhen } from "~/ui/useCloseWhen";
-import { exploreLightbox } from "./display";
+import { exploreLightbox, listMark } from "./display";
 import { useLiveCard } from "./live";
 import { ShopLinks } from "./ShopLinks";
 import { useQuickAddTo } from "./quickAdd";
@@ -57,7 +57,7 @@ function LiveDetail({ card: d }: { card: LiveCard }) {
             className="detail-img"
             type="button"
             aria-label={`Show ${d.name} full screen`}
-            onClick={() => showPhoto(exploreLightbox(d, img))}
+            onClick={() => showPhoto(exploreLightbox(d, img, listMark(have)))}
           >
             <HeroImage key={img} src={img} name={d.name} />
           </button>

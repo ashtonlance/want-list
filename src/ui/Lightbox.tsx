@@ -31,6 +31,8 @@ export interface LightboxItem {
   name: string;
   /** The line under the name: set, number, price. */
   caption: string;
+  /** Where the card stands with the list, like "Got it", shown as a tag under the caption. */
+  mark?: string;
   /** Opens the card's sheet, from the Details button under the photo. */
   onDetails?: () => void;
   /** One quick action beside Details, like marking the card as got. */
@@ -287,6 +289,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
           <div className="cap">
             <b>{item.name}</b>
             {item.caption}
+            {item.mark ? <span className="lb-mark">✓ {item.mark}</span> : null}
           </div>
           {item.onDetails || item.action ? (
             <div className="lb-acts">

@@ -59,6 +59,17 @@ body.selecting .toast {
   max-width: 440px;
   line-height: 1.45;
 }
+.lightbox .lb-mark {
+  display: block;
+  width: fit-content;
+  margin: 8px auto 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
 .lightbox .cap b {
   display: block;
   font-size: 16px;
