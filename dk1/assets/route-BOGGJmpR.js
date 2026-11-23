@@ -1,0 +1,1 @@
+import{tt as e}from"./index-DtprijJb.js";var t=e;export{t as component};
