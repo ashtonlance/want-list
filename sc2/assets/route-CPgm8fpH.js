@@ -1,1 +1,0 @@
-import{et as e}from"./index-CKct8Gr4.js";var t=e;export{t as component};
