@@ -8,6 +8,7 @@ import { useStore } from "~/lib/store";
 import { SlidersIcon } from "~/ui/icons";
 import { Seg } from "~/ui/Seg";
 import { SearchInput } from "~/ui/SearchInput";
+import { useStuck } from "~/ui/useStuck";
 import { patchListUi, useListUi } from "./state";
 
 const STATUSES: { value: StatusFilter; label: string }[] = [
@@ -20,8 +21,9 @@ export function Filters({ count }: { count: number }) {
   const { q, status, prio } = useListUi();
   const sort = useStore(prefs.sort);
   const { open } = useOverlayNav();
+  const tools = useStuck();
   return (
-    <div className="filters">
+    <div className="filters" ref={tools}>
       <div className="filter-row">
         <SearchInput
           wrapClassName="flex-1"

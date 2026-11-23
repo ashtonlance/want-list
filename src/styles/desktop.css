@@ -1,0 +1,55 @@
+/* ---------- desktop: pointer and wide-screen touches; phones never match these ---------- */
+
+/* A card lifts toward the pointer, so it's clear what a click opens. A selected one keeps its ring. */
+@media (hover: hover) and (pointer: fine) {
+  /* main: outranks the plain transform transition in motion.css, so the shadow eases too. */
+  main :is(.tile, .ex-card) .tile-img,
+  .pick-img {
+    transition:
+      transform 0.2s var(--ease),
+      box-shadow 0.2s var(--ease);
+  }
+  main :is(.tile, .ex-card):not(.sel):hover .tile-img,
+  .pick:hover .pick-img {
+    transform: translateY(-4px);
+    box-shadow: var(--card-lift);
+  }
+  main :is(.tile, .ex-card):not(.sel):hover:active .tile-img {
+    transform: translateY(-4px) scale(0.98);
+  }
+  .row:not(.sel):hover {
+    background: var(--sunk);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    main :is(.tile, .ex-card):not(.sel):hover .tile-img,
+    main :is(.tile, .ex-card):not(.sel):hover:active .tile-img,
+    .pick:hover .pick-img {
+      transform: none;
+    }
+  }
+}
+
+/* The search and filter bar stays under the top bar while the cards scroll (ui/useStuck.ts). */
+@media (min-width: 1024px) {
+  .ex-tools,
+  .filters {
+    position: sticky;
+    top: var(--topbar-h);
+    z-index: 20;
+    /* Bleeds to the page's edges, without moving anything around it. */
+    margin: -8px calc(-1 * var(--gx));
+    padding: 8px var(--gx);
+    background: var(--bar);
+    -webkit-backdrop-filter: saturate(1.6) blur(20px);
+    backdrop-filter: saturate(1.6) blur(20px);
+    border-bottom: 0.5px solid transparent;
+    transition: border-color 0.2s;
+  }
+  /* Once the page has moved, the pinned bar carries the hairline, so it and the top bar read as one. */
+  :root:has(.topbar.scrolled) :is(.ex-tools, .filters)[data-stuck] {
+    border-bottom-color: var(--line-2);
+  }
+  :root:has(:is(.ex-tools, .filters)[data-stuck]) .topbar {
+    border-bottom-color: transparent;
+  }
+}

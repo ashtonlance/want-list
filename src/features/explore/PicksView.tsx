@@ -23,6 +23,7 @@ import {
 } from "~/ui/Filters";
 import { Select } from "~/ui/Select";
 import { useFilterSheet } from "~/ui/useFilterSheet";
+import { useStuck } from "~/ui/useStuck";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { AddedMark, ExCard, PassButton, PriceTag, QuickWant } from "./ExCard";
 import { SearchInput } from "~/ui/SearchInput";
@@ -120,6 +121,7 @@ export function PicksView() {
   const { picks, loaded, refilled, day } = usePicks();
   // The side bar has less room for each collection's count than a chip.
   const side = useInSideBar();
+  const tools = useStuck();
   // Refill picks on screen stay put for the day, whatever loads or changes next.
   useEffect(() => {
     if (refilled) rememberShown(picks, day);
@@ -383,7 +385,7 @@ export function PicksView() {
           />
         ))}
       </Rail>
-      <div className="ex-tools">
+      <div className="ex-tools" ref={tools}>
         <div className="ex-bar">
           <SearchInput
             wrapClassName="flex-1"

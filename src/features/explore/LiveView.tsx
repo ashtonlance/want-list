@@ -27,6 +27,7 @@ import {
 } from "~/ui/Filters";
 import { Select } from "~/ui/Select";
 import { useFilterSheet } from "~/ui/useFilterSheet";
+import { useStuck } from "~/ui/useStuck";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { ComingSoon, SoonChip } from "./ComingSoon";
 import { idleSteps } from "~/lib/idle";
@@ -82,6 +83,7 @@ export function LiveView() {
   // chip lists that set live from TCGdex.
   const feedMode = !set;
   const ui = useLiveUi();
+  const tools = useStuck();
   const { canWrite } = useAuth();
   const { open } = useOverlayNav();
   const sets = useTdSets();
@@ -238,7 +240,7 @@ export function LiveView() {
 
   return (
     <>
-      <div className="ex-tools">
+      <div className="ex-tools" ref={tools}>
         <div className="ex-bar">
           <form
             className="flex min-w-0 flex-1"

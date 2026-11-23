@@ -17,6 +17,7 @@
   --lb: rgba(10, 10, 12, 0.92);
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 14px rgba(0, 0, 0, 0.05);
   --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.08), 0 3px 10px rgba(0, 0, 0, 0.08);
+  --card-lift: 0 2px 4px rgba(0, 0, 0, 0.08), 0 12px 28px rgba(0, 0, 0, 0.14);
   --binder: #1d1d20;
   --sleeve: #2a2a2f;
   --pocket: rgba(255, 255, 255, 0.06);
@@ -28,6 +29,8 @@
   --r: 16px;
   --r-sm: 10px;
   --tb: calc(56px + env(safe-area-inset-top, 0px));
+  /* The top bar itself, which a pinned bar sits under (see .topbar). */
+  --topbar-h: calc(52px + env(safe-area-inset-top, 0px));
   --tab: calc(56px + env(safe-area-inset-bottom, 0px));
   --gx: max(16px, env(safe-area-inset-left, 0px));
   /* Motion: quick, decelerating, nothing bouncy (styles/motion.css, lib/motion.ts). */
@@ -57,6 +60,7 @@
     --scrim: rgba(0, 0, 0, 0.6);
     --shadow: none;
     --card-shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 3px 10px rgba(0, 0, 0, 0.4);
+    --card-lift: 0 2px 4px rgba(0, 0, 0, 0.5), 0 12px 28px rgba(0, 0, 0, 0.55);
     --binder: #0e0e10;
     --sleeve: #1c1c20;
     color-scheme: dark;

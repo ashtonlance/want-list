@@ -24,4 +24,5 @@
 @import "./filters.css" layer(app);
 @import "./share.css" layer(app);
 @import "./images.css" layer(app);
+@import "./desktop.css" layer(app);
 @import "./motion.css" layer(app);

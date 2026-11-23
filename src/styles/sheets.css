@@ -107,9 +107,9 @@ body {
   :root:has(.pane) {
     --pane-w: clamp(340px, 30vw, 440px);
   }
-  /* The tile the arrow keys land on clears the sticky top bar. */
+  /* The tile the arrow keys land on clears the top bar and the search bar pinned under it. */
   main [data-sr] {
-    scroll-margin: 64px 0 16px;
+    scroll-margin: calc(var(--topbar-h) + 12px + var(--tools-h, 0px)) 0 16px;
   }
 }
 @keyframes pane-in {
