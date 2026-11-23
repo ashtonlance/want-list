@@ -93,6 +93,18 @@ describe("priceDrop", () => {
     expect(priceDrop(days([40, 40, 40, 40, 40, 30], "2026-11-10"), "2026-11-23")).toBeNull();
   });
 
+  it("says nothing after a gap of more than a week", () => {
+    const before = days([40, 40, 40, 40, 40, 40], "2026-11-05");
+    expect(priceDrop([...before, { day: "2026-11-23", price: 30 }], "2026-11-23")).toBeNull();
+  });
+
+  it("leaves out days before a gap of more than a week", () => {
+    const old = days([40, 40, 40, 40, 40], "2026-10-29");
+    const recent = days([30, 30, 30, 30, 30, 25], "2026-11-23");
+    expect(priceDrop([...old, ...recent], "2026-11-23")).toEqual({ from: 30, now: 25, share: 1 / 6 });
+    expect(priceDrop([...old, ...days([30, 25])], "2026-11-23")).toBeNull();
+  });
+
   it("only looks back 30 days for the usual price", () => {
     const old = days(Array<number>(20).fill(100), "2026-10-01");
     expect(priceDrop([...old, ...days([40, 40, 40, 40, 40, 39])], "2026-11-23")).toBeNull();

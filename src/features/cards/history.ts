@@ -110,11 +110,19 @@ export function priceDrop(points: readonly PricePoint[], asOf: string): PriceDro
   const last = points.at(-1);
   if (!last || dayNum(asOf) - dayNum(last.day) > 3) return null;
   const end = dayNum(last.day);
-  const before = points.filter((p) => p !== last && end - dayNum(p.day) <= DROP_WINDOW).map((p) => p.price);
+  // Only the days since the last gap of more than a week: the days before one say little about what's usual now.
+  let from = points.length - 1;
+  while (from > 0 && dayNum(points[from]?.day ?? "") - dayNum(points[from - 1]?.day ?? "") <= 7) from--;
+  const before = points
+    .slice(from, -1)
+    .filter((p) => end - dayNum(p.day) <= DROP_WINDOW)
+    .map((p) => p.price);
   if (before.length < DROP_MIN_DAYS) return null;
-  const from = median(before);
-  const share = (from - last.price) / from;
-  return share >= DROP_SHARE && from - last.price >= DROP_MIN ? { from, now: last.price, share } : null;
+  const usual = median(before);
+  const share = (usual - last.price) / usual;
+  return share >= DROP_SHARE && usual - last.price >= DROP_MIN
+    ? { from: usual, now: last.price, share }
+    : null;
 }
 
 /** "14%", rounded down so a drop is never overstated. */

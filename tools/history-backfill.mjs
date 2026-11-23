@@ -11,6 +11,34 @@ import { KEEP_DAYS, addDays, centsOf, readHistory, setDay, writeHistory } from "
 
 const ROOT = new URL("..", import.meta.url);
 const ARCHIVE = "https://tcgcsv.com/archive/tcgplayer";
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+/** How long a Retry-After header asks to wait, in ms (seconds or an HTTP date), or null. */
+function retryAfter(h) {
+  if (!h) return null;
+  const ms = /^\d+$/.test(h.trim()) ? Number(h) * 1000 : Date.parse(h) - Date.now();
+  return Number.isFinite(ms) && ms > 0 ? ms : null;
+}
+/**
+ * One day's archive, waiting and trying again when tcgcsv says to slow down (429), has a hiccup (5xx) or
+ * the connection drops. Each wait is at most a minute and never runs past `deadline`. Resolves to the last
+ * response, or null when the connection kept failing.
+ */
+async function download(url, deadline) {
+  for (let i = 1; ; i++) {
+    let r = null;
+    try {
+      r = await fetch(url, { headers: { "user-agent": "want-list-sync (github actions)" } });
+      if (r.status !== 429 && r.status < 500) return r;
+    } catch (e) {
+      console.warn(url.split("/").pop(), e.message);
+    }
+    const wait = Math.min(60_000, Math.max(5_000, retryAfter(r?.headers.get("retry-after")) ?? 15_000 * i));
+    if (i >= 6 || Date.now() + wait > deadline) return r;
+    await r?.body?.cancel();
+    console.warn(url.split("/").pop(), r ? `HTTP ${r.status}` : "failed", `- waiting ${Math.round(wait / 1000)}s`);
+    await sleep(wait);
+  }
+}
 const readJson = async (f) => { try { return JSON.parse(await readFile(new URL(f, ROOT), "utf8")); } catch { return null; } };
 
 const catalog = await readJson("catalog.json");
@@ -63,10 +91,12 @@ for (const { day, missing } of days) {
   const groups = new Set([...missing].map((pid) => groupOf.get(pid)));
   const work = await mkdtemp(join(tmpdir(), "prices-"));
   try {
-    const r = await fetch(`${ARCHIVE}/prices-${day}.ppmd.7z`, { headers: { "user-agent": "want-list-sync (github actions)" } });
-    if (!r.ok) { console.warn(day, "archive: HTTP", r.status); continue; }
+    const r = await download(`${ARCHIVE}/prices-${day}.ppmd.7z`, started + BUDGET_MS);
+    if (r?.status === 429) { console.warn(day, "tcgcsv is still limiting downloads; stopping here, run again later"); break; }
+    if (!r?.ok) { console.warn(day, "archive:", r ? `HTTP ${r.status}` : "couldn't download"); continue; }
     const file = join(work, "a.7z");
-    await writeFile(file, Buffer.from(await r.arrayBuffer()));
+    try { await writeFile(file, Buffer.from(await r.arrayBuffer())); }
+    catch (e) { console.warn(day, "download cut off:", e.message); continue; }
     const x = spawnSync("7z", ["x", "-y", `-o${join(work, "x")}`, file], { stdio: ["ignore", "ignore", "pipe"] });
     if (x.status !== 0) { console.warn(day, "7z failed:", String(x.stderr).slice(0, 300)); continue; }
     const files = await pricesFiles(join(work, "x"));
@@ -94,6 +124,7 @@ for (const { day, missing } of days) {
   } finally {
     await rm(work, { recursive: true, force: true });
   }
+  await sleep(1000); // gentle on tcgcsv
 }
 
 await save();
