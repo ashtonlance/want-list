@@ -34,7 +34,7 @@ const cat = parseCatalog({
   ],
 });
 const pidsOf = (look: Parameters<typeof lookCards>[1]) => [...(lookCards(cat, look) ?? [])].map((c) => c.pid);
-const pids = (idx: number[]) => idx.map((i) => cat.cards[i]?.pid);
+const pids = (idx: readonly number[]) => idx.map((i) => cat.cards[i]?.pid);
 
 describe("lookCards", () => {
   it("returns null for any look", () => {

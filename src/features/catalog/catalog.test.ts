@@ -5,7 +5,7 @@ import { searchCatalog } from "./search";
 import { testCatalog } from "./testCatalog";
 
 const cat = testCatalog();
-const pids = (idx: number[], from = cat) => idx.map((i) => from.cards[i]?.pid);
+const pids = (idx: readonly number[], from = cat) => idx.map((i) => from.cards[i]?.pid);
 
 describe("parseCatalog", () => {
   it("indexes cards by product id", () => {
@@ -71,6 +71,13 @@ describe("feedRows", () => {
   });
   it("puts unpriced cards last when sorting by price, low to high", () => {
     expect(pids(feedRows(cat, { lang: "en", sort: "low", cap: 0 }))).toEqual([2, 1, 3, 4]);
+  });
+  it("sorts A to Z, the same name by price, high to low", () => {
+    expect(pids(feedRows(cat, { lang: "both", sort: "name", cap: 0 }))).toEqual([1, 5, 3, 2, 4]);
+  });
+  it("hands back the same list for the same choices, so going back to a view is instant", () => {
+    const opts = { lang: "en", sort: "new", cap: 0 } as const;
+    expect(feedRows(cat, opts)).toBe(feedRows(cat, { ...opts }));
   });
 });
 

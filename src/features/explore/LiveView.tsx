@@ -7,11 +7,14 @@ import { FEED_ERA_OPTIONS } from "~/features/catalog/era";
 import {
   FEED_PRICE_OPTIONS,
   feedRows,
+  lookCounts,
+  feedWarmUps,
   priceBand,
+  rarityNames,
   type FeedLang,
   type FeedSort,
 } from "~/features/catalog/feed";
-import { LOOK_OPTIONS, lookCards } from "~/features/catalog/looks";
+import { LOOK_OPTIONS } from "~/features/catalog/looks";
 import { sameName } from "~/features/catalog/names";
 import { Button } from "~/components/ui/button";
 import { Toggle } from "~/components/ui/toggle";
@@ -27,6 +30,7 @@ import { Select } from "~/ui/Select";
 import { useFilterSheet } from "~/ui/useFilterSheet";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { ComingSoon, SoonChip } from "./ComingSoon";
+import { idleSteps } from "~/lib/idle";
 import { forgetScroll } from "~/lib/scroll";
 import { EveryCardFeed } from "./EveryCardFeed";
 import { LoadError } from "~/ui/LoadError";
@@ -98,34 +102,11 @@ export function LiveView() {
         : null,
     [feedMode, catalog.data, ui.lang, ui.feedSort, ui.feedPrice, ui.rarity, ui.look, ui.era, q],
   );
-  // How many cards in the chosen language each look has, for its chip.
-  const lookCounts = useMemo(() => {
-    const cat = catalog.data;
-    if (!feedMode || !cat) return null;
-    const want = ui.lang === "en" ? false : ui.lang === "jp" ? true : null;
-    const inLang = (jp: boolean) => want === null || jp === want;
-    return new Map(
-      LOOK_OPTIONS.map(({ value }) => {
-        const set = lookCards(cat, value);
-        let n = 0;
-        for (const c of set ?? cat.cards) if (inLang(cat.sets[c.set]?.jp ?? false)) n++;
-        return [value, n] as const;
-      }),
-    );
-  }, [feedMode, catalog.data, ui.lang]);
   const filtered = ui.look !== "any" || ui.rarity !== "" || ui.feedPrice !== "any" || ui.era !== "any";
-  const rarityOptions = useMemo(() => {
-    const cat = catalog.data;
-    if (!cat) return [{ value: "", label: "Any rarity" }];
-    const counts = new Map<number, number>();
-    for (const c of cat.cards) counts.set(c.rarity, (counts.get(c.rarity) ?? 0) + 1);
-    const names = [...counts.entries()]
-      .map(([i, n]) => [cat.rarities[i] ?? "", n] as const)
-      .filter(([name]) => name)
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .map(([name]) => ({ value: name, label: name }));
-    return [{ value: "", label: "Any rarity" }, ...names];
-  }, [catalog.data]);
+  // The filter sheet's counts and rarity list cover the whole catalog, so they're worked out in idle
+  // moments after the feed is on screen (along with the search index), not in the same pass.
+  const warmCat = feedMode ? catalog.data : undefined;
+  useEffect(() => (warmCat ? idleSteps(feedWarmUps(warmCat, ui.lang)) : undefined), [warmCat, ui.lang]);
   // A saved rarity the catalog no longer lists would show an empty feed: drop it.
   const rarity = (ui.rarity && catalog.data?.rarities.find((r) => sameName(r, ui.rarity))) || "";
   const staleRarity = Boolean(catalog.data && ui.rarity && !rarity);
@@ -195,6 +176,18 @@ export function LiveView() {
   };
   const { collections } = useCollections();
   const sheet = useFilterSheet();
+  // How many cards in the chosen language each look has, for its chip.
+  const looksCounted = sheet.open && feedMode && catalog.data ? lookCounts(catalog.data, ui.lang) : null;
+  const rarityOptions = useMemo(
+    () => [
+      { value: "", label: "Any rarity" },
+      ...(sheet.open && catalog.data ? rarityNames(catalog.data) : []).map((name) => ({
+        value: name,
+        label: name,
+      })),
+    ],
+    [sheet.open, catalog.data],
+  );
   /** A change to the Every card feed, which starts it again from the top. */
   const feed =
     <K extends FeedKey>(key: K) =>
@@ -325,7 +318,7 @@ export function LiveView() {
               <Choices
                 label="Card look"
                 value={ui.look}
-                options={LOOK_OPTIONS.map((l) => ({ ...l, count: lookCounts?.get(l.value) }))}
+                options={LOOK_OPTIONS.map((l) => ({ ...l, count: looksCounted?.get(l.value) }))}
                 onChange={feed("look")}
               />
               <Choices

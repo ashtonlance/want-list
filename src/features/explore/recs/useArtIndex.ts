@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { queryKeys } from "~/data/keys";
+import { whenIdle } from "~/lib/idle";
 import { parseArt, type ArtIndex } from "./art";
 
 /** art.bin, or null when it isn't there yet (before the first fingerprint run) or can't be read. */
@@ -11,16 +12,6 @@ async function fetchArt(): Promise<ArtIndex | null> {
   const index = parseArt(await r.arrayBuffer());
   if (import.meta.env.DEV) console.debug(`art.bin: ${String(index.pids.length)} cards`);
   return index;
-}
-
-/** Runs fn once the browser is idle (or after a short wait where it can't tell); returns a cancel. */
-function whenIdle(fn: () => void, timeout: number): () => void {
-  if (typeof requestIdleCallback === "function") {
-    const id = requestIdleCallback(fn, { timeout });
-    return () => cancelIdleCallback(id);
-  }
-  const id = setTimeout(fn, 50);
-  return () => clearTimeout(id);
 }
 
 /** True once the browser is idle after the first paint, so the art file never competes with what's on screen. */
