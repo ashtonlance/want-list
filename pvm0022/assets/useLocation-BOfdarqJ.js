@@ -1,0 +1,1 @@
+import{a as e,t}from"./useSelector-BCuL7Jeo.js";import{L as n}from"./prefs-Mtb-OaoQ.js";function r(r){let i=e();return t(i.stores.location,n(r,i))}export{r as t};
