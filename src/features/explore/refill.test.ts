@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { testCatalog } from "~/features/catalog/testCatalog";
 import { NO_ASK, type Card } from "~/features/cards/types";
 import type { PickCard } from "./picks";
-import { MIN_OPEN, refillPicks, speciesOf } from "./refill";
+import { speciesOf } from "./recs/features";
+import { MIN_OPEN, refillPicks } from "./refill";
 
 const cat = testCatalog();
 

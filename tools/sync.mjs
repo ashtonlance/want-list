@@ -1,9 +1,12 @@
 // Daily sync: rebuilds catalog.json (every English and Japanese card with today's
 // TCGplayer market price) and prices.json (prices for every card on the list and in
 // Explore) from tcgcsv.com, the public daily mirror of TCGplayer's catalog.
+// Artists come from TCGdex (see artists.mjs).
 // Runs in GitHub Actions (.github/workflows/sync.yml). Node 20+, no dependencies.
 // Existing cards keep their names, numbers and set names, so nothing on the list shifts.
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { fetchArtists } from "./artists.mjs";
+import { readListPids } from "./lib/listPids.mjs";
 
 const ROOT = new URL("..", import.meta.url);
 const API = "https://tcgcsv.com/tcgplayer";
@@ -111,6 +114,27 @@ for (const { set, rows } of entries) {
   for (const r of rows) { r[2] = si; const subs = priceOf.get(r[0]); if (subs) r[5] = marketOf(subs); cards.push(r); }
 }
 
+// 3b. Artists from TCGdex. Cards keep the artist they had; new sets are read as they appear.
+// A card row's 7th field indexes `artists`. tools/cache/artist-sets.json remembers the TCGdex sets already
+// read; it stays out of catalog.json, which every visitor downloads.
+const ARTIST_SETS = "tools/cache/artist-sets.json";
+const artistByPid = new Map();
+for (const r of oldCat.cards) { const a = (oldCat.artists || [])[r[6]]; if (a) artistByPid.set(r[0], a); }
+let artistSets = (await readJson(ARTIST_SETS)) || {};
+try {
+  const res = await fetchArtists({ cards, done: artistSets, budget: 60000 });
+  for (const [pid, a] of res.artistOf) artistByPid.set(pid, a);
+  artistSets = res.done;
+} catch (e) { console.warn("couldn't read artists, keeping the ones known:", e.message); }
+const artists = [], artistIdx = new Map();
+for (const r of cards) {
+  const a = artistByPid.get(r[0]);
+  if (!a) continue;
+  if (!artistIdx.has(a)) artistIdx.set(a, artists.push(a) - 1);
+  r[6] = artistIdx.get(a);
+}
+console.log("artists:", artists.length, "names on", cards.filter(r => r[6] != null).length, "cards");
+
 // 4. Safety: never replace a good catalog with a much smaller one.
 if (cards.length < oldCat.cards.length * 0.95) throw new Error(`only ${cards.length} cards vs ${oldCat.cards.length} before; keeping the old catalog`);
 // Sets announced but not out yet, with or without a card list so far: [name, jp, release date].
@@ -120,23 +144,12 @@ const upcoming = groups
   .sort((a, b) => a.pub.localeCompare(b.pub) || a.g.jp - b.g.jp)
   .map(({ g, pub }) => [cleanSet(g.name), g.jp, pub]);
 console.log("upcoming:", upcoming.map(u => `${u[0]} (${u[1] ? "JP" : "EN"}, ${u[2]})`).join(" | ") || "none");
-const newCat = { asOf: today, sets, rarities, cards, groups: groupsOut, upcoming };
+const newCat = { asOf: today, sets, rarities, cards, groups: groupsOut, upcoming, artists };
 
 // 5. prices.json: every product on the list or in Explore, plus anything it already tracked.
 const want = new Set(Object.keys((oldPrices && oldPrices.items) || {}));
 try {
-  const cfg = await readFile(new URL("config.js", ROOT), "utf8");
-  const url = /url:\s*"([^"]+)"/.exec(cfg)[1], key = /anonKey:\s*"([^"]+)"/.exec(cfg)[1];
-  for (const t of ["cards", "discover"]) for (let from = 0; ; from += 1000) {
-    const r = await fetch(`${url}/rest/v1/${t}?select=data&order=id&offset=${from}&limit=1000`, { headers: { apikey: key, authorization: "Bearer " + key } });
-    if (!r.ok) throw new Error(t + " HTTP " + r.status);
-    const rows = await r.json();
-    for (const { data: d } of rows) {
-      const pid = (d.tcg && d.tcg.productId) || (/tcgplayer\.com\/product\/(\d+)/.exec((d.listing && d.listing.url) || "") || [])[1] || d.tcgProduct;
-      if (pid) want.add(String(pid));
-    }
-    if (rows.length < 1000) break;
-  }
+  for (const pid of await readListPids(ROOT)) want.add(pid);
 } catch (e) { console.warn("couldn't read the list, pricing only known products:", e.message); }
 const items = {};
 for (const pid of want) { const e = priceOf.get(+pid); if (e) items[pid] = e; else if (oldPrices && oldPrices.items[pid]) items[pid] = oldPrices.items[pid]; }
@@ -144,5 +157,7 @@ const newPrices = { asOf: today, source: "TCGplayer via tcgcsv.com", items };
 
 await writeFile(new URL("catalog.json", ROOT), JSON.stringify(newCat));
 await writeFile(new URL("prices.json", ROOT), JSON.stringify(newPrices));
+await mkdir(new URL("tools/cache/", ROOT), { recursive: true });
+await writeFile(new URL(ARTIST_SETS, ROOT), JSON.stringify(artistSets, null, 0) + "\n");
 const added = cards.filter(r => !oldByPid.has(r[0])).length;
 console.log(`catalog: ${sets.length} sets, ${cards.length} cards (${added} new). prices: ${Object.keys(items).length} products.`);

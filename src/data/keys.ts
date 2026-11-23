@@ -9,6 +9,7 @@ export const docKeys = {
 export const queryKeys = {
   prices: ["prices"],
   catalog: ["catalog"],
+  art: ["art"],
   editor: (email: string) => ["editor", email] as const,
   tdSets: ["tcgdex", "sets"],
   tdCard: (id: string) => ["tcgdex", "card", id] as const,

@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { copyFile, mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
@@ -19,10 +19,14 @@ function readSupabaseConfig(): { url: string; anonKey: string } {
 }
 
 /**
- * catalog.json and prices.json sit at the repo root because the daily sync rewrites them there.
- * Serve them in dev and ship them next to the app in the build.
+ * catalog.json, prices.json and art.bin sit at the repo root because the daily jobs rewrite them there.
+ * Serve them in dev and ship them next to the app in the build. art.bin is optional: picks work without it,
+ * and it doesn't exist until the art workflow's first run.
  */
-const DATA_FILES = ["catalog.json", "prices.json"];
+const DATA_FILES = ["catalog.json", "prices.json", "art.bin"];
+const OPTIONAL_DATA = new Set(["art.bin"]);
+const contentType = (name: string) =>
+  name.endsWith(".json") ? "application/json" : "application/octet-stream";
 function siteData(): Plugin {
   return {
     name: "want-list:site-data",
@@ -35,18 +39,23 @@ function siteData(): Plugin {
         }
         readFile(resolve(root, name)).then(
           (body) => {
-            res.setHeader("content-type", "application/json");
+            res.setHeader("content-type", contentType(name));
             res.end(body);
           },
           (err: unknown) => {
-            next(err);
+            if (OPTIONAL_DATA.has(name)) {
+              res.statusCode = 404;
+              res.end();
+            } else next(err);
           },
         );
       });
     },
     async generateBundle() {
       for (const fileName of DATA_FILES) {
-        this.emitFile({ type: "asset", fileName, source: await readFile(resolve(root, fileName)) });
+        const path = resolve(root, fileName);
+        if (OPTIONAL_DATA.has(fileName) && !existsSync(path)) continue;
+        this.emitFile({ type: "asset", fileName, source: await readFile(path) });
       }
     },
   };
@@ -101,6 +110,12 @@ const offline = VitePWA({
         urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.endsWith("/catalog.json"),
         handler: "StaleWhileRevalidate",
         options: { cacheName: "catalog", expiration: { maxEntries: 1 } },
+      },
+      {
+        // Art fingerprints for picks (about 1 MB): from the cache at once, refreshed in the background.
+        urlPattern: ({ url, sameOrigin }) => sameOrigin && url.pathname.endsWith("/art.bin"),
+        handler: "StaleWhileRevalidate",
+        options: { cacheName: "art", expiration: { maxEntries: 1 }, cacheableResponse: { statuses: [200] } },
       },
       {
         // Today's prices are small, so fetch them fresh, falling back to the last copy when offline or slow.

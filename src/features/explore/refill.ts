@@ -1,159 +1,30 @@
-import {
-  cleanCatalogName,
-  rarityOf,
-  realPrice,
-  setOf,
-  type Catalog,
-  type CatalogCard,
-} from "~/features/catalog/catalog";
-import { fullArtCards } from "~/features/catalog/rarity";
+import { cleanCatalogName, setOf, type Catalog, type CatalogCard } from "~/features/catalog/catalog";
 import { pidOf } from "~/features/cards/pricing";
 import type { Card } from "~/features/cards/types";
 import { WILDCARDS, type PickCard } from "./picks";
+import type { ArtIndex } from "./recs/art";
+import { catalogFeatures, type CardFeatures } from "./recs/features";
+import { artRows, artTaste, rankForCollection, rankWildcards, type Scored } from "./recs/rank";
+import type { Example } from "./recs/taste";
 
 /** Every collection keeps at least this many picks waiting for an answer. */
 export const MIN_OPEN = 8;
 
-/** At most this many refill picks of one Pokémon per collection, so a tab isn't twelve Gengars. */
+/** At most this many refill picks of one Pokémon, and of one artist, per collection. */
 const PER_SPECIES = 2;
+const PER_ARTIST = 3;
 
-/** Wildcards are fun, cheap full art cards. */
-const WILD_PRICE: readonly [number, number] = [2, 50];
+/** How much each kind of example counts. Claude's own open suggestions only hint, so a new collection has something. */
+const LISTED = 1;
+const ADDED = 1;
+const SUGGESTED = 0.25;
+const PASSED = -1;
 
-const FORM_WORDS = new Set([
-  "ex",
-  "gx",
-  "v",
-  "vmax",
-  "vstar",
-  "break",
-  "lv.x",
-  "prime",
-  "legend",
-  "δ",
-  "☆",
-  "star",
-]);
-// Era words, regional forms, and an owner like "Team Rocket's" or "Misty's".
-const PREFIXES =
-  /^(?:(?:mega|dark|light|shining|radiant|shadow|alolan|galarian|hisuian|paldean)\s+|(?:[\w.]+\s+)*?[\w.]+['’]s\s+)+/;
-
-/** The Pokémon a card shows: "Mega Gengar ex" is gengar, "Umbreon & Darkrai GX" is umbreon and darkrai. */
-export function speciesOf(name: string): string[] {
-  return cleanCatalogName(name)
-    .toLowerCase()
-    .split(/\s*&\s*/)
-    .map((part) =>
-      part
-        .replace(PREFIXES, "")
-        .split(/\s+/)
-        .filter((w) => w && !FORM_WORDS.has(w))
-        .join(" ")
-        .replace(/-gx$/, ""),
-    )
-    .filter(Boolean);
-}
-
-const stripZeros = (s: string) => s.replace(/^0+/, "").toLowerCase();
-const keyOf = (name: string, number: string, set: string) =>
-  `${cleanCatalogName(name).toLowerCase()}|${stripZeros(number)}|${set.toLowerCase()}`;
-
-/** A small, stable hash so ties rotate from day to day instead of always showing the same cards. */
-function dayHash(pid: number, day: string): number {
-  let h = pid;
-  for (let i = 0; i < day.length; i++) h = Math.imul(h ^ day.charCodeAt(i), 2654435761) >>> 0;
-  return h / 2 ** 32;
-}
-
-function median(xs: number[]): number {
-  const s = [...xs].sort((a, b) => a - b);
-  return s.length ? (s[Math.floor(s.length / 2)] ?? 0) : 0;
-}
-
-interface Profile {
-  species: Set<string>;
-  rarities: Set<string>;
-  /** Price band seeds suggest, or null when none have a price. */
-  band: readonly [number, number] | null;
-  jp: boolean;
-}
-
-/** What a collection's cards and accepted picks have in common. */
-function profileOf(seeds: readonly CatalogCard[], cat: Catalog): Profile {
-  const prices = seeds.map((c) => realPrice(c.market)).filter((v) => v > 0);
-  const mid = median(prices);
-  return {
-    species: new Set(seeds.flatMap((c) => speciesOf(c.name))),
-    rarities: new Set(seeds.map((c) => rarityOf(cat, c)).filter(Boolean)),
-    band: mid ? [mid * 0.2, Math.max(mid * 3, 15)] : null,
-    jp: seeds.some((c) => setOf(cat, c).jp),
-  };
-}
-
-/** What the scorer needs from each catalog card, worked out once per catalog rather than per collection. */
-interface Meta {
-  c: CatalogCard;
-  species: string[];
-  rarity: string;
-  art: boolean;
-  price: number;
-  jp: boolean;
-  date: string;
-}
-
-function metaOf(cat: Catalog): Meta[] {
-  const art = fullArtCards(cat);
-  return cat.cards.map((c) => {
-    const rarity = rarityOf(cat, c);
-    const set = setOf(cat, c);
-    return {
-      c,
-      species: speciesOf(c.name),
-      rarity,
-      art: art.has(c),
-      price: realPrice(c.market),
-      jp: set.jp,
-      date: set.date,
-    };
-  });
-}
-
-function score(m: Meta, p: Profile): number {
-  const sameSpecies = m.species.some((s) => p.species.has(s));
-  const sameRarity = p.rarities.has(m.rarity);
-  if (!sameSpecies && !(sameRarity && m.art)) return 0;
-  let s = (sameSpecies ? 4 : 0) + (sameRarity ? 2 : 0) + (m.art ? 1 : 0);
-  if (p.band) {
-    if (m.price >= p.band[0] && m.price <= p.band[1]) s += 1;
-    else if (m.price > p.band[1] * 2) s -= 4;
-  }
-  return s;
-}
-
-function toPick(c: CatalogCard, cat: Catalog, coll: string, rank: number): PickCard {
-  const set = setOf(cat, c);
-  const price = realPrice(c.market);
-  return {
-    id: `auto:${coll}:${c.pid}`,
-    name: cleanCatalogName(c.name),
-    set: set.name,
-    number: c.number,
-    lang: set.jp ? "JP" : "EN",
-    coll,
-    status: "new",
-    batch: 0,
-    rank,
-    tcgdexId: null,
-    tcgProduct: c.pid,
-    img: null,
-    market: price || null,
-    priceAsOf: cat.asOf,
-    live: false,
-    rarity: rarityOf(cat, c),
-    illustrator: "",
-    reason: coll === WILDCARDS ? "A fun full art card under $50" : `Like the cards in ${coll}`,
-    auto: true,
-  };
+/** A refill pick already on screen, kept as it is so new information never reshuffles what he's looking at. */
+export interface KeptPick {
+  coll: string;
+  pid: number;
+  reason: string;
 }
 
 export interface RefillInput {
@@ -165,87 +36,283 @@ export interface RefillInput {
   collections: readonly string[];
   /** Today's date; refill picks rotate daily. */
   day: string;
+  /** Art fingerprints, once they've loaded; picks work without them. */
+  art?: ArtIndex | null;
+  /** Refill picks already shown today. They stay, in order, while they're still open. */
+  keep?: readonly KeptPick[];
+}
+
+const stripZeros = (s: string) => s.replace(/^0+/, "").toLowerCase();
+const keyOf = (name: string, number: string, set: string) =>
+  `${cleanCatalogName(name).toLowerCase()}|${stripZeros(number)}|${set.toLowerCase()}`;
+
+const lookupCache = new WeakMap<Catalog, { byKey: Map<string, CatalogCard>; byPid: Map<number, number> }>();
+
+/** Name+number+set and product id lookups into the catalog, built once per catalog. */
+function lookups(cat: Catalog) {
+  const hit = lookupCache.get(cat);
+  if (hit) return hit;
+  const byKey = new Map<string, CatalogCard>();
+  const byPid = new Map<number, number>();
+  cat.cards.forEach((c, i) => {
+    byKey.set(keyOf(c.name, c.number, setOf(cat, c).name), c);
+    byPid.set(c.pid, i);
+  });
+  const out = { byKey, byPid };
+  lookupCache.set(cat, out);
+  return out;
+}
+
+function toPick(f: CardFeatures, cat: Catalog, coll: string, rank: number, reason: string): PickCard {
+  const set = setOf(cat, f.c);
+  return {
+    id: `auto:${coll}:${String(f.c.pid)}`,
+    name: f.name,
+    set: set.name,
+    number: f.c.number,
+    lang: set.jp ? "JP" : "EN",
+    coll,
+    status: "new",
+    batch: 0,
+    rank,
+    tcgdexId: null,
+    tcgProduct: f.c.pid,
+    img: null,
+    market: f.price || null,
+    priceAsOf: cat.asOf,
+    live: false,
+    rarity: f.rarity,
+    illustrator: f.artist,
+    reason,
+    auto: true,
+  };
+}
+
+const rankCache = new WeakMap<readonly CardFeatures[], WeakMap<object, Map<string, Scored[]>>>();
+const NO_ART = {};
+
+/**
+ * A ranking, remembered while its inputs stay the same: an add or a pass changes one collection's examples,
+ * so only that collection is ranked again. Rankings include cards already taken; placement skips those.
+ */
+function remembered(
+  features: readonly CardFeatures[],
+  art: ArtIndex | null,
+  key: string,
+  examples: readonly Example[],
+  rank: () => Scored[],
+): Scored[] {
+  let byArt = rankCache.get(features);
+  if (!byArt) rankCache.set(features, (byArt = new WeakMap<object, Map<string, Scored[]>>()));
+  let byKey = byArt.get(art ?? NO_ART);
+  if (!byKey) byArt.set(art ?? NO_ART, (byKey = new Map<string, Scored[]>()));
+  const full = `${key}|${examples.map((e) => `${String(e.f.c.pid)}:${String(e.weight)}`).join(",")}`;
+  const hit = byKey.get(full);
+  if (hit) return hit;
+  const out = rank();
+  if (byKey.size > 64) byKey.clear();
+  byKey.set(full, out);
+  return out;
+}
+
+interface CollectionExamples {
+  /** Every example for and against, for the taste model. */
+  examples: Example[];
+  /** Cards whose look stands for the collection, newest first, and picks whose look counts against it. */
+  liked: CardFeatures[];
+  passed: CardFeatures[];
+  /** Wildcards only: Pokémon the collections already cover. */
+  collected: Set<string>;
+}
+
+/** What refilling and art warm-up both need: catalog lookups, the list, and each collection's examples. */
+function contextOf({ catalog: cat, cards, picks, day }: RefillInput) {
+  const features = catalogFeatures(cat);
+  const { byKey, byPid } = lookups(cat);
+  const featuresOf = (
+    pid: number | null,
+    name: string,
+    number: string,
+    set: string,
+  ): CardFeatures | undefined => {
+    const at = pid != null ? byPid.get(pid) : undefined;
+    if (at !== undefined) return features[at];
+    const c = byKey.get(keyOf(name, number, set));
+    const i = c ? byPid.get(c.pid) : undefined;
+    return i === undefined ? undefined : features[i];
+  };
+  const ofCard = (c: Card) => featuresOf(pidOf(c), c.name, c.number, c.set);
+  const ofPick = (p: PickCard) => featuresOf(p.tcgProduct, p.name, p.number, p.set);
+  // Newest first, so the art match leans on what he added lately.
+  const listed = [...cards].sort((a, b) => b.addedAt.localeCompare(a.addedAt));
+
+  const onList = new Set<number>();
+  for (const c of listed) {
+    const f = ofCard(c);
+    if (f) onList.add(f.c.pid);
+  }
+
+  const examplesOf = (coll: string): CollectionExamples => {
+    const saved = picks.filter((p) => p.coll === coll);
+    // A pick he added is also a card on the list; it counts once, as the card.
+    const added = (p: PickCard) => p.status === "added" || p.status === "owned";
+    if (coll === WILDCARDS) {
+      const liked = [...listed.flatMap((c) => ofCard(c) ?? [])];
+      for (const p of picks) {
+        const f = added(p) ? ofPick(p) : undefined;
+        if (f && !onList.has(f.c.pid)) liked.push(f);
+      }
+      const passed = saved.filter((p) => p.status === "passed").flatMap((p) => ofPick(p) ?? []);
+      return {
+        examples: [
+          ...liked.map((f) => ({ f, weight: LISTED })),
+          ...passed.map((f) => ({ f, weight: PASSED })),
+        ],
+        liked,
+        passed,
+        collected: new Set(
+          listed.filter((c) => c.collections.length).flatMap((c) => ofCard(c)?.species ?? []),
+        ),
+      };
+    }
+    const inColl = listed.filter((c) => c.collections.includes(coll)).flatMap((c) => ofCard(c) ?? []);
+    const counted = new Set(inColl.map((f) => f.c.pid));
+    const examples: Example[] = [
+      ...inColl.map((f) => ({ f, weight: LISTED })),
+      ...saved.flatMap((p): Example[] => {
+        const f = ofPick(p);
+        if (!f || (added(p) && counted.has(f.c.pid))) return [];
+        const weight = p.status === "passed" ? PASSED : p.status === "new" ? SUGGESTED : ADDED;
+        return [{ f, weight }];
+      }),
+    ];
+    return {
+      examples,
+      liked: examples.filter((e) => e.weight >= ADDED).map((e) => e.f),
+      passed: examples.filter((e) => e.weight < 0).map((e) => e.f),
+      collected: new Set(),
+    };
+  };
+  const examplesByColl = new Map<string, CollectionExamples>();
+  const examplesFor = (coll: string): CollectionExamples => {
+    let hit = examplesByColl.get(coll);
+    if (!hit) examplesByColl.set(coll, (hit = examplesOf(coll)));
+    return hit;
+  };
+
+  /** How a collection's cards look, from the fingerprints; the costly part, remembered for the same cards. */
+  const artFor = (coll: string, art: ArtIndex | null) => {
+    if (!art) return null;
+    const { liked, passed } = examplesFor(coll);
+    return artTaste(art, artRows(art, cat, features), byPid, liked, passed);
+  };
+
+  /** Every card worth suggesting for a collection, best first, remembered while its examples stay the same. */
+  const rankedFor = (coll: string, art: ArtIndex | null): Scored[] => {
+    const { examples, collected } = examplesFor(coll);
+    const rows = art ? artRows(art, cat, features) : null;
+    const artOf = () => artFor(coll, art);
+    return coll === WILDCARDS
+      ? remembered(features, art, `${day}|${coll}|${[...collected].sort().join(",")}`, examples, () =>
+          rankWildcards({
+            liked: examples.filter((e) => e.weight > 0),
+            passed: examples.filter((e) => e.weight < 0),
+            features,
+            collected,
+            art: artOf(),
+            rows,
+            day,
+          }),
+        )
+      : remembered(features, art, `${day}|${coll}`, examples, () =>
+          rankForCollection({ coll, examples, features, art: artOf(), rows, day }),
+        );
+  };
+  return { features, byPid, ofPick, onList, examplesFor, artFor, rankedFor };
 }
 
 /**
- * Picks that top every collection back up to MIN_OPEN open picks, drawn from the full catalog:
- * the same Pokémon as the collection's cards, or the same full art rarities, near the same prices.
- * Nothing is saved until the card is added or passed on.
+ * The rankings refillPicks will need once the fingerprints are in, one step per collection, so they can
+ * be worked out a step at a time while the browser is idle instead of all at once.
  */
-export function refillPicks({ catalog: cat, cards, picks, collections, day }: RefillInput): PickCard[] {
-  const metas = metaOf(cat);
-  const byKey = new Map<string, CatalogCard>();
-  for (const m of metas) byKey.set(keyOf(m.c.name, m.c.number, setOf(cat, m.c).name), m.c);
-  const find = (pid: number | null, name: string, number: string, set: string) =>
-    (pid != null ? cat.byPid.get(pid) : undefined) ?? byKey.get(keyOf(name, number, set));
+export function artWarmup(input: RefillInput, art: ArtIndex): (() => void)[] {
+  const { artFor, rankedFor } = contextOf(input);
+  // Two steps per collection: matching its look, then ranking with it.
+  return [...input.collections, WILDCARDS].flatMap((coll) => [
+    () => void artFor(coll, art),
+    () => void rankedFor(coll, art),
+  ]);
+}
 
-  const listed = new Set<number>();
-  for (const c of cards) {
-    const hit = find(pidOf(c), c.name, c.number, c.set);
-    if (hit) listed.add(hit.pid);
-  }
-  // Wildcards stay clear of every Pokémon the collections already cover.
-  const collected = new Set(cards.filter((c) => c.collections.length).flatMap((c) => speciesOf(c.name)));
+/**
+ * Picks that top every collection back up to MIN_OPEN open picks, drawn from the full catalog and ranked
+ * by what the collection's cards, added picks and passed picks say about its taste (see recs/rank.ts).
+ * Picks already shown today stay put; only the gaps are filled. Nothing is saved until a card is added
+ * or passed on.
+ */
+export function refillPicks(input: RefillInput): PickCard[] {
+  const { catalog: cat, picks, collections, art = null, keep = [] } = input;
+  const { features, byPid, ofPick, onList, examplesFor, rankedFor } = contextOf(input);
 
-  const out: PickCard[] = [];
   // Never suggest a card that's already a pick anywhere, or twice across collections.
   const taken = new Set<number>();
   for (const p of picks) {
-    const hit = find(p.tcgProduct, p.name, p.number, p.set);
-    if (hit) taken.add(hit.pid);
+    const f = ofPick(p);
+    if (f) taken.add(f.c.pid);
+  }
+  const unseen = (pid: number) => !onList.has(pid) && !taken.has(pid);
+  const order = [...collections, WILDCARDS];
+  const needOf = (coll: string) =>
+    MIN_OPEN -
+    picks.filter((p) => p.coll === coll && p.status === "new" && !(p.tcgProduct && onList.has(p.tcgProduct)))
+      .length;
+  // A kept Wildcard goes once its Pokémon joins a collection, as a fresh ranking would drop it.
+  const collected = examplesFor(WILDCARDS).collected;
+  const stillFits = (k: KeptPick, f: CardFeatures) =>
+    unseen(k.pid) && !(k.coll === WILDCARDS && f.species.some((sp) => collected.has(sp)));
+  // Picks on screen belong to their collection: no other collection may take them while they're shown.
+  const reserved = new Map<number, string>();
+  for (const k of keep) {
+    const at = byPid.get(k.pid);
+    const f = at === undefined ? undefined : features[at];
+    if (f && !reserved.has(k.pid) && order.includes(k.coll) && needOf(k.coll) > 0 && stillFits(k, f))
+      reserved.set(k.pid, k.coll);
   }
 
-  for (const coll of [...collections, WILDCARDS]) {
-    const saved = picks.filter((p) => p.coll === coll);
-    const seen = new Set<number>([...listed, ...taken]);
-    const open = saved.filter(
-      (p) => p.status === "new" && !(p.tcgProduct && listed.has(p.tcgProduct)),
-    ).length;
-    const need = MIN_OPEN - open;
+  const out: PickCard[] = [];
+  for (const coll of order) {
+    let need = needOf(coll);
+    if (need <= 0) continue;
+    let rank = 0;
+    const perSpecies = new Map<string, number>();
+    const perArtist = new Map<string, number>();
+    const place = (f: CardFeatures, reason: string) => {
+      const sp = f.species[0] ?? f.name;
+      perSpecies.set(sp, (perSpecies.get(sp) ?? 0) + 1);
+      if (f.artist) perArtist.set(f.artist, (perArtist.get(f.artist) ?? 0) + 1);
+      taken.add(f.c.pid);
+      out.push(toPick(f, cat, coll, rank++, reason));
+      need--;
+    };
+
+    const fits = (f: CardFeatures) =>
+      unseen(f.c.pid) &&
+      (reserved.get(f.c.pid) ?? coll) === coll &&
+      (perSpecies.get(f.species[0] ?? f.name) ?? 0) < PER_SPECIES &&
+      (!f.artist || (perArtist.get(f.artist) ?? 0) < PER_ARTIST);
+
+    for (const k of keep) {
+      if (need <= 0) break;
+      if (k.coll !== coll) continue;
+      const at = byPid.get(k.pid);
+      const f = at === undefined ? undefined : features[at];
+      if (f && fits(f) && stillFits(k, f)) place(f, k.reason);
+    }
     if (need <= 0) continue;
 
-    let ranked: Meta[];
-    if (coll === WILDCARDS) {
-      ranked = metas
-        .filter(
-          (m) =>
-            !seen.has(m.c.pid) &&
-            !m.jp &&
-            m.art &&
-            m.price >= WILD_PRICE[0] &&
-            m.price <= WILD_PRICE[1] &&
-            !m.species.some((s) => collected.has(s)),
-        )
-        .sort((a, b) => dayHash(a.c.pid, day) - dayHash(b.c.pid, day));
-    } else {
-      const seeds = [
-        ...cards
-          .filter((c) => c.collections.includes(coll))
-          .map((c) => find(pidOf(c), c.name, c.number, c.set)),
-        ...saved.filter((p) => p.status !== "passed").map((p) => find(p.tcgProduct, p.name, p.number, p.set)),
-      ].filter((c): c is CatalogCard => c !== undefined);
-      if (!seeds.length) continue;
-      const profile = profileOf(seeds, cat);
-      const scored: { m: Meta; s: number }[] = [];
-      for (const m of metas) {
-        if (seen.has(m.c.pid) || !m.price || (m.jp && !profile.jp)) continue;
-        const s = score(m, profile);
-        if (s > 0) scored.push({ m, s: s + dayHash(m.c.pid, day) });
-      }
-      scored.sort((a, b) => b.s - a.s || b.m.date.localeCompare(a.m.date));
-      ranked = scored.map((x) => x.m);
-    }
-
-    const perSpecies = new Map<string, number>();
-    let rank = 0;
-    for (const m of ranked) {
-      if (rank >= need) break;
-      const sp = m.species[0] ?? m.c.name;
-      const n = perSpecies.get(sp) ?? 0;
-      if (n >= PER_SPECIES) continue;
-      perSpecies.set(sp, n + 1);
-      taken.add(m.c.pid);
-      out.push(toPick(m.c, cat, coll, rank++));
+    for (const s of rankedFor(coll, art)) {
+      if (need <= 0) break;
+      if (fits(s.f)) place(s.f, s.explain());
     }
   }
   return out;

@@ -18,6 +18,8 @@ export interface CatalogCard {
   rarity: number;
   /** TCGplayer market price, or 0 when there isn't one. */
   market: number;
+  /** Index into the catalog's artists, or -1 when the artist isn't known. */
+  artist: number;
 }
 
 /** catalog.json, rebuilt every day by the sync job: every English and Japanese card. */
@@ -25,6 +27,8 @@ export interface Catalog {
   asOf: string;
   sets: CatalogSet[];
   rarities: string[];
+  /** Illustrators, from TCGdex; cards point at them by index. */
+  artists: string[];
   cards: CatalogCard[];
   byPid: Map<number, CatalogCard>;
   /** Sets announced but not out yet, soonest first, whether or not their cards are listed yet. */
@@ -43,6 +47,7 @@ export function parseCatalog(v: unknown): Catalog {
     };
   });
   const rarities = Array.isArray(v.rarities) ? v.rarities.map((r) => String(r)) : [];
+  const artists = Array.isArray(v.artists) ? v.artists.map((a) => String(a)) : [];
   const cards: CatalogCard[] = [];
   const byPid = new Map<number, CatalogCard>();
   for (const r of v.cards) {
@@ -54,6 +59,7 @@ export function parseCatalog(v: unknown): Catalog {
       number: String(r[3] ?? ""),
       rarity: typeof r[4] === "number" ? r[4] : -1,
       market: typeof r[5] === "number" ? r[5] : 0,
+      artist: typeof r[6] === "number" && r[6] < artists.length ? r[6] : -1,
     };
     cards.push(c);
     byPid.set(c.pid, c);
@@ -64,7 +70,7 @@ export function parseCatalog(v: unknown): Catalog {
       ? [{ name: a[0], jp: Boolean(a[1]), date: a[2] }]
       : [];
   });
-  return { asOf: str(v.asOf) ?? "", sets, rarities, cards, byPid, upcoming };
+  return { asOf: str(v.asOf) ?? "", sets, rarities, artists, cards, byPid, upcoming };
 }
 
 async function fetchCatalog(): Promise<Catalog> {
@@ -88,6 +94,7 @@ export function useCatalog(enabled = true) {
 export const setOf = (cat: Catalog, c: CatalogCard): CatalogSet =>
   cat.sets[c.set] ?? { name: "", jp: false, date: "" };
 export const rarityOf = (cat: Catalog, c: CatalogCard): string => cat.rarities[c.rarity] ?? "";
+export const artistOf = (cat: Catalog, c: CatalogCard): string => cat.artists[c.artist] ?? "";
 
 /** TCGplayer shows $99,999.90 for listings with no real market; treat that as no price. */
 export const realPrice = (v: number): number => (v > 0 && v < 99999 ? v : 0);

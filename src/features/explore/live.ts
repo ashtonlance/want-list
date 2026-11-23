@@ -2,6 +2,7 @@ import { useQueries, useQuery } from "@tanstack/react-query";
 import { queryKeys } from "~/data/keys";
 import { tcgImage } from "~/lib/images";
 import {
+  artistOf,
   cleanCatalogName,
   rarityOf,
   realPrice,
@@ -24,7 +25,7 @@ export function catalogLiveCard(cat: Catalog, c: CatalogCard): LiveCard {
     setId: "",
     number: c.number,
     rarity: rarityOf(cat, c),
-    illustrator: "",
+    illustrator: artistOf(cat, c),
     img: tcgImage(c.pid),
     pid: c.pid,
     market: realPrice(c.market) || null,

@@ -1,5 +1,5 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { Fragment, useCallback, useMemo, useRef } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef } from "react";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
@@ -41,6 +41,7 @@ import {
 } from "./state";
 import { usePickStatus } from "./usePickStatus";
 import { usePicks } from "./usePicks";
+import { rememberShown } from "./recs/shown";
 import { useCollections } from "~/features/cards/useCollections";
 
 const SORTS: readonly { value: PicksSort; label: string }[] = [
@@ -92,7 +93,11 @@ function rarityOptions(picks: readonly PickCard[], chosen: string): { value: str
 export function PicksView() {
   const { coll, artist = "" } = useSearch({ from: "/explore/picks" });
   const navigate = useNavigate({ from: "/explore/picks" });
-  const { picks, loaded } = usePicks();
+  const { picks, loaded, refilled, day } = usePicks();
+  // Refill picks on screen stay put for the day, whatever loads or changes next.
+  useEffect(() => {
+    if (refilled) rememberShown(picks, day);
+  }, [picks, refilled, day]);
   const { cards } = useCards();
   const active = useActiveCollection();
   const ui = usePicksUi();

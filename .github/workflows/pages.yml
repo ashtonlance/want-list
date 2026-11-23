@@ -1,7 +1,8 @@
 name: Deploy site
 # Builds the app with Vite and publishes it to GitHub Pages.
 # The daily sync commits with the Actions token, which doesn't start push workflows,
-# so a finished sync on main triggers a deploy too (it picks up the new catalog and prices).
+# so a finished sync on main triggers a deploy too (it picks up the new catalog and prices). The art run
+# starts a deploy itself, and only when it published a new art.bin.
 on:
   push:
     branches: [main]
