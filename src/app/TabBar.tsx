@@ -1,5 +1,6 @@
-import { useLocation, useNavigate } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { useLocation, useNavigate, useRouter } from "@tanstack/react-router";
+import type { MouseEvent, ReactNode } from "react";
+import { prefersReducedMotion } from "~/lib/motion";
 import { tabSearch } from "~/features/explore/state";
 import { BinderIcon, CompassIcon, ListIcon } from "~/ui/icons";
 import { prefs, type Section } from "./prefs";
@@ -19,26 +20,36 @@ function targetOf(section: Section): { to: string; search?: Record<string, strin
   return { to: explorePath(tab), search: { ...tabSearch.get()[tab] } };
 }
 
+/** A click the browser should handle itself: a new tab or window, or a download. */
+const opensElsewhere = (e: MouseEvent) => e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey;
+
 export function TabBar() {
   const current = sectionOf(useLocation({ select: (l) => l.pathname }));
   const navigate = useNavigate();
+  const router = useRouter();
+  // A real address, so a tab can open in a new window; a plain tap is handled below.
+  const hrefOf = (section: Section) =>
+    router.history.createHref(router.buildLocation(targetOf(section)).publicHref);
   return (
     <nav className="tabbar" aria-label="Sections">
-      <div className="tabs" role="group" aria-label="Mode">
+      <div className="tabs">
         {TABS.map((t) => (
-          <button
+          <a
             key={t.section}
-            type="button"
-            aria-pressed={current === t.section}
-            onClick={() => {
+            href={hrefOf(t.section)}
+            aria-current={current === t.section ? "page" : undefined}
+            onClick={(e) => {
+              if (opensElsewhere(e)) return;
+              e.preventDefault();
               // Tapping the tab you're on goes back to the top, like any phone app.
-              if (current === t.section) window.scrollTo({ top: 0, behavior: "smooth" });
+              if (current === t.section)
+                window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "auto" : "smooth" });
               else void navigate(targetOf(t.section));
             }}
           >
             {t.icon}
             {t.label}
-          </button>
+          </a>
         ))}
       </div>
     </nav>

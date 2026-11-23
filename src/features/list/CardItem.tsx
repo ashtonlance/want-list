@@ -1,4 +1,3 @@
-import type { KeyboardEvent, MouseEvent } from "react";
 import { useCardWrites } from "~/features/cards/api";
 import { cardImageSrc } from "~/features/cards/image";
 import { isGot, shortPrice } from "~/features/cards/pricing";
@@ -23,43 +22,39 @@ function Check({ on }: { on: boolean }) {
   return <span className={"check" + (on ? " on" : "")}>{on ? "✓" : ""}</span>;
 }
 
+/** What a card's open button reads out: name, printing, set, and whether it's got or its price. */
+function cardLabel(c: Card): string {
+  const sp = shortPrice(c);
+  return (
+    c.name +
+    (c.variant ? `, ${c.variant}` : "") +
+    (c.set ? `, ${c.set}` : "") +
+    (isGot(c) ? ", got it" : sp?.amt ? `, ${sp.amt}` : "")
+  );
+}
+
+/** The button over a tile's or row's picture that shows it full screen; none while selecting. */
+function PhotoButton({ name, onPhoto }: { name: string; onPhoto: () => void }) {
+  return (
+    <button className="photo-open" type="button" aria-label={`Show ${name} full screen`} onClick={onPhoto} />
+  );
+}
+
+/*
+ * A tile or row is a plain container. Its .card-open button, stretched over it, opens the card (or
+ * toggles it while selecting); the picture's button and the row's chips and star sit above it, so no
+ * control is nested in another (styles/cards.css).
+ */
+
 /** A card in the grid layout. */
 export function CardTile({ card: c, selecting, selected, onActivate, onPhoto }: ItemProps) {
   const got = isGot(c);
   const sp = shortPrice(c);
-  const label =
-    c.name +
-    (c.variant ? `, ${c.variant}` : "") +
-    (c.set ? `, ${c.set}` : "") +
-    (got ? ", got it" : sp?.amt ? `, ${sp.amt}` : "") +
-    (selecting ? (selected ? ", selected" : ", not selected") : "");
-  const onKeyDown = (e: KeyboardEvent) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      onActivate(c);
-    }
-  };
+  const label = cardLabel(c) + (selecting ? (selected ? ", selected" : ", not selected") : "");
   return (
-    <article
-      className={"tile" + (got ? " got" : "") + (selected ? " sel" : "")}
-      role="button"
-      tabIndex={0}
-      aria-label={label}
-      data-sr={c.id}
-      onClick={() => onActivate(c)}
-      onKeyDown={onKeyDown}
-    >
-      <div
-        className="tile-img"
-        onClick={
-          onPhoto && !selecting
-            ? (e) => {
-                e.stopPropagation();
-                onPhoto();
-              }
-            : undefined
-        }
-      >
+    <article className={"tile" + (got ? " got" : "") + (selected ? " sel" : "")} data-sr={c.id}>
+      <button className="card-open" type="button" aria-label={label} onClick={() => onActivate(c)} />
+      <div className="tile-img">
         <CardImage src={cardImageSrc(c)} name={c.name} />
         {got ? <span className="tile-badge have">Got it</span> : null}
         {!got && sp?.amt ? <span className={"tile-badge" + (sp.deal ? " deal" : "")}>{sp.amt}</span> : null}
@@ -69,6 +64,7 @@ export function CardTile({ card: c, selecting, selected, onActivate, onPhoto }: 
           </span>
         ) : null}
         {selecting ? <Check on={selected} /> : null}
+        {onPhoto && !selecting ? <PhotoButton name={c.name} onPhoto={onPhoto} /> : null}
       </div>
       <div className="tile-name">{c.name}</div>
       <div className="tile-sub">
@@ -86,43 +82,20 @@ export function CardRow({ card: c, selecting, selected, canWrite, onActivate, on
   const got = isGot(c);
   const sp = shortPrice(c);
   const src = cardImageSrc(c);
-  const inner = src ? <CardImage src={src} name={c.name} /> : "No photo";
-  const onClick = (e: MouseEvent) => {
-    if ((e.target as Element).closest("button,a,input,label")) return;
-    onActivate(c);
-  };
   return (
-    <article
-      className={"row" + (got ? " got" : "") + (selected ? " sel" : "")}
-      data-sr={c.id}
-      onClick={onClick}
-    >
-      {selecting ? (
-        <button
-          className={"thumb pick" + (src ? "" : " empty")}
-          type="button"
-          aria-pressed={selected}
-          aria-label={(selected ? "Unselect " : "Select ") + c.name}
-          onClick={() => onActivate(c)}
-        >
-          {inner}
-          <Check on={selected} />
-        </button>
-      ) : (
-        <div
-          className={"thumb" + (src ? "" : " empty")}
-          onClick={
-            onPhoto
-              ? (e) => {
-                  e.stopPropagation();
-                  onPhoto();
-                }
-              : undefined
-          }
-        >
-          {inner}
-        </div>
-      )}
+    <article className={"row" + (got ? " got" : "") + (selected ? " sel" : "")} data-sr={c.id}>
+      <button
+        className="card-open"
+        type="button"
+        aria-pressed={selecting ? selected : undefined}
+        aria-label={selecting ? (selected ? "Unselect " : "Select ") + c.name : cardLabel(c)}
+        onClick={() => onActivate(c)}
+      />
+      <div className={"thumb" + (src ? "" : " empty")}>
+        {src ? <CardImage src={src} name={c.name} /> : "No photo"}
+        {selecting ? <Check on={selected} /> : null}
+        {onPhoto && !selecting ? <PhotoButton name={c.name} onPhoto={onPhoto} /> : null}
+      </div>
       <div className="who">
         <div className="name">
           {c.name}

@@ -94,17 +94,21 @@ button.pocket {
   position: relative;
   min-width: 0;
 }
+/* Earlier at the top left, later at the top right: far enough apart for a 44px tap area each. */
 .mv {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 6px;
+  left: 6px;
+  right: 6px;
   display: flex;
-  gap: 3px;
+  justify-content: space-between;
   z-index: 2;
+  pointer-events: none;
 }
 .mv button {
-  width: 26px;
-  height: 26px;
+  pointer-events: auto;
+  width: 28px;
+  height: 28px;
   border-radius: 7px;
   border: 0;
   background: rgba(0, 0, 0, 0.66);
@@ -116,6 +120,8 @@ button.pocket {
 .mv button:disabled {
   opacity: 0.3;
   cursor: default;
+  /* Taps there open the card instead. */
+  pointer-events: none;
 }
 @media (max-width: 700px) {
   .spread {
@@ -244,7 +250,6 @@ button.pocket {
   width: auto;
   flex: 1 1 160px;
   min-height: 38px;
-  font-size: 14px;
 }
 .chk {
   display: inline-flex;

@@ -1,4 +1,4 @@
-import { useState, type KeyboardEvent, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { formatMoney } from "~/lib/format";
 import { CardImage } from "~/ui/CardImage";
 import { CrossIcon, PlusIcon, TickIcon } from "~/ui/icons";
@@ -23,7 +23,11 @@ interface ExCardProps {
   coll?: string;
 }
 
-/** A card tile in Explore's grids. */
+/**
+ * A card tile in Explore's grids. The tile is a plain container: a button stretched over it opens the
+ * card, and the picture's button (full screen) and any quick actions on the bottom line sit above it,
+ * so no control is nested in another (styles/explore.css).
+ */
 export function ExCard({
   sr,
   label,
@@ -37,35 +41,20 @@ export function ExCard({
   badge,
   coll,
 }: ExCardProps) {
-  const onKeyDown = (e: KeyboardEvent<HTMLElement>) => {
-    if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) {
-      e.preventDefault();
-      onOpen();
-    }
-  };
   return (
-    <article
-      className={"ex-card" + (className ? " " + className : "")}
-      role="button"
-      tabIndex={0}
-      aria-label={label}
-      data-sr={sr}
-      onClick={onOpen}
-      onKeyDown={onKeyDown}
-    >
-      <div
-        className="tile-img"
-        onClick={
-          onPhoto
-            ? (e) => {
-                e.stopPropagation();
-                onPhoto();
-              }
-            : undefined
-        }
-      >
+    <article className={"ex-card" + (className ? " " + className : "")} data-sr={sr}>
+      <button className="card-open" type="button" aria-label={label} onClick={onOpen} />
+      <div className="tile-img">
         <CardImage src={img} name={name} />
         {badge ? <span className="tile-badge">{badge}</span> : null}
+        {onPhoto ? (
+          <button
+            className="photo-open"
+            type="button"
+            aria-label={`Show ${name} full screen`}
+            onClick={onPhoto}
+          />
+        ) : null}
       </div>
       {coll ? <div className="ex-coll">{coll}</div> : null}
       <div className="ex-name">{name}</div>
@@ -99,8 +88,7 @@ export function QuickWant({
       aria-label={label}
       title={title}
       disabled={done}
-      onClick={(e) => {
-        e.stopPropagation();
+      onClick={() => {
         setDone(true);
         void onWant().then((ok) => {
           if (!ok) setDone(false);
@@ -119,10 +107,7 @@ export const PassButton = ({ name, onPass }: { name: string; onPass: () => void 
     type="button"
     aria-label={`Pass on ${name}`}
     title="Not for me"
-    onClick={(e) => {
-      e.stopPropagation();
-      onPass();
-    }}
+    onClick={() => onPass()}
   >
     <CrossIcon />
   </button>

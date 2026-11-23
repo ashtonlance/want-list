@@ -229,7 +229,7 @@
 .chip-toggle,
 .colltab,
 .seg button,
-.tabbar button {
+.tabbar a {
   transition:
     transform var(--t-fast) var(--ease),
     background-color var(--t) var(--ease),
@@ -246,13 +246,13 @@
   transform: scale(0.96);
 }
 .seg button:active,
-.tabbar button:active {
+.tabbar a:active {
   transform: scale(0.94);
 }
-.tabbar button svg {
+.tabbar a svg {
   transition: transform var(--t) var(--ease);
 }
-.tabbar button[aria-pressed="true"] svg {
+.tabbar a[aria-current="page"] svg {
   animation: tab-pop var(--t-slow) var(--ease);
 }
 @keyframes tab-pop {

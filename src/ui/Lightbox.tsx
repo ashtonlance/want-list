@@ -116,7 +116,6 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
       to: () => tile,
       wait: 0,
     });
-    if (lastFocus.current instanceof HTMLElement) lastFocus.current.focus({ preventScroll: true });
   };
   const step = useCallback((dir: -1 | 1) => {
     setOpened((o) => {
@@ -125,7 +124,8 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
       return index >= 0 && index < o.items.length ? { ...o, index, dir: dir > 0 ? "next" : "prev" } : o;
     });
   }, []);
-  useOverlay(item !== undefined, close);
+  // Holds focus while open, like a sheet, and gives it back to whatever opened the photo.
+  useOverlay(item !== undefined, close, { el: box, returnTo: () => lastFocus.current });
 
   useEffect(() => {
     if (item) closeBtn.current?.focus();

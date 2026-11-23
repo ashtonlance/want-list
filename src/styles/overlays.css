@@ -15,8 +15,9 @@
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
   animation: fade 0.2s;
 }
+/* Above the select toolbar, which stands in for the tab bar (--bulk, styles/cards.css). */
 body.selecting .toast {
-  bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(var(--bulk) + 14px);
 }
 .toast-undo {
   margin-left: 10px;
@@ -45,6 +46,7 @@ body.selecting .toast {
 .lightbox img {
   max-width: min(440px, 100%);
   max-height: 76vh;
+  max-height: 76dvh;
   width: auto;
   height: auto;
   border-radius: 16px;
