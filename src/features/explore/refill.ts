@@ -5,7 +5,7 @@ import { WILDCARDS, type PickCard } from "./picks";
 import type { ArtIndex } from "./recs/art";
 import { catalogFeatures, type CardFeatures } from "./recs/features";
 import { artRows, artTaste, rankForCollection, rankWildcards, type Scored } from "./recs/rank";
-import type { Example } from "./recs/taste";
+import { fitsTheme, pokemonTheme, type Example } from "./recs/taste";
 
 /** Every collection keeps at least this many picks waiting for an answer. */
 export const MIN_OPEN = 8;
@@ -127,6 +127,8 @@ interface CollectionExamples {
   passed: CardFeatures[];
   /** Wildcards only: Pokémon the collections already cover. */
   collected: Set<string>;
+  /** The Pokémon the collection is about, if it's about any (see pokemonTheme). */
+  theme: ReadonlySet<string> | null;
 }
 
 /** What refilling and art warm-up both need: catalog lookups, the list, and each collection's examples. */
@@ -177,6 +179,7 @@ function contextOf({ catalog: cat, cards, picks, day }: RefillInput) {
         collected: new Set(
           listed.filter((c) => c.collections.length).flatMap((c) => ofCard(c)?.species ?? []),
         ),
+        theme: null,
       };
     }
     const inColl = listed.filter((c) => c.collections.includes(coll)).flatMap((c) => ofCard(c) ?? []);
@@ -195,6 +198,7 @@ function contextOf({ catalog: cat, cards, picks, day }: RefillInput) {
       liked: examples.filter((e) => e.weight >= ADDED).map((e) => e.f),
       passed: examples.filter((e) => e.weight < 0).map((e) => e.f),
       collected: new Set(),
+      theme: pokemonTheme(coll, examples),
     };
   };
   const examplesByColl = new Map<string, CollectionExamples>();
@@ -270,10 +274,13 @@ export function refillPicks(input: RefillInput): PickCard[] {
     MIN_OPEN -
     picks.filter((p) => p.coll === coll && p.status === "new" && !(p.tcgProduct && onList.has(p.tcgProduct)))
       .length;
-  // A kept Wildcard goes once its Pokémon joins a collection, as a fresh ranking would drop it.
+  // A kept Wildcard goes once its Pokémon joins a collection, and a kept pick of another Pokémon once its
+  // collection turns out to be about its own Pokémon, as a fresh ranking would drop either.
   const collected = examplesFor(WILDCARDS).collected;
   const stillFits = (k: KeptPick, f: CardFeatures) =>
-    unseen(k.pid) && !(k.coll === WILDCARDS && f.species.some((sp) => collected.has(sp)));
+    unseen(k.pid) &&
+    fitsTheme(examplesFor(k.coll).theme, f) &&
+    !(k.coll === WILDCARDS && f.species.some((sp) => collected.has(sp)));
   // Picks on screen belong to their collection: no other collection may take them while they're shown.
   const reserved = new Map<number, string>();
   for (const k of keep) {

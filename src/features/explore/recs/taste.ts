@@ -4,6 +4,9 @@ import type { CardFeatures } from "./features";
  * What a collection's cards say about taste, learned from examples: cards on the list and picks he
  * added count for a card's features, picks he passed on count against them.
  *
+ * A collection is about its Pokémon when up to three of them are on most of its cards (Mew & Mewtwo,
+ * a Gengar line). Picks for it then stay with those Pokémon.
+ *
  * Two kinds of feature:
  * - Identity (the Pokémon, the artist): any match counts, more matches count more.
  *   affinity = (yes - no) / (yes + no + 1.5), so one add is 0.4, three adds 0.67, one pass -0.4.
@@ -42,6 +45,8 @@ export interface Taste {
   speciesCount: Map<string, number>;
   /** How many listed and added cards there are. */
   kept: number;
+  /** The Pokémon the collection is about, or null when it's about something else (see pokemonTheme). */
+  theme: ReadonlySet<string> | null;
   /** The highest price among the positive examples, or 0. */
   maxPrice: number;
   /** Share of the positive examples that are commons or uncommons (tier 0). */
@@ -53,7 +58,8 @@ const bump = (m: Map<string | number, number>, k: string | number, w: number) =>
   m.set(k, (m.get(k) ?? 0) + w);
 };
 
-export function buildTaste(examples: readonly Example[]): Taste {
+/** A collection's taste, from its examples; given its name, also the Pokémon it's about. */
+export function buildTaste(examples: readonly Example[], coll?: string): Taste {
   const t: Taste = {
     identity: { species: counts(), artist: counts() },
     distribution: { tier: counts(), era: counts(), band: counts() },
@@ -62,6 +68,7 @@ export function buildTaste(examples: readonly Example[]): Taste {
     artistCount: new Map(),
     speciesCount: new Map(),
     kept: 0,
+    theme: null,
     maxPrice: 0,
     commonShare: 0,
   };
@@ -88,12 +95,51 @@ export function buildTaste(examples: readonly Example[]): Taste {
     }
   }
   t.commonShare = t.yes ? commons / t.yes : 0;
+  t.theme = coll === undefined ? null : pokemonTheme(coll, examples);
   for (const c of Object.values(t.distribution)) {
     c.topYes = topOf(c.yes);
     c.topNo = topOf(c.no);
   }
   return t;
 }
+
+/** A collection needs this many listed or added cards before it reads as being about its Pokémon. */
+const THEME_MIN_CARDS = 3;
+/** A Pokémon is one it's about when its name names it, or it's on this many of its cards and this share. */
+const THEME_SPECIES_CARDS = 2;
+const THEME_SPECIES_SHARE = 0.2;
+/** It's about at most this many Pokémon, together on at least this share of its cards. */
+const THEME_MAX_SPECIES = 3;
+const THEME_SHARE = 0.75;
+
+/**
+ * The Pokémon a collection is about: Mew and Mewtwo for "Mew & Mewtwo", Gastly, Haunter and Gengar for a
+ * Gengar line. Null for a collection of many Pokémon (Kanto Starters) or a look (Forest, Dark Full Art),
+ * whose picks may be any Pokémon. One card isn't a theme unless the name says so, so a stray card or a
+ * new collection of three different Pokémon doesn't narrow the picks.
+ */
+export function pokemonTheme(coll: string, examples: readonly Example[]): ReadonlySet<string> | null {
+  const kept = examples.filter((e) => e.weight >= 1).map((e) => new Set(e.f.species));
+  if (kept.length < THEME_MIN_CARDS) return null;
+  const count = new Map<string, number>();
+  for (const ss of kept) for (const s of ss) count.set(s, (count.get(s) ?? 0) + 1);
+  const words = ` ${coll.toLowerCase().replace(/[^\p{L}\d.-]+/gu, " ")} `;
+  const theme = new Set(
+    [...count]
+      .filter(
+        ([s, n]) =>
+          words.includes(` ${s} `) || (n >= THEME_SPECIES_CARDS && n >= kept.length * THEME_SPECIES_SHARE),
+      )
+      .map(([s]) => s),
+  );
+  if (!theme.size || theme.size > THEME_MAX_SPECIES) return null;
+  const covered = kept.filter((ss) => [...ss].some((s) => theme.has(s))).length;
+  return covered >= kept.length * THEME_SHARE ? theme : null;
+}
+
+/** True when a card has one of the Pokémon a collection is about, or the collection isn't about any. */
+export const fitsTheme = (theme: ReadonlySet<string> | null, f: CardFeatures): boolean =>
+  !theme || f.species.some((s) => theme.has(s));
 
 const SMOOTH = 1.5;
 /** How much a pass counts against a Pokémon or artist that cards he kept also have... */

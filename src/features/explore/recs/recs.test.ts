@@ -5,8 +5,8 @@ import type { Card } from "~/features/cards/types";
 import type { PickCard } from "../picks";
 import { artWarmup, refillPicks } from "../refill";
 import { matchSeeds, parseArt, percentiles, rowOf, type ArtIndex } from "./art";
-import { catalogFeatures, eraOf, priceBand } from "./features";
-import { buildTaste, distributionAffinity, identityAffinity } from "./taste";
+import { catalogFeatures, eraOf, priceBand, type CardFeatures } from "./features";
+import { buildTaste, distributionAffinity, identityAffinity, pokemonTheme, type Example } from "./taste";
 
 // Rarities: 0 Common, 1 Rare, 2 Illustration Rare, 3 Special Illustration Rare.
 // Artists: 0 Aya, 1 Ben, 2 Cy.
@@ -166,6 +166,50 @@ describe("refill ranking", () => {
     expect(out.filter((p) => p.coll === "Mew")).toHaveLength(8);
   });
 
+  it("keeps a collection about its Pokémon to those Pokémon, older printings included", () => {
+    const MM = "Mew & Mewtwo";
+    const mixed = parseCatalog({
+      asOf: cat.asOf,
+      sets: [
+        ["Mask Set", 0, SV],
+        ["Old Set", 0, "2004-01-01"],
+      ],
+      rarities: ["Common", "Rare", "Illustration Rare"],
+      artists: ["Aya", "Kai", "Rin", "Sho", "Tomo"],
+      cards: [
+        // On the list: three modern illustration rares of Mew and Mewtwo.
+        ...[0, 1, 2].map((i) => [100 + i, i ? "Mew ex" : "Mewtwo ex", 0, String(100 + i), 2, 30, i]),
+        // Old plain rare Mews, and modern illustration rares of other Pokémon.
+        ...Array.from({ length: 10 }, (_, i) => [200 + i, "Mew", 1, String(i + 1), 1, 20, i % 5]),
+        ...Array.from({ length: 10 }, (_, i) => [300 + i, "Milotic ex", 0, String(300 + i), 2, 30, i % 5]),
+      ],
+    });
+    const mine = [0, 1, 2].map((i) =>
+      card({
+        id: String(i),
+        name: i ? "Mew ex" : "Mewtwo ex",
+        number: String(100 + i),
+        collections: [MM],
+      }),
+    );
+    const out = refillPicks({ ...base, catalog: mixed, collections: [MM], cards: mine, picks: [] });
+    const mew = out.filter((p) => p.coll === MM);
+    expect(mew).toHaveLength(8);
+    expect(mew.every((p) => p.name === "Mew")).toBe(true);
+
+    // A pick of another Pokémon kept from before the collection was about Mew goes.
+    const keep = [{ coll: MM, pid: 300, reason: "Shown earlier" }];
+    const again = refillPicks({
+      ...base,
+      catalog: mixed,
+      collections: [MM],
+      cards: mine,
+      picks: [],
+      keep,
+    });
+    expect(again.some((p) => p.coll === MM && p.name === "Milotic ex")).toBe(false);
+  });
+
   it("counts a pick he added once, as the card it put on the list", () => {
     const out = spooky(
       refillPicks({
@@ -212,6 +256,36 @@ describe("refill ranking", () => {
 });
 
 describe("taste", () => {
+  const ex = (...species: string[]): Example => ({ f: { species } as unknown as CardFeatures, weight: 1 });
+  it("tells a collection about a few Pokémon from one about many or about a look", () => {
+    const theme = (...cards: string[][]) => themeOf("", ...cards);
+    const themeOf = (coll: string, ...cards: string[][]) => {
+      const t = pokemonTheme(
+        coll,
+        cards.map((ss) => ex(...ss)),
+      );
+      return t ? [...t].sort() : null;
+    };
+    expect(theme(["mew"], ["mew"], ["mew"], ["mewtwo"], ["mewtwo"])).toEqual(["mew", "mewtwo"]);
+    expect(theme(["gastly"], ["haunter"], ["gengar"], ["gengar"], ["haunter"], ["gastly"])).toEqual([
+      "gastly",
+      "gengar",
+      "haunter",
+    ]);
+    // Four Pokémon, or too few cards to tell.
+    expect(theme(["squirtle"], ["squirtle"], ["charmeleon"], ["ivysaur"], ["venusaur"])).toBeNull();
+    expect(theme(["mew"], ["mew"])).toBeNull();
+    // One card of a Pokémon counts when the name names it, not otherwise.
+    expect(themeOf("Mew & Mewtwo", ["mew"], ["mew"], ["mew"], ["mewtwo"])).toEqual(["mew", "mewtwo"]);
+    expect(theme(["mew"], ["mew"], ["mew"], ["mew"], ["pikachu"])).toEqual(["mew"]);
+    // Three different Pokémon in a new collection aren't a theme yet.
+    expect(theme(["oddish"], ["tangela"], ["paras"])).toBeNull();
+    // A look: no Pokémon on most of it.
+    expect(
+      theme(["oddish"], ["bellsprout"], ["oddish"], ["tangela"], ["exeggcute"], ["paras"], ["oddish"]),
+    ).toBeNull();
+  });
+
   const fs = catalogFeatures(cat);
   const f = (pid: number) => {
     const hit = fs.find((x) => x.c.pid === pid);

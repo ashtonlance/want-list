@@ -1,7 +1,14 @@
 import type { Catalog } from "~/features/catalog/catalog";
 import { matchSeeds, percentiles, rowOf, type ArtIndex, type ArtMatch } from "./art";
 import { eraLabel, poolsOf, type CardFeatures } from "./features";
-import { buildTaste, distributionAffinity, identityAffinity, type Example, type Taste } from "./taste";
+import {
+  buildTaste,
+  distributionAffinity,
+  fitsTheme,
+  identityAffinity,
+  type Example,
+  type Taste,
+} from "./taste";
 
 /**
  * How much each signal counts toward a pick's score. Identity signals (Pokémon, artist) and art likeness
@@ -19,8 +26,15 @@ export const WEIGHTS = {
   band: 1.25,
 } as const;
 
-/** Below this a card isn't suggested at all. */
+/** Below this a card isn't suggested at all... */
 const MIN_SCORE = 1.5;
+/**
+ * ...except one of the Pokémon a collection is about and in its price range, which only needs this. Passes and an unusual era or
+ * rarity still rank it lower, but a Mew collection shouldn't run out of Mew while Mew cards are left.
+ */
+const THEME_MIN_SCORE = 0;
+/** A card of a Pokémon the collection is about counts at least this much for it, whatever passes say. */
+const THEME_SPECIES = 0.6;
 /** A card pricier than this many times the collection's priciest card loses points... */
 const PRICE_STRETCH = 4;
 const PRICE_PENALTY = 4;
@@ -164,7 +178,7 @@ export interface CollectionInput {
 
 /** Every candidate worth suggesting for a collection, best first, each with the reason it was picked. */
 export function rankForCollection({ coll, examples, features, art, rows, day }: CollectionInput): Scored[] {
-  const taste = buildTaste(examples);
+  const taste = buildTaste(examples, coll);
   if (!taste.yes) return [];
   const jpOk = examples.some((e) => e.weight > 0 && e.f.jp);
   const commonsOk = taste.commonShare >= COMMON_SHARE;
@@ -187,15 +201,21 @@ function scoreCard(
   art: ReturnType<typeof artSignal>,
   coll: string,
 ): Scored | null {
+  // In a collection about its Pokémon (Mew & Mewtwo), only those Pokémon are picks, and they always count.
+  const { theme } = t;
+  if (!fitsTheme(theme, f)) return null;
+  const onTheme = theme !== null;
   let species = 0;
   let speciesName = "";
   for (const s of f.species) {
+    if (theme && !theme.has(s)) continue;
     const a = identityAffinity(t, "species", s);
     if (a > species || !speciesName) {
       species = a;
       speciesName = s;
     }
   }
+  if (onTheme) species = Math.max(species, THEME_SPECIES);
   const artist = identityAffinity(t, "artist", f.artist);
   // A card needs a real reason: its Pokémon, its artist, its look, or the collection's kind of full art.
   // Checked before anything else, since most of the catalog has none.
@@ -215,8 +235,9 @@ function scoreCard(
   };
   let score = parts.species + parts.artist + parts.art + parts.tier + parts.era + WEIGHTS.band * band;
   if (art) score -= WEIGHTS.artPassed * art.passedMore;
-  if (t.maxPrice && f.price > Math.max(t.maxPrice * PRICE_STRETCH, PRICE_FLOOR)) score -= PRICE_PENALTY;
-  if (score < MIN_SCORE) return null;
+  const pricey = t.maxPrice > 0 && f.price > Math.max(t.maxPrice * PRICE_STRETCH, PRICE_FLOOR);
+  if (pricey) score -= PRICE_PENALTY;
+  if (score < (onTheme && !pricey ? THEME_MIN_SCORE : MIN_SCORE)) return null;
 
   // The reason names the most specific signal that counts for something: an artist, a Pokémon or a look
   // says more than "an illustration rare", so those win unless they barely count.
@@ -237,8 +258,8 @@ function scoreCard(
   const seed = art?.seed;
   const mostly = (n: number | undefined) => (n ?? 0) >= t.kept * MOSTLY;
   const uncapped = {
-    // The Pokémon the refill's cap counts the card under.
-    species: mostly(t.speciesCount.get(f.species[0] ?? "")),
+    // The Pokémon the refill's cap counts the card under. A collection about one Pokémon has no other to share with.
+    species: theme?.size === 1 || mostly(t.speciesCount.get(f.species[0] ?? "")),
     // One card by an artist isn't a theme yet.
     artist: t.kept >= 2 && mostly(t.artistCount.get(f.artist)),
   };
