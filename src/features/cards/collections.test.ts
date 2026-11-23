@@ -24,6 +24,7 @@ const card = (id: string, collections: string[]): Card => ({
   collections,
   slots: {},
   tcg: null,
+  owned: null,
 });
 
 describe("allCollections", () => {

@@ -12,6 +12,7 @@ import { knownSets } from "./collections";
 import { EditForm } from "./EditForm";
 import { cardImageSrc } from "./image";
 import { lightboxItem } from "./lightboxItem";
+import { OwnedSection } from "./OwnedSection";
 import { marketLinks } from "./links";
 import { PriceBlock } from "./PriceBlock";
 import { isGot } from "./pricing";
@@ -153,6 +154,8 @@ function CardDetail({
           {c.note}
         </div>
       ) : null}
+
+      {got ? <OwnedSection card={c} canWrite={canWrite} /> : null}
 
       <div className="sec">
         <h4 className="sec-title">Shop</h4>

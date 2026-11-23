@@ -28,6 +28,7 @@ const card = (over: Partial<Card>): Card => ({
   collections: ["Spooky"],
   slots: {},
   tcg: null,
+  owned: null,
   ...over,
 });
 

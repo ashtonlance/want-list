@@ -38,6 +38,7 @@ export function newCard(f: NewCardFields): CardData {
     order: -Date.now(),
     collections: [],
     slots: {},
+    owned: null,
     ...f,
   };
 }

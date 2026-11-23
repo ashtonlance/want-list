@@ -24,6 +24,7 @@ export function testCard(over: Partial<Card> = {}): Card {
     collections: [],
     slots: {},
     tcg: null,
+    owned: null,
     ...over,
   };
 }

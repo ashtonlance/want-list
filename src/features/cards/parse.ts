@@ -10,7 +10,15 @@ import {
   strish,
   type JsonRecord,
 } from "~/lib/json";
-import type { Ask, Card, Deal, Listing, TcgPrice } from "./types";
+import {
+  RAW_CONDITIONS,
+  type Ask,
+  type Card,
+  type Deal,
+  type Listing,
+  type Owned,
+  type TcgPrice,
+} from "./types";
 
 function parseAsk(v: unknown): Ask | null {
   if (!isRecord(v)) return null;
@@ -54,6 +62,25 @@ export function parseTcg(v: unknown): TcgPrice | null {
   };
 }
 
+const money = (v: unknown): number | null => {
+  const n = num(v);
+  return n != null && n >= 0 ? n : null;
+};
+
+/** The copies you own. Bad values fall back to one raw copy with nothing paid. */
+export function parseOwned(v: unknown): Owned | null {
+  if (!isRecord(v)) return null;
+  const qty = num(v.qty);
+  return {
+    qty: qty != null && qty >= 1 ? Math.floor(qty) : 1,
+    condition: oneOf(v.condition, RAW_CONDITIONS) ?? null,
+    grader: (str(v.grader) ?? "").trim(),
+    grade: (strish(v.grade) ?? "").trim(),
+    paid: money(v.paid),
+    value: money(v.value),
+  };
+}
+
 /** Reads one stored card. Missing or malformed fields fall back to empty values rather than failing. */
 export function parseCard(id: string, d: JsonRecord): Card {
   return {
@@ -78,5 +105,6 @@ export function parseCard(id: string, d: JsonRecord): Card {
     collections: strArray(d.collections),
     slots: numRecord(d.slots),
     tcg: parseTcg(d.tcg),
+    owned: parseOwned(d.owned),
   };
 }

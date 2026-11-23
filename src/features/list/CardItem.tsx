@@ -1,6 +1,7 @@
 import type { KeyboardEvent, MouseEvent } from "react";
 import { useCardWrites } from "~/features/cards/api";
 import { cardImageSrc } from "~/features/cards/image";
+import { ownedBadge, ownedOf } from "~/features/cards/owned";
 import { isGot, shortPrice } from "~/features/cards/pricing";
 import type { Card } from "~/features/cards/types";
 import { formatDate } from "~/lib/format";
@@ -61,7 +62,7 @@ export function CardTile({ card: c, selecting, selected, onActivate, onPhoto }: 
         }
       >
         <CardImage src={cardImageSrc(c)} name={c.name} />
-        {got ? <span className="tile-badge have">Got it</span> : null}
+        {got ? <span className="tile-badge have">{ownedBadge(ownedOf(c))}</span> : null}
         {!got && sp?.amt ? <span className={"tile-badge" + (sp.deal ? " deal" : "")}>{sp.amt}</span> : null}
         {c.priority ? (
           <span className="tile-star" aria-hidden="true">
@@ -136,7 +137,7 @@ export function CardRow({ card: c, selecting, selected, canWrite, onActivate, on
         </div>
         {got || c.checkRequested || c.collections.length ? (
           <div className="flags">
-            {got ? <span className="flag">Got it</span> : null}
+            {got ? <span className="flag">{ownedBadge(ownedOf(c))}</span> : null}
             {!got && c.checkRequested ? <span className="flag">Price check queued</span> : null}
             {c.collections.map((n) => (
               <button

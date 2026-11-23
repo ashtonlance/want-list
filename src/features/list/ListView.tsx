@@ -116,7 +116,7 @@ export function ListView() {
 
   return (
     <div className="view">
-      <Stats cards={cards} loaded={loaded} />
+      <Stats cards={cards} loaded={loaded} status={ui.status} coll={coll} />
       {failed ? (
         <div className="banner">Couldn&apos;t load the list. Check your connection and try again.</div>
       ) : null}

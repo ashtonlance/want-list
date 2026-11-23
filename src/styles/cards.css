@@ -905,3 +905,85 @@
 .add-manual {
   margin-top: 14px;
 }
+
+/* ---------- your copy (got cards) ---------- */
+.owned {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--sunk);
+  border-radius: 12px;
+  padding: 12px 14px;
+}
+.owned-sum {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.owned-line {
+  font-size: 15px;
+  font-weight: 600;
+}
+.owned-nums {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin: 0;
+}
+.owned-nums dt {
+  font-size: 12px;
+  color: var(--muted);
+}
+.owned-nums dd {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+}
+.owned-form {
+  background: var(--sunk);
+  border-radius: 12px;
+  padding: 14px;
+}
+.owned-form .seg {
+  display: flex;
+  background: var(--line);
+}
+.owned-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.owned-label {
+  font-size: 15px;
+  font-weight: 600;
+}
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  background: var(--surface);
+  border-radius: 999px;
+  padding: 3px;
+}
+.stepper button {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--ink);
+  cursor: pointer;
+}
+.stepper button:disabled {
+  color: var(--faint);
+  cursor: default;
+}
+.stepper output {
+  min-width: 32px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+}
