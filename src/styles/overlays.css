@@ -87,10 +87,12 @@ body.selecting .toast {
   height: 40px;
   font-size: 22px;
   cursor: pointer;
+  /* Above a zoomed photo, which stacks over what comes before it. */
+  z-index: 1;
 }
-/* Single-finger drags are ours (step sideways, pull down to close); pinch still zooms. */
+/* Every gesture here is ours (step, pull down to close, pinch to zoom the photo), so the page never zooms. */
 .lightbox {
-  touch-action: pinch-zoom;
+  touch-action: none;
   user-select: none;
 }
 /* The dark backdrop is its own layer so a pull down can lift it. */
@@ -104,11 +106,14 @@ body.selecting .toast {
 .lightbox img {
   transition: transform var(--t) var(--ease);
   -webkit-user-drag: none;
-  will-change: transform;
 }
 .lightbox.dragging img,
 .lightbox.dragging .lb-back {
   transition: none;
+}
+/* Only while a finger moves it: a held layer would stay drawn at its first size, soft when zoomed. */
+.lightbox.dragging img {
+  will-change: transform;
 }
 .lightbox > .cap,
 .lightbox > .close,
@@ -125,6 +130,23 @@ body.selecting .toast {
 .lightbox.dragging-y > .lb-nav {
   opacity: 0;
   transition-duration: var(--t-fast);
+}
+/* Zoomed in, the photo has the screen to itself but for the close button. */
+.lightbox.zoomed > .cap,
+.lightbox.zoomed > .lb-acts,
+.lightbox.zoomed > .lb-nav {
+  opacity: 0;
+  /* Hidden from Tab too; it flips once the fade ends. */
+  visibility: hidden;
+  transition:
+    opacity var(--t-fast) var(--ease),
+    visibility var(--t-fast);
+}
+.lightbox.zoomed img {
+  cursor: grab;
+}
+.lightbox.zoomed.dragging img {
+  cursor: grabbing;
 }
 .lb-acts {
   display: flex;

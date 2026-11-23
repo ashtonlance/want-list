@@ -21,6 +21,7 @@ import {
   prefersReducedMotion,
   sheetPicture,
 } from "~/lib/motion";
+import { usePhotoZoom } from "./usePhotoZoom";
 import { useProgressiveSrc } from "./useProgressiveSrc";
 import { useOverlay } from "./overlay";
 
@@ -91,8 +92,9 @@ interface Opened {
 
 /**
  * Full-screen card photo. Swipe sideways or use the arrow keys to move through the cards on screen;
- * pull down to close, as in Photos. Also closes on Escape, a tap outside the photo, or any navigation. Opening and closing fly the picture
- * from and back to its tile where it's on screen (lib/motion.ts).
+ * pull down to close, and pinch or double-tap to zoom, as in Photos (usePhotoZoom.ts). Also closes on
+ * Escape, a tap outside the photo, or any navigation. Opening and closing fly the picture from and
+ * back to its tile where it's on screen (lib/motion.ts).
  */
 export function LightboxProvider({ children }: { children: ReactNode }) {
   const [opened, setOpened] = useState<Opened | null>(null);
@@ -113,6 +115,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
   const shown = opened?.href === href ? opened : null;
   const item = shown ? shown.items[shown.index] : undefined;
   const count = shown?.items.length ?? 0;
+  const zoom = usePhotoZoom(box, photo, shown ? shown.index : null);
 
   const close = () => {
     // Back to its tile if that's on screen; otherwise the photo just fades away.
@@ -141,6 +144,8 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!shown) return;
     const onKey = (e: KeyboardEvent) => {
+      // Zoomed in, the photo stays put; Escape still closes it.
+      if (zoom.zoomed()) return;
       if (e.key === "ArrowRight") step(1);
       if (e.key === "ArrowLeft") step(-1);
     };
@@ -149,7 +154,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
     for (const n of [shown.items[shown.index - 1], shown.items[shown.index + 1]])
       if (n) new Image().src = bigImage(n.src);
     return () => window.removeEventListener("keydown", onKey);
-  }, [shown, step]);
+  }, [shown, step, zoom]);
 
   const open = useCallback(
     (next: LightboxItem) => {
@@ -214,11 +219,23 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
 
   const onPointerDown = (e: PointerEvent) => {
     if (e.button !== 0 || (e.target as Element).closest("button")) return;
+    dragged.current = false;
+    // A second finger pinches, and any finger on a zoomed photo pans it.
+    if (zoom.down(e)) {
+      if (drag.current) {
+        drag.current = null;
+        settle();
+      }
+      return;
+    }
     const now = performance.now();
     drag.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, axis: null, y: e.clientY, t: now, vy: 0 };
-    dragged.current = false;
   };
   const onPointerMove = (e: PointerEvent) => {
+    if (zoom.move(e)) {
+      dragged.current = true;
+      return;
+    }
     const d = drag.current;
     if (d?.id !== e.pointerId) return;
     const dx = e.clientX - d.x0;
@@ -239,9 +256,14 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
     follow(dx, dy);
   };
   const onPointerUp = (e: PointerEvent) => {
+    if (zoom.up(e)) return;
     const d = drag.current;
+    if (d?.id !== e.pointerId) return;
     drag.current = null;
-    if (d?.id !== e.pointerId || !d.axis) return;
+    if (!d.axis) {
+      zoom.tap(e);
+      return;
+    }
     const dx = e.clientX - d.x0;
     const dy = e.clientY - d.y0;
     // A finger held still before lifting isn't a flick.
@@ -265,13 +287,20 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
           aria-modal="true"
           aria-label="Card photo"
           onClick={(e) => {
-            if (dragged.current) dragged.current = false;
-            else if (e.target === e.currentTarget || e.target === back.current) close();
+            if (dragged.current) {
+              dragged.current = false;
+              return;
+            }
+            if (e.target !== e.currentTarget && e.target !== back.current) return;
+            // Outside a zoomed photo, a tap zooms back out first.
+            if (zoom.zoomed()) zoom.reset();
+            else close();
           }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
-          onPointerCancel={() => {
+          onPointerCancel={(e) => {
+            if (zoom.cancel(e)) return;
             drag.current = null;
             settle();
           }}
