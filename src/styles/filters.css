@@ -1,0 +1,99 @@
+/* ---------- filter and sort (ui/Filters.tsx) ---------- */
+.ex-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.ex-bar input[type="search"],
+.ex-bar form {
+  flex: 1;
+  min-width: 0;
+}
+.ex-bar form input {
+  width: 100%;
+}
+
+/* What's on, under the toolbar: quiet outlined chips that each turn one filter off. */
+.active-filters {
+  align-items: center;
+}
+.chip-toggle.on-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 5px 10px 5px 12px;
+  font-size: 13px;
+  background: var(--sunk);
+  border-color: transparent;
+}
+.chip-toggle.on-chip span {
+  font-size: 16px;
+  line-height: 1;
+  color: var(--muted);
+}
+
+/* The sheet: titled sections of chips, with the actions pinned to the bottom. */
+.filter-form {
+  gap: 4px;
+}
+.filter-sec {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.filter-sec:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+.filter-sec h4 {
+  margin: 0;
+}
+.filter-sec select {
+  width: 100%;
+}
+.choice-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.choice-wrap .chip-toggle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+}
+.choice-n {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.chip-toggle[aria-pressed="true"] .choice-n {
+  color: inherit;
+  opacity: 0.65;
+}
+.filter-foot {
+  position: sticky;
+  bottom: calc(-20px - env(safe-area-inset-bottom, 0px));
+  display: flex;
+  gap: 10px;
+  margin: 4px calc(-1 * var(--gx)) calc(-20px - env(safe-area-inset-bottom, 0px));
+  padding: 12px var(--gx) calc(14px + env(safe-area-inset-bottom, 0px));
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+}
+.filter-foot .btn {
+  flex: 1;
+}
+.filter-foot .btn.primary {
+  flex: 2;
+}
+@media (min-width: 700px) {
+  .filter-foot {
+    bottom: -20px;
+    margin-bottom: -20px;
+    padding-bottom: 16px;
+  }
+}

@@ -33,6 +33,7 @@ export const canTransition = (): boolean => SUPPORTED && !prefersReducedMotion()
 
 /** The easing and lengths shared with CSS (styles/tokens.css), for animations started from code. */
 export const EASE_OUT = "cubic-bezier(0.2, 0.8, 0.2, 1)";
+export const EASE_IN = "cubic-bezier(0.4, 0, 1, 1)";
 
 let running = 0;
 
@@ -150,6 +151,21 @@ export function morph({ from, update, to, wait = 300 }: MorphOptions): void {
       clearName(from);
       if (target) clearName(target);
     });
+}
+
+/**
+ * Closes a sheet that isn't kept in the address (a filter sheet) with the same slide down as one
+ * that is (app/pageTransition.ts's "sheet-close").
+ */
+export function closeSheet(update: () => void): void {
+  if (!canTransition()) {
+    update();
+    return;
+  }
+  start(() => {
+    flushSync(update);
+    return Promise.resolve();
+  }, ["sheet-close"]);
 }
 
 /** Card tiles fully on screen between the top bar and the tab bar, at most a screenful. */

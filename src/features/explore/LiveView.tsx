@@ -12,14 +12,23 @@ import {
   type FeedSort,
 } from "~/features/catalog/feed";
 import { LOOK_OPTIONS, lookCards } from "~/features/catalog/looks";
+import {
+  ActiveFilters,
+  Choices,
+  FilterButton,
+  FilterSection,
+  FilterSheet,
+  type ActiveFilter,
+} from "~/ui/Filters";
 import { Select } from "~/ui/Select";
+import { useFilterSheet } from "~/ui/useFilterSheet";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { ComingSoon } from "./ComingSoon";
 import { EveryCardFeed } from "./EveryCardFeed";
 import { LoadError } from "./ExCard";
 import { useTdSets } from "./live";
 import { LiveResults } from "./LiveResults";
-import { CAP_OPTIONS, patchLiveUi, useLiveUi, type LiveSort } from "./state";
+import { CAP_OPTIONS, DEFAULT_LIVE_UI, patchLiveUi, useLiveUi, type LiveSort, type LiveUi } from "./state";
 import { useCollections } from "~/features/cards/useCollections";
 
 const DEBOUNCE_MS = 650;
@@ -28,10 +37,13 @@ const SET_CHIPS = 10;
 
 const LANG_WORD: Record<FeedLang, string> = { en: "English", jp: "Japanese", both: "English and Japanese" };
 
+/** Settings that change the Every card feed. */
+type FeedKey = "feedSort" | "look" | "feedPrice" | "era" | "rarity" | "lang";
+
 const LANG_OPTIONS: readonly { value: FeedLang; label: string }[] = [
   { value: "en", label: "English" },
   { value: "jp", label: "Japanese" },
-  { value: "both", label: "English and Japanese" },
+  { value: "both", label: "Both" },
 ];
 
 const FEED_SORTS: readonly { value: FeedSort; label: string }[] = [
@@ -153,6 +165,55 @@ export function LiveView() {
 
   const toFeedTop = () => window.scrollTo({ top: 0 });
   const { collections } = useCollections();
+  const sheet = useFilterSheet();
+  /** A change to the Every card feed, which starts it again from the top. */
+  const feed =
+    <K extends FeedKey>(key: K) =>
+    (value: LiveUi[K]) => {
+      patchLiveUi({ [key]: value });
+      toFeedTop();
+    };
+
+  const label = <T,>(options: readonly { value: T; label: string }[], v: T) =>
+    options.find((o) => o.value === v)?.label ?? String(v);
+  const active: ActiveFilter[] = all
+    ? [
+        ...(ui.look !== "any"
+          ? [{ key: "look", label: label(LOOK_OPTIONS, ui.look), clear: () => feed("look")("any") }]
+          : []),
+        ...(ui.feedPrice !== "any"
+          ? [
+              {
+                key: "price",
+                label: label(FEED_PRICE_OPTIONS, ui.feedPrice),
+                clear: () => feed("feedPrice")("any"),
+              },
+            ]
+          : []),
+        ...(ui.era !== "any"
+          ? [{ key: "era", label: label(FEED_ERA_OPTIONS, ui.era), clear: () => feed("era")("any") }]
+          : []),
+        ...(ui.rarity ? [{ key: "rarity", label: ui.rarity, clear: () => feed("rarity")("") }] : []),
+        ...(ui.lang !== "en"
+          ? [{ key: "lang", label: LANG_WORD[ui.lang], clear: () => feed("lang")("en") }]
+          : []),
+      ]
+    : ui.cap
+      ? [{ key: "cap", label: label(CAP_OPTIONS, ui.cap), clear: () => patchLiveUi({ cap: 0 }) }]
+      : [];
+  const sorted = all ? ui.feedSort !== DEFAULT_LIVE_UI.feedSort : ui.sort !== DEFAULT_LIVE_UI.sort;
+  const clearFilters = () => {
+    patchLiveUi(
+      all
+        ? { look: "any", rarity: "", feedPrice: "any", era: "any", lang: "en" }
+        : { cap: DEFAULT_LIVE_UI.cap },
+    );
+    if (all) toFeedTop();
+  };
+  const resetAll = () => {
+    clearFilters();
+    patchLiveUi(all ? { feedSort: DEFAULT_LIVE_UI.feedSort } : { sort: DEFAULT_LIVE_UI.sort });
+  };
 
   return (
     <>
@@ -161,29 +222,29 @@ export function LiveView() {
         <p>{intro}</p>
       </div>
       <div className="ex-tools">
-        <form
-          className="lv-search"
-          role="search"
-          autoComplete="off"
-          onSubmit={(e) => {
-            e.preventDefault();
-            input.current?.blur();
-            commit(typed.trim());
-          }}
-        >
-          <input
-            ref={input}
-            type="search"
-            placeholder="Search any card, like Gengar"
-            aria-label="Search live cards"
-            enterKeyHint="search"
-            value={typed}
-            onChange={(e) => setTyped(e.target.value)}
-          />
-          <button className="btn small" type="submit">
-            Search
-          </button>
-        </form>
+        <div className="ex-bar">
+          <form
+            className="lv-search"
+            role="search"
+            autoComplete="off"
+            onSubmit={(e) => {
+              e.preventDefault();
+              input.current?.blur();
+              commit(typed.trim());
+            }}
+          >
+            <input
+              ref={input}
+              type="search"
+              placeholder="Search any card, like Gengar"
+              aria-label="Search live cards"
+              enterKeyHint="search"
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+            />
+          </form>
+          <FilterButton on={active.length > 0 || sorted} onClick={sheet.show} />
+        </div>
         <div className="colltabs">
           <button className="colltab" type="button" aria-pressed={all} onClick={() => showSet("")}>
             <b>Every card</b>
@@ -203,120 +264,81 @@ export function LiveView() {
             <b>All sets</b>
           </button>
         </div>
-        {all ? (
-          <div className="colltabs" role="group" aria-label="Card looks">
-            {LOOK_OPTIONS.map((l) => (
-              <button
-                key={l.value}
-                className="colltab"
-                type="button"
-                aria-pressed={ui.look === l.value}
-                onClick={() => {
-                  patchLiveUi({ look: l.value });
-                  toFeedTop();
-                }}
-              >
-                <b>{l.label}</b>
-                {lookCounts ? <span>{(lookCounts.get(l.value) ?? 0).toLocaleString()}</span> : null}
-              </button>
-            ))}
-          </div>
-        ) : null}
-        <div className="scroller">
-          {all ? (
-            <Select
-              aria-label="Card language"
-              value={ui.lang}
-              options={LANG_OPTIONS}
-              onChange={(lang) => {
-                patchLiveUi({ lang });
-                toFeedTop();
-              }}
-            />
-          ) : null}
-          {all ? (
-            <Select
-              aria-label="Sort live cards"
-              value={ui.feedSort}
-              options={FEED_SORTS}
-              onChange={(feedSort) => {
-                patchLiveUi({ feedSort });
-                toFeedTop();
-              }}
-            />
-          ) : (
-            <Select
-              aria-label="Sort live cards"
-              value={ui.sort}
-              options={liveSorts(Boolean(q))}
-              onChange={(sort) => patchLiveUi({ sort })}
-            />
-          )}
-          {all ? (
-            <Select
-              aria-label="Price"
-              value={ui.feedPrice}
-              options={FEED_PRICE_OPTIONS}
-              onChange={(feedPrice) => {
-                patchLiveUi({ feedPrice });
-                toFeedTop();
-              }}
-            />
-          ) : (
-            <Select
-              aria-label="Price limit"
-              value={ui.cap}
-              options={CAP_OPTIONS}
-              onChange={(cap) => patchLiveUi({ cap })}
-            />
-          )}
+        <ActiveFilters items={active} onClearAll={clearFilters} />
+      </div>
+      {sheet.open ? (
+        <FilterSheet
+          onClose={sheet.hide}
+          onReset={resetAll}
+          changed={active.length > 0 || sorted}
+          showLabel={
+            all && rows
+              ? `Show ${rows.length.toLocaleString()} ${rows.length === 1 ? "card" : "cards"}`
+              : "Done"
+          }
+        >
           {all ? (
             <>
-              <Select
-                aria-label="Rarity"
-                value={ui.rarity}
-                options={rarityOptions}
-                onChange={(rarity) => {
-                  patchLiveUi({ rarity });
-                  toFeedTop();
-                }}
+              <Choices label="Sort" value={ui.feedSort} options={FEED_SORTS} onChange={feed("feedSort")} />
+              <Choices
+                label="Card look"
+                value={ui.look}
+                options={LOOK_OPTIONS.map((l) => ({ ...l, count: lookCounts?.get(l.value) }))}
+                onChange={feed("look")}
               />
-              <Select
-                aria-label="Set released"
+              <Choices
+                label="Price"
+                value={ui.feedPrice}
+                options={FEED_PRICE_OPTIONS}
+                onChange={feed("feedPrice")}
+              />
+              <Choices
+                label="Set released"
                 value={ui.era}
                 options={FEED_ERA_OPTIONS}
-                onChange={(era) => {
-                  patchLiveUi({ era });
-                  toFeedTop();
-                }}
+                onChange={feed("era")}
               />
-              {filtered ? (
-                <button
-                  className="chip-toggle"
-                  type="button"
-                  onClick={() => {
-                    patchLiveUi({ look: "any", rarity: "", feedPrice: "any", era: "any" });
-                    toFeedTop();
-                  }}
-                >
-                  Clear filters
-                </button>
-              ) : null}
+              <FilterSection label="Rarity">
+                <Select
+                  aria-label="Rarity"
+                  value={ui.rarity}
+                  options={rarityOptions}
+                  onChange={feed("rarity")}
+                />
+              </FilterSection>
+              <Choices label="Language" value={ui.lang} options={LANG_OPTIONS} onChange={feed("lang")} />
             </>
-          ) : null}
+          ) : (
+            <>
+              <Choices
+                label="Sort"
+                value={ui.sort}
+                options={liveSorts(Boolean(q))}
+                onChange={(sort) => patchLiveUi({ sort })}
+              />
+              <Choices
+                label="Price"
+                value={ui.cap}
+                options={CAP_OPTIONS}
+                onChange={(cap) => patchLiveUi({ cap })}
+              />
+            </>
+          )}
           {canWrite ? (
-            <Select
-              aria-label="Collection for added cards"
-              value={ui.addTo}
-              options={[
-                { value: "", label: "Add with no collection" },
-                ...collections.map((c) => ({ value: c.name, label: `Add to ${c.name}` })),
-              ]}
-              onChange={(addTo) => patchLiveUi({ addTo })}
-            />
+            <FilterSection label="Quick add goes to">
+              <Select
+                aria-label="Collection for added cards"
+                value={ui.addTo}
+                options={[
+                  { value: "", label: "No collection" },
+                  ...collections.map((c) => ({ value: c.name, label: c.name })),
+                ]}
+                onChange={(addTo) => patchLiveUi({ addTo })}
+              />
+            </FilterSection>
           ) : null}
-        </div>
-      </div>
+        </FilterSheet>
+      ) : null}
       {!all ? (
         <LiveResults key={q ? `q:${q}` : `set:${set}`} q={q} set={set} />
       ) : catalog.isError && !catalog.data ? (

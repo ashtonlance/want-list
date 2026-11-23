@@ -9,7 +9,16 @@ import { useActiveCollection } from "~/features/list/useActiveCollection";
 import { formatDate, formatMoney } from "~/lib/format";
 import { glide, useEnterAnimation } from "~/lib/motion";
 import { useScrollRestoration } from "~/lib/scroll";
+import {
+  ActiveFilters,
+  Choices,
+  FilterButton,
+  FilterSection,
+  FilterSheet,
+  type ActiveFilter,
+} from "~/ui/Filters";
 import { Select } from "~/ui/Select";
+import { useFilterSheet } from "~/ui/useFilterSheet";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { AddedMark, ExCard, PassButton, PriceTag, QuickWant } from "./ExCard";
 import { useLiveCards } from "./live";
@@ -20,7 +29,15 @@ import { usePhotoGrid } from "~/ui/Lightbox";
 import { exploreLightbox } from "./display";
 import { isPickAdded, pickImage, pickOnList, WILDCARDS, withLive, type PickCard } from "./picks";
 import { ALL_PICKS } from "./search";
-import { CAP_OPTIONS, ERA_OPTIONS, inEra, patchPicksUi, usePicksUi, type PicksSort } from "./state";
+import {
+  CAP_OPTIONS,
+  DEFAULT_PICKS_UI,
+  ERA_OPTIONS,
+  inEra,
+  patchPicksUi,
+  usePicksUi,
+  type PicksSort,
+} from "./state";
 import { usePickStatus } from "./usePickStatus";
 import { usePicks } from "./usePicks";
 import { useCollections } from "~/features/cards/useCollections";
@@ -33,6 +50,11 @@ const SORTS: readonly { value: PicksSort; label: string }[] = [
   { value: "high", label: "Price: high to low" },
   { value: "name", label: "Name: A to Z" },
 ];
+
+const LOOKS = [
+  { value: "any", label: "Any look" },
+  { value: "full", label: "Full art only" },
+] as const;
 
 interface CollTab {
   name: string;
@@ -89,6 +111,7 @@ export function PicksView() {
     return m;
   }, [catalog.data]);
   const passOn = usePickStatus();
+  const sheet = useFilterSheet();
 
   const { collections } = useCollections();
   const order = useMemo(() => collections.map((c) => c.name), [collections]);
@@ -221,6 +244,30 @@ export function PicksView() {
   const filtered = Boolean(q || ui.cap || ui.rarity || ui.fullArt || ui.era !== "any" || artist);
   const passed = all.filter((p) => p.status === "passed").length;
   const added = all.filter((p) => isPickAdded(cards, p)).length;
+  const label = <T,>(options: readonly { value: T; label: string }[], v: T) =>
+    options.find((o) => o.value === v)?.label ?? String(v);
+  const onFilters: ActiveFilter[] = [
+    ...(artist ? [{ key: "artist", label: `Art by ${artist}`, clear: clearArtist }] : []),
+    ...(ui.fullArt ? [{ key: "art", label: "Full art", clear: () => patchPicksUi({ fullArt: false }) }] : []),
+    ...(ui.cap
+      ? [{ key: "cap", label: label(CAP_OPTIONS, ui.cap), clear: () => patchPicksUi({ cap: 0 }) }]
+      : []),
+    ...(ui.era !== "any"
+      ? [{ key: "era", label: label(ERA_OPTIONS, ui.era), clear: () => patchPicksUi({ era: "any" }) }]
+      : []),
+    ...(ui.rarity ? [{ key: "rarity", label: ui.rarity, clear: () => patchPicksUi({ rarity: "" }) }] : []),
+    ...(!ui.hideAdded && added
+      ? [{ key: "added", label: "Showing added", clear: () => patchPicksUi({ hideAdded: true }) }]
+      : []),
+    ...(ui.showPassed && passed
+      ? [{ key: "passed", label: "Showing passed", clear: () => patchPicksUi({ showPassed: false }) }]
+      : []),
+  ];
+  const clearFilters = () => {
+    const { cap, rarity, era, fullArt, showPassed, hideAdded } = DEFAULT_PICKS_UI;
+    patchPicksUi({ cap, rarity, era, fullArt, showPassed, hideAdded });
+    if (artist) clearArtist();
+  };
   const latest = all.find((p) => !p.auto)?.batch ?? 1;
   const asOf = all
     .map((p) => p.priceAsOf)
@@ -264,79 +311,83 @@ export function PicksView() {
         </p>
       </div>
       <div className="ex-tools">
-        <input
-          type="search"
-          placeholder="Search picks, sets or artists"
-          aria-label="Search picks"
-          value={ui.q}
-          onChange={(e) => patchPicksUi({ q: e.target.value })}
-        />
-        <div className="scroller">
-          <Select
-            aria-label="Price limit"
+        <div className="ex-bar">
+          <input
+            type="search"
+            placeholder="Search picks, sets or artists"
+            aria-label="Search picks"
+            value={ui.q}
+            onChange={(e) => patchPicksUi({ q: e.target.value })}
+          />
+          <FilterButton on={onFilters.length > 0 || ui.sort !== DEFAULT_PICKS_UI.sort} onClick={sheet.show} />
+        </div>
+        <ActiveFilters items={onFilters} onClearAll={clearFilters} />
+      </div>
+      {sheet.open ? (
+        <FilterSheet
+          onClose={sheet.hide}
+          onReset={() => {
+            clearFilters();
+            patchPicksUi({ sort: DEFAULT_PICKS_UI.sort });
+          }}
+          changed={onFilters.length > 0 || ui.sort !== DEFAULT_PICKS_UI.sort}
+          showLabel={`Show ${shown.length.toLocaleString()} ${shown.length === 1 ? "pick" : "picks"}`}
+        >
+          <Choices label="Sort" value={ui.sort} options={SORTS} onChange={(sort) => patchPicksUi({ sort })} />
+          <Choices
+            label="Card look"
+            value={ui.fullArt ? "full" : "any"}
+            options={LOOKS}
+            onChange={(v) => patchPicksUi({ fullArt: v === "full" })}
+          />
+          <Choices
+            label="Price"
             value={ui.cap}
             options={CAP_OPTIONS}
             onChange={(cap) => patchPicksUi({ cap })}
           />
-          <Select
-            aria-label="Sort picks"
-            value={ui.sort}
-            options={SORTS}
-            onChange={(sort) => patchPicksUi({ sort })}
-          />
-          <button
-            className="chip-toggle"
-            type="button"
-            aria-pressed={ui.fullArt}
-            onClick={() => patchPicksUi({ fullArt: !ui.fullArt })}
-          >
-            Full art
-          </button>
-          <Select
-            aria-label="Rarity"
-            value={ui.rarity}
-            options={rarityOptions(all, ui.rarity)}
-            onChange={(rarity) => patchPicksUi({ rarity })}
-          />
-          <Select
-            aria-label="Set released"
+          <Choices
+            label="Set released"
             value={ui.era}
             options={ERA_OPTIONS}
             onChange={(era) => patchPicksUi({ era })}
           />
-          {added ? (
-            <button
-              className="chip-toggle"
-              type="button"
-              aria-pressed={!ui.hideAdded}
-              onClick={() => patchPicksUi({ hideAdded: !ui.hideAdded })}
-            >
-              {ui.hideAdded ? `Show ${added} already added` : "Hide added"}
-            </button>
+          <FilterSection label="Rarity">
+            <Select
+              aria-label="Rarity"
+              value={ui.rarity}
+              options={rarityOptions(all, ui.rarity)}
+              onChange={(rarity) => patchPicksUi({ rarity })}
+            />
+          </FilterSection>
+          {added || passed ? (
+            <FilterSection label="Also show">
+              <div className="choice-wrap">
+                {added ? (
+                  <button
+                    className="chip-toggle"
+                    type="button"
+                    aria-pressed={!ui.hideAdded}
+                    onClick={() => patchPicksUi({ hideAdded: !ui.hideAdded })}
+                  >
+                    Already added <span className="choice-n">{added}</span>
+                  </button>
+                ) : null}
+                {passed ? (
+                  <button
+                    className="chip-toggle"
+                    type="button"
+                    aria-pressed={ui.showPassed}
+                    onClick={() => patchPicksUi({ showPassed: !ui.showPassed })}
+                  >
+                    Passed <span className="choice-n">{passed}</span>
+                  </button>
+                ) : null}
+              </div>
+            </FilterSection>
           ) : null}
-          {passed ? (
-            <button
-              className="chip-toggle"
-              type="button"
-              aria-pressed={ui.showPassed}
-              onClick={() => patchPicksUi({ showPassed: !ui.showPassed })}
-            >
-              {ui.showPassed ? "Hide passed" : `Show ${passed} passed`}
-            </button>
-          ) : null}
-          {artist ? (
-            <button
-              className="chip-toggle"
-              type="button"
-              aria-pressed="true"
-              title="Clear artist filter"
-              onClick={clearArtist}
-            >
-              Art by {artist} ×
-            </button>
-          ) : null}
-        </div>
-      </div>
+        </FilterSheet>
+      ) : null}
       <div className="ex-grid" ref={grid}>
         {shown.map((p, i) => {
           const already = isPickAdded(cards, p);

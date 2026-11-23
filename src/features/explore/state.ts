@@ -37,7 +37,7 @@ export interface LiveUi {
   era: Era;
 }
 
-export const liveUi = createStore<LiveUi>({
+export const DEFAULT_LIVE_UI: LiveUi = {
   feedSort: "new",
   sort: "num",
   lang: "en",
@@ -47,7 +47,9 @@ export const liveUi = createStore<LiveUi>({
   rarity: "",
   feedPrice: "any",
   era: "any",
-});
+};
+
+export const liveUi = createStore<LiveUi>(DEFAULT_LIVE_UI);
 export const useLiveUi = (): LiveUi => useStore(liveUi);
 export const patchLiveUi = (patch: Partial<LiveUi>): void => liveUi.set((prev) => ({ ...prev, ...patch }));
 
@@ -64,7 +66,7 @@ export interface PicksUi {
   hideAdded: boolean;
 }
 
-export const picksUi = createStore<PicksUi>({
+export const DEFAULT_PICKS_UI: PicksUi = {
   q: "",
   cap: 0,
   sort: "rec",
@@ -73,7 +75,9 @@ export const picksUi = createStore<PicksUi>({
   fullArt: false,
   showPassed: false,
   hideAdded: true,
-});
+};
+
+export const picksUi = createStore<PicksUi>(DEFAULT_PICKS_UI);
 export const usePicksUi = (): PicksUi => useStore(picksUi);
 export const patchPicksUi = (patch: Partial<PicksUi>): void => picksUi.set((prev) => ({ ...prev, ...patch }));
 

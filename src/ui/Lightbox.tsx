@@ -12,7 +12,15 @@ import {
   type Ref,
 } from "react";
 import { bigImage } from "~/lib/images";
-import { findPicture, isTransitioning, morph, sheetPicture } from "~/lib/motion";
+import {
+  canTransition,
+  EASE_IN,
+  findPicture,
+  isTransitioning,
+  morph,
+  prefersReducedMotion,
+  sheetPicture,
+} from "~/lib/motion";
 import { useProgressiveSrc } from "./useProgressiveSrc";
 import { useOverlay } from "./overlay";
 
@@ -35,6 +43,22 @@ const LightboxContext = createContext<LightboxApi | null>(null);
 
 /** How far a swipe has to travel, in pixels, to move to the next photo. */
 const SWIPE = 50;
+/** How far a finger moves before the drag picks a direction: sideways to step, down to close. */
+const SLOP = 8;
+/** Pulled down this far, or flicked down this fast (px per ms), the photo closes on release. */
+const DISMISS = 110;
+const FLICK = 0.6;
+
+interface Drag {
+  id: number;
+  x0: number;
+  y0: number;
+  axis: "x" | "y" | null;
+  /** The last vertical position and time, for the speed of a flick. */
+  y: number;
+  t: number;
+  vy: number;
+}
 
 const sameCard = (a: LightboxItem, b: LightboxItem) => bigImage(a.src) === bigImage(b.src);
 
@@ -49,19 +73,21 @@ interface Opened {
 }
 
 /**
- * Full-screen card photo. Swipe or use the arrow keys to move through the cards on screen.
- * Closes on Escape, a tap outside the photo, or any navigation. Opening and closing fly the picture
+ * Full-screen card photo. Swipe sideways or use the arrow keys to move through the cards on screen;
+ * pull down to close, as in Photos. Also closes on Escape, a tap outside the photo, or any navigation. Opening and closing fly the picture
  * from and back to its tile where it's on screen (lib/motion.ts).
  */
 export function LightboxProvider({ children }: { children: ReactNode }) {
   const [opened, setOpened] = useState<Opened | null>(null);
-  const [dragX, setDragX] = useState(0);
-  const drag = useRef<{ x: number; y: number; id: number } | null>(null);
+  const drag = useRef<Drag | null>(null);
+  // A drag ends with a click on the backdrop; this keeps that click from closing the photo.
+  const dragged = useRef(false);
   const sequenceRef = useRef<readonly LightboxItem[]>([]);
   const lastFocus = useRef<Element | null>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
   const box = useRef<HTMLDivElement>(null);
   const photo = useRef<HTMLImageElement>(null);
+  const back = useRef<HTMLDivElement>(null);
   const href = useLocation({ select: (l) => l.href });
   // Navigating anywhere closes the photo.
   const shown = opened?.href === href ? opened : null;
@@ -80,7 +106,6 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
     if (lastFocus.current instanceof HTMLElement) lastFocus.current.focus({ preventScroll: true });
   };
   const step = useCallback((dir: -1 | 1) => {
-    setDragX(0);
     setOpened((o) => {
       if (!o) return o;
       const index = o.index + dir;
@@ -111,7 +136,6 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
       lastFocus.current = document.activeElement;
       const items = sequenceRef.current;
       const index = items.findIndex((i) => sameCard(i, next));
-      setDragX(0);
       morph({
         from: findPicture(next.src),
         update: () => {
@@ -125,20 +149,88 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
     [href],
   );
 
+  /** Follows the finger: sideways moves the photo, down also shrinks it and lifts the dark backdrop. */
+  const follow = (dx: number, dy: number) => {
+    const img = photo.current;
+    if (!img) return;
+    if (drag.current?.axis === "x") {
+      img.style.transform = `translateX(${String(dx)}px)`;
+      return;
+    }
+    // Upward pulls give a little, then resist.
+    const y = dy > 0 ? dy : dy * 0.25;
+    const pulled = Math.min(Math.max(y, 0) / innerHeight, 1);
+    img.style.transform = `translate(${String(dx * 0.5)}px, ${String(y)}px) scale(${String(1 - pulled * 0.3)})`;
+    if (back.current)
+      back.current.style.opacity = String(1 - Math.min(Math.max(y, 0) / (innerHeight * 0.45), 1));
+  };
+  const settle = () => {
+    box.current?.classList.remove("dragging", "dragging-y");
+    if (photo.current) photo.current.style.transform = "";
+    if (back.current) back.current.style.opacity = "";
+  };
+
+  /** Closes after a pull down: flies back to the tile where it can, else slides away. */
+  const dismiss = () => {
+    box.current?.classList.remove("dragging", "dragging-y");
+    const img = photo.current;
+    if (img && !canTransition() && !prefersReducedMotion() && typeof img.animate === "function") {
+      const away = { duration: 200, easing: EASE_IN, fill: "forwards" as const };
+      back.current?.animate([{ opacity: back.current.style.opacity || "1" }, { opacity: 0 }], away);
+      img
+        .animate(
+          [
+            { transform: img.style.transform || "none" },
+            { transform: `translateY(${String(innerHeight * 0.6)}px) scale(0.8)`, opacity: 0 },
+          ],
+          away,
+        )
+        .finished.then(close, close);
+      return;
+    }
+    close();
+  };
+
   const onPointerDown = (e: PointerEvent) => {
-    if (count > 1) drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    if (e.button !== 0 || (e.target as Element).closest("button")) return;
+    const now = performance.now();
+    drag.current = { id: e.pointerId, x0: e.clientX, y0: e.clientY, axis: null, y: e.clientY, t: now, vy: 0 };
+    dragged.current = false;
   };
   const onPointerMove = (e: PointerEvent) => {
     const d = drag.current;
-    if (d?.id === e.pointerId) setDragX(e.clientX - d.x);
+    if (d?.id !== e.pointerId) return;
+    const dx = e.clientX - d.x0;
+    const dy = e.clientY - d.y0;
+    if (!d.axis) {
+      if (Math.hypot(dx, dy) < SLOP) return;
+      // Sideways steps only when there's another card; otherwise any drag pulls the photo.
+      d.axis = Math.abs(dx) > Math.abs(dy) && count > 1 ? "x" : "y";
+      dragged.current = true;
+      box.current?.classList.add("dragging", ...(d.axis === "y" ? ["dragging-y"] : []));
+      e.currentTarget.setPointerCapture(e.pointerId);
+    }
+    const now = performance.now();
+    const dt = now - d.t;
+    if (dt > 0) d.vy = d.vy * 0.4 + ((e.clientY - d.y) / dt) * 0.6;
+    d.y = e.clientY;
+    d.t = now;
+    follow(dx, dy);
   };
   const onPointerUp = (e: PointerEvent) => {
     const d = drag.current;
     drag.current = null;
-    if (d?.id !== e.pointerId) return;
-    const dx = e.clientX - d.x;
-    if (Math.abs(dx) > SWIPE && Math.abs(dx) > Math.abs(e.clientY - d.y)) step(dx < 0 ? 1 : -1);
-    else setDragX(0);
+    if (d?.id !== e.pointerId || !d.axis) return;
+    const dx = e.clientX - d.x0;
+    const dy = e.clientY - d.y0;
+    // A finger held still before lifting isn't a flick.
+    const vy = performance.now() - d.t > 80 ? 0 : d.vy;
+    if (d.axis === "y" && (dy > DISMISS || (vy > FLICK && dy > 24))) {
+      dismiss();
+      return;
+    }
+    settle();
+    if (d.axis === "x" && Math.abs(dx) > SWIPE) step(dx < 0 ? 1 : -1);
   };
 
   return (
@@ -152,16 +244,18 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
           aria-modal="true"
           aria-label="Card photo"
           onClick={(e) => {
-            if (e.target === e.currentTarget) close();
+            if (dragged.current) dragged.current = false;
+            else if (e.target === e.currentTarget || e.target === back.current) close();
           }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
           onPointerCancel={() => {
             drag.current = null;
-            setDragX(0);
+            settle();
           }}
         >
+          <div className="lb-back" ref={back} aria-hidden="true" />
           <button className="close" type="button" aria-label="Close" ref={closeBtn} onClick={close}>
             ×
           </button>
@@ -170,7 +264,6 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
             ref={photo}
             item={item}
             className={shown.dir ? `from-${shown.dir}` : undefined}
-            dragX={dragX}
           />
           <div className="cap">
             <b>{item.name}</b>
@@ -229,22 +322,12 @@ interface PhotoProps {
   item: LightboxItem;
   ref: Ref<HTMLImageElement>;
   className: string | undefined;
-  dragX: number;
 }
 
 /** The big picture: the grid's small image at once, so it can fly in, then the large one. */
-function Photo({ item, ref, className, dragX }: PhotoProps) {
+function Photo({ item, ref, className }: PhotoProps) {
   const src = useProgressiveSrc(item.src);
-  return (
-    <img
-      ref={ref}
-      src={src}
-      alt={`${item.name} card`}
-      draggable={false}
-      className={className}
-      style={dragX ? { transform: `translateX(${String(dragX)}px)` } : undefined}
-    />
-  );
+  return <img ref={ref} src={src} alt={`${item.name} card`} draggable={false} className={className} />;
 }
 
 function useLightboxApi(): LightboxApi {
