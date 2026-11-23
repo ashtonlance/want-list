@@ -1,5 +1,6 @@
 name: Daily card sync
-# Refreshes catalog.json and prices.json from TCGplayer data (via tcgcsv.com) every day.
+# Refreshes catalog.json and prices.json from TCGplayer data (via tcgcsv.com) every day,
+# with each card's artist from TCGdex.
 on:
   schedule:
     - cron: "30 21 * * *" # 21:30 UTC, after tcgcsv's daily update
@@ -7,6 +8,8 @@ on:
   push:
     paths:
       - tools/sync.mjs
+      - tools/artists.mjs
+      - tools/lib/**
       - .github/workflows/sync.yml
 permissions:
   contents: write
@@ -16,7 +19,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
