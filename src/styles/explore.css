@@ -1,26 +1,23 @@
 /* ---------- explore ---------- */
-.ex-intro h2 {
-  margin: 0 0 4px;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-.ex-intro p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.45;
-}
 .ex-tools {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
+/* Browse and For you, in the top bar where the title would be. */
 .ex-seg {
   display: flex;
   width: 100%;
-  max-width: 340px;
+  max-width: 240px;
+}
+.ex-seg button {
+  min-height: 30px;
+  padding: 4px 12px;
+}
+.ex-meta {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
 }
 .lv-search {
   display: flex;
@@ -180,23 +177,12 @@
 }
 
 /* Sets that aren't out yet */
-.soon-line {
-  display: block;
-  width: 100%;
-  text-align: left;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: var(--sunk);
-  color: var(--ink);
-  font: inherit;
-  font-size: 13.5px;
-  line-height: 1.4;
-  padding: 10px 12px;
-  margin-bottom: 12px;
-  cursor: pointer;
-}
-.soon-line b {
-  font-weight: 600;
+/* Upcoming sets, as a chip beside Every card. */
+.colltab.soon-chip:not([aria-pressed="true"]) {
+  background: transparent;
+  box-shadow: none;
+  border: 1px dashed var(--line-2);
+  padding: 4px 11px;
 }
 .panel.soon {
   margin-bottom: 12px;

@@ -12,6 +12,15 @@
 .ex-bar form input {
   width: 100%;
 }
+.ex-bar input[type="search"] {
+  min-height: 40px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.ex-bar .opt-btn {
+  width: 40px;
+  height: 40px;
+}
 
 /* What's on, under the toolbar: quiet outlined chips that each turn one filter off. */
 .active-filters {

@@ -1,6 +1,7 @@
 import { useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "~/features/auth/AuthProvider";
+import { ExploreTabs } from "~/features/explore/ExploreTabs";
 import { useActiveCollection } from "~/features/list/useActiveCollection";
 import { useCollections } from "~/features/cards/useCollections";
 import { useShareLink } from "~/features/share/useShareLink";
@@ -35,10 +36,16 @@ export function Topbar() {
   return (
     <header className={"topbar" + (scrolled ? " scrolled" : "")}>
       <div className="topbar-in">
-        <div className="tb-title">
-          <small>Poke Cards</small>
-          <h1>{title}</h1>
-        </div>
+        {section === "explore" ? (
+          <div className="tb-title">
+            <h1 className="sr-only">{title}</h1>
+            <ExploreTabs />
+          </div>
+        ) : (
+          <div className="tb-title">
+            <h1 title={title}>{title}</h1>
+          </div>
+        )}
         <div className="tb-acts">
           {section === "list" ? (
             <button

@@ -113,8 +113,7 @@ export function CollectionHead({ cards, coll, canWrite }: Props) {
   };
 
   return (
-    <div className="panel collhead">
-      <h2>{coll}</h2>
+    <div className="collhead">
       <div className="progress">
         <div className="bar" role="img" aria-label={`${pct}% collected`}>
           <i style={{ width: `${pct}%` }} />

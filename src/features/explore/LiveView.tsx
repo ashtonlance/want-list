@@ -23,7 +23,7 @@ import {
 import { Select } from "~/ui/Select";
 import { useFilterSheet } from "~/ui/useFilterSheet";
 import { SkeletonGrid } from "~/ui/Skeleton";
-import { ComingSoon } from "./ComingSoon";
+import { ComingSoon, SoonChip } from "./ComingSoon";
 import { forgetScroll } from "~/lib/scroll";
 import { EveryCardFeed } from "./EveryCardFeed";
 import { LoadError } from "~/ui/LoadError";
@@ -163,7 +163,6 @@ export function LiveView() {
     void navigate({ search: id ? { set: id } : {}, replace: true });
   };
 
-  const setName = sets.data?.sets.find((s) => s.id === set)?.name;
   // The newest sets get chips; an older set picked from All sets gets one too while it's showing.
   const chipSets = useMemo(() => {
     const list = sets.data?.sets ?? [];
@@ -172,16 +171,17 @@ export function LiveView() {
     return picked ? [...newest, picked] : newest;
   }, [sets.data, set]);
   const langWord = LANG_WORD[ui.lang];
-  const title = q ? `Results for “${q}”` : all ? "Every card" : setName || "Newest cards";
-  const intro = q
-    ? rows
-      ? `${rows.length.toLocaleString()} ${langWord} ${rows.length === 1 ? "card matches" : "cards match"}, newest sets first.`
-      : `Every ${langWord} printing, newest sets first.`
-    : all
-      ? rows
-        ? `${filtered ? "" : "All "}${rows.length.toLocaleString()} ${langWord} ${rows.length === 1 ? "card" : "cards"}${filtered ? " match" : " ever made"}. Keep scrolling.`
-        : `Every ${langWord} card ever made. Keep scrolling.`
-      : "Straight from the latest card data, chase cards first. Prices are today's TCGplayer market.";
+  // The count rides in the search box, and a search's result count gets one quiet line, so the cards
+  // start right under the tools.
+  const placeholder =
+    all && rows
+      ? `Search ${rows.length.toLocaleString()} ${filtered ? "matching" : langWord} cards`
+      : "Search any card, like Gengar";
+  const resultLine =
+    q && rows
+      ? `${rows.length.toLocaleString()} ${langWord} ${rows.length === 1 ? "card matches" : "cards match"} “${q}”, newest sets first`
+      : "";
+  const soon = all && ui.era === "soon";
 
   // A changed feed starts from the top, so no other feed's position is kept to come back to.
   const toFeedTop = () => {
@@ -241,10 +241,6 @@ export function LiveView() {
 
   return (
     <>
-      <div className="ex-intro">
-        <h2>{title}</h2>
-        <p>{intro}</p>
-      </div>
       <div className="ex-tools">
         <div className="ex-bar">
           <form
@@ -260,7 +256,7 @@ export function LiveView() {
             <input
               ref={input}
               type="search"
-              placeholder="Search any card, like Gengar"
+              placeholder={placeholder}
               aria-label="Search live cards"
               enterKeyHint="search"
               value={typed}
@@ -270,9 +266,28 @@ export function LiveView() {
           <FilterButton on={active.length > 0 || sorted} onClick={sheet.show} />
         </div>
         <div className="colltabs">
-          <button className="colltab" type="button" aria-pressed={all} onClick={() => showSet("")}>
+          <button
+            className="colltab"
+            type="button"
+            aria-pressed={all && !soon}
+            onClick={() => {
+              showSet("");
+              if (soon) feed("era")("any");
+            }}
+          >
             <b>Every card</b>
           </button>
+          {catalog.data ? (
+            <SoonChip
+              cat={catalog.data}
+              lang={ui.lang}
+              on={soon}
+              onClick={() => {
+                showSet("");
+                feed("era")(soon ? "any" : "soon");
+              }}
+            />
+          ) : null}
           {chipSets.map((s) => (
             <button
               key={s.id}
@@ -289,6 +304,7 @@ export function LiveView() {
           </button>
         </div>
         <ActiveFilters items={active} onClearAll={clearFilters} />
+        {resultLine ? <p className="ex-meta">{resultLine}</p> : null}
       </div>
       {sheet.open ? (
         <FilterSheet
@@ -372,9 +388,7 @@ export function LiveView() {
         />
       ) : rows && catalog.data ? (
         <>
-          {q ? null : (
-            <ComingSoon cat={catalog.data} rows={rows} lang={ui.lang} showing={ui.era === "soon"} />
-          )}
+          {!q && ui.era === "soon" ? <ComingSoon cat={catalog.data} rows={rows} lang={ui.lang} /> : null}
           <EveryCardFeed
             key={q}
             cat={catalog.data}

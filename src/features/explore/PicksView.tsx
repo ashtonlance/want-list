@@ -321,12 +321,6 @@ export function PicksView() {
           </button>
         ))}
       </div>
-      <div className="ex-intro">
-        <h2>{isAll ? "All picks" : tab}</h2>
-        <p>
-          {about} Prices are TCGplayer market before shipping{asOf ? `, as of ${formatDate(asOf)}` : ""}.
-        </p>
-      </div>
       <div className="ex-tools">
         <div className="ex-bar">
           <input
@@ -451,7 +445,8 @@ export function PicksView() {
         )}
       </div>
       <p className="hint">
-        Picks refill on their own as you add cards or pass on them. Ask Claude in chat for hand-picked ones.
+        {about} Prices are TCGplayer market before shipping{asOf ? `, as of ${formatDate(asOf)}` : ""}. Picks
+        refill on their own as you add cards or pass on them. Ask Claude in chat for hand-picked ones.
       </p>
     </>
   );

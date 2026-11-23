@@ -2,19 +2,60 @@ import { useMemo } from "react";
 import type { Catalog } from "~/features/catalog/catalog";
 import type { FeedLang } from "~/features/catalog/feed";
 import { formatDate, plural, today } from "~/lib/format";
-import { patchLiveUi } from "./state";
 
 interface Props {
   cat: Catalog;
   /** The feed's rows, to count the cards each upcoming set has so far. */
   rows: readonly number[];
   lang: FeedLang;
-  /** True while the feed shows only sets that aren't out yet. */
-  showing: boolean;
 }
 
-/** Sets announced but not out yet: a line above the feed, or the list itself under "Not out yet". */
-export function ComingSoon({ cat, rows, lang, showing }: Props) {
+const upcoming = (cat: Catalog, lang: FeedLang) => {
+  const now = today();
+  return cat.upcoming.filter((s) => s.date > now && (lang === "both" || s.jp === (lang === "jp")));
+};
+
+// "Nov 27" this year, "Feb 6, 2027" after that.
+const when = (date: string) => {
+  const year = today().slice(0, 4);
+  return date.startsWith(year) ? formatDate(date).replace(`, ${year}`, "") : formatDate(date);
+};
+
+/**
+ * Sets announced but not out yet, as a chip beside Every card: one set by name and date, more by count.
+ * Tapping it shows only those sets' cards, with the list above them.
+ */
+export function SoonChip({
+  cat,
+  lang,
+  on,
+  onClick,
+}: {
+  cat: Catalog;
+  lang: FeedLang;
+  on: boolean;
+  onClick: () => void;
+}) {
+  const sets = useMemo(() => upcoming(cat, lang), [cat, lang]);
+  const first = sets[0];
+  // Still shown while it's the filter in use, so there's always a pressed chip to tap back out of.
+  if (!first && !on) return null;
+  return (
+    <button className="colltab soon-chip" type="button" aria-pressed={on} onClick={onClick}>
+      {!first ? (
+        <b>Coming soon</b>
+      ) : (
+        <>
+          <b>{sets.length === 1 ? first.name : `${plural(sets.length, "set")} coming`}</b>
+          <span>{sets.length === 1 ? `out ${when(first.date)}` : `next ${when(first.date)}`}</span>
+        </>
+      )}
+    </button>
+  );
+}
+
+/** The sets that aren't out yet, above their cards while the feed shows only those. */
+export function ComingSoon({ cat, rows, lang }: Props) {
   const sets = useMemo(() => {
     const now = today();
     const counts = new Map<string, number>();
@@ -26,29 +67,11 @@ export function ComingSoon({ cat, rows, lang, showing }: Props) {
         counts.set(k, (counts.get(k) ?? 0) + 1);
       }
     }
-    return cat.upcoming
-      .filter((s) => s.date > now && (lang === "both" || s.jp === (lang === "jp")))
-      .map((s) => ({ ...s, cards: counts.get(`${s.jp ? 1 : 0}|${s.name.toLowerCase()}`) ?? 0 }));
+    return upcoming(cat, lang).map((s) => ({
+      ...s,
+      cards: counts.get(`${s.jp ? 1 : 0}|${s.name.toLowerCase()}`) ?? 0,
+    }));
   }, [cat, rows, lang]);
-
-  // "Nov 27" this year, "Feb 6, 2027" after that.
-  const year = today().slice(0, 4);
-  const when = (date: string) =>
-    date.startsWith(year) ? formatDate(date).replace(`, ${year}`, "") : formatDate(date);
-
-  if (!showing) {
-    if (!sets.length) return null;
-    return (
-      <button className="soon-line" type="button" onClick={() => patchLiveUi({ era: "soon" })}>
-        <b>{plural(sets.length, "set")} coming soon:</b>{" "}
-        {sets
-          .slice(0, 3)
-          .map((s) => `${s.name} (${when(s.date)})`)
-          .join(", ")}
-        {sets.length > 3 ? "…" : ""}
-      </button>
-    );
-  }
 
   return (
     <div className="panel soon">

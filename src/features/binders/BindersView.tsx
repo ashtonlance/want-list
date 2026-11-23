@@ -274,17 +274,14 @@ function BinderHead({ binder, infos, onOptions }: BinderHeadProps) {
   const owned = filled.filter((i) => i.got).length;
   const cost = filled.reduce((sum, i) => sum + (i.got ? 0 : (i.price ?? 0)), 0);
   return (
-    <div className="panel bhead">
-      <div className="bhead-top">
-        <h2>{binder.name}</h2>
-        <button className="btn small" type="button" onClick={onOptions}>
-          Binder options
-        </button>
-      </div>
+    <div className="bhead">
       <p className="bsum">
         {filled.length} of {binder.slots.length} pockets filled · {owned} owned · {formatMoney(cost)} to
         finish
       </p>
+      <button className="btn small" type="button" onClick={onOptions}>
+        Binder options
+      </button>
     </div>
   );
 }

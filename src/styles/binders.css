@@ -129,27 +129,16 @@ button.pocket {
     padding: 10px;
   }
 }
+/* The binder's name is on its chip, so the head is one line: totals and options. */
 .bhead {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-.bhead-top {
   display: flex;
   gap: 10px;
   align-items: center;
   justify-content: space-between;
 }
-.bhead h2 {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
 .bsum {
+  flex: 1;
+  min-width: 0;
   margin: 0;
   color: var(--muted);
   font-size: 13.5px;
