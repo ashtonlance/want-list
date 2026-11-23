@@ -1,6 +1,7 @@
 import { prefs } from "~/app/prefs";
 import type { StatusFilter } from "~/features/cards/filters";
 import { createStore, useStore } from "~/lib/store";
+import { noteCollectionUse } from "~/features/cards/recentCollections";
 
 /** What the list screen is showing. Kept outside the screen so it survives a trip to another tab. */
 export interface ListUi {
@@ -36,6 +37,7 @@ export const patchListUi = (patch: Partial<ListUi>): void => listUi.set((prev) =
 /** Shows one collection, or every card when `name` is null. */
 export function showCollection(name: string | null): void {
   prefs.coll.set(name);
+  if (name) noteCollectionUse(name);
   if (!name) prefs.view.set("list");
   patchListUi({ collForm: null, confirmDelete: false });
 }

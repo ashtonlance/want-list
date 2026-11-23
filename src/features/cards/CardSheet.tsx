@@ -57,6 +57,44 @@ function CardDetail({
   return (
     <>
       <SheetHead title={got ? "In your collection" : "On your want list"} />
+      {/* The actions come first, so they're in reach without scrolling past the big picture. */}
+      {canWrite ? (
+        <div className="detail-acts">
+          <button
+            className={"btn" + (got ? "" : " primary")}
+            type="button"
+            onClick={() =>
+              void save(c, { status: got ? "want" : "got" }, got ? "Moved back to want" : "Marked as got")
+            }
+          >
+            {got ? "Move back to want" : "Got it"}
+          </button>
+          <button
+            className="btn"
+            type="button"
+            aria-pressed={c.priority}
+            onClick={() => void save(c, { priority: !c.priority })}
+          >
+            <StarIcon filled={c.priority} style={{ width: 18, height: 18 }} />
+            {c.priority ? "Priority" : "Mark priority"}
+          </button>
+          {got ? null : (
+            <button
+              className="btn wide"
+              type="button"
+              onClick={() =>
+                void save(
+                  c,
+                  { checkRequested: !c.checkRequested },
+                  c.checkRequested ? "Price check cancelled" : "Queued for a price check",
+                )
+              }
+            >
+              {c.checkRequested ? "Cancel price check" : "Check price"}
+            </button>
+          )}
+        </div>
+      ) : null}
       <div className="detail-hero">
         {src ? (
           <button
@@ -113,44 +151,6 @@ function CardDetail({
       {c.note ? (
         <div className="detail-note" style={{ marginTop: 14 }}>
           {c.note}
-        </div>
-      ) : null}
-
-      {canWrite ? (
-        <div className="detail-acts">
-          <button
-            className={"btn" + (got ? "" : " primary")}
-            type="button"
-            onClick={() =>
-              void save(c, { status: got ? "want" : "got" }, got ? "Moved back to want" : "Marked as got")
-            }
-          >
-            {got ? "Move back to want" : "Got it"}
-          </button>
-          <button
-            className="btn"
-            type="button"
-            aria-pressed={c.priority}
-            onClick={() => void save(c, { priority: !c.priority })}
-          >
-            <StarIcon filled={c.priority} style={{ width: 18, height: 18 }} />
-            {c.priority ? "Priority" : "Mark priority"}
-          </button>
-          {got ? null : (
-            <button
-              className="btn wide"
-              type="button"
-              onClick={() =>
-                void save(
-                  c,
-                  { checkRequested: !c.checkRequested },
-                  c.checkRequested ? "Price check cancelled" : "Queued for a price check",
-                )
-              }
-            >
-              {c.checkRequested ? "Cancel price check" : "Check price"}
-            </button>
-          )}
         </div>
       ) : null}
 

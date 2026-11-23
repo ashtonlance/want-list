@@ -99,7 +99,7 @@ body.selecting .toast {
 }
 .lightbox > .cap,
 .lightbox > .close,
-.lightbox > .lb-details,
+.lightbox > .lb-acts,
 .lightbox > .lb-nav {
   transition:
     opacity var(--t) var(--ease),
@@ -108,12 +108,17 @@ body.selecting .toast {
 /* While pulling down, only the photo shows, as in Photos. */
 .lightbox.dragging-y > .cap,
 .lightbox.dragging-y > .close,
-.lightbox.dragging-y > .lb-details,
+.lightbox.dragging-y > .lb-acts,
 .lightbox.dragging-y > .lb-nav {
   opacity: 0;
   transition-duration: var(--t-fast);
 }
-.lightbox .lb-details {
+.lb-acts {
+  display: flex;
+  gap: 10px;
+}
+.lightbox .lb-details,
+.lightbox .lb-action {
   background: #fff;
   color: #111114;
   border: 0;
@@ -121,6 +126,18 @@ body.selecting .toast {
   padding: 10px 22px;
   font: 600 15px/1.2 inherit;
   cursor: pointer;
+}
+/* Beside the action, Details steps back so the action reads first. */
+.lightbox .lb-action + .lb-details {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+.lightbox .lb-action:disabled {
+  cursor: default;
+}
+.lightbox .lb-action.done {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 .lb-nav {
   display: flex;

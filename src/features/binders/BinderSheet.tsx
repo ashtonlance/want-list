@@ -21,7 +21,8 @@ export interface BinderSheetActions {
   open: (sheet: SheetState) => void;
   close: () => void;
   scan: () => void;
-  make: (name: string, pockets: Pockets) => void;
+  /** Makes a binder, filled with a collection's cards when `from` names one. */
+  make: (name: string, pockets: Pockets, from: string) => void;
   importBinder: (b: Binder) => void;
   saveOptions: (b: Binder) => void;
   /** Saves new slots with an Undo toast. */

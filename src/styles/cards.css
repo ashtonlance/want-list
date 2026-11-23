@@ -494,6 +494,9 @@
   white-space: nowrap;
   margin-top: -4px;
 }
+.tile-variant {
+  color: var(--ink-2);
+}
 
 /* ---------- bulk select toolbar ---------- */
 .bulk {
@@ -644,7 +647,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-top: 16px;
+  margin-bottom: 16px;
 }
 .detail-acts .btn {
   min-height: 48px;

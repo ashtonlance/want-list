@@ -3,14 +3,15 @@ import { useMemo, useState } from "react";
 import { prefs } from "~/app/prefs";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
-import { formatMoney } from "~/lib/format";
+import { collectionCards } from "~/features/cards/collections";
+import { formatMoney, plural } from "~/lib/format";
 import { useScrollRestoration } from "~/lib/scroll";
 import { useStore } from "~/lib/store";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { BinderPages } from "./BinderPages";
 import { BinderSheet, type BinderSheetActions } from "./BinderSheet";
 import { newBinderId } from "./parse";
-import { emptySlots, pageCount, slotInfo, swapSlots, withSlot, type SlotInfo } from "./slots";
+import { emptySlots, pageCount, startingSlots, slotInfo, swapSlots, withSlot, type SlotInfo } from "./slots";
 import type { Binder } from "./types";
 import { useAddToList } from "./useAddToList";
 import { setBinderPage, useBinderPage } from "./state";
@@ -55,18 +56,19 @@ export function BindersView() {
     open: openSheet,
     close: closeSheet,
     scan,
-    make(name, pockets) {
+    make(name, pockets, from) {
+      const ids = from ? collectionCards(cards, from).map((c) => c.id) : [];
       const b: Binder = {
         id: newBinderId(),
         name,
         pockets,
-        slots: emptySlots(pockets * 2),
+        slots: startingSlots(pockets, ids),
         createdAt: new Date().toISOString(),
         updatedAt: "",
       };
       closeSheet();
       choose(b.id);
-      void save(b, `Made ${name}`);
+      void save(b, ids.length ? `Made ${name} with ${plural(ids.length, "card")}` : `Made ${name}`);
     },
     importBinder(b) {
       closeSheet();

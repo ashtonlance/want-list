@@ -29,6 +29,7 @@ import { usePhotoGrid } from "~/ui/Lightbox";
 import { exploreLightbox } from "./display";
 import { isPickAdded, pickImage, pickOnList, WILDCARDS, withLive, type PickCard } from "./picks";
 import { ALL_PICKS } from "./search";
+import { byRecentUse, noteCollectionUse, useRecentCollections } from "~/features/cards/recentCollections";
 import {
   CAP_OPTIONS,
   DEFAULT_PICKS_UI,
@@ -64,7 +65,7 @@ interface CollTab {
 
 const isOpen = (cards: readonly Card[], p: PickCard) => p.status === "new" && !pickOnList(cards, p);
 
-/** One tab per collection with picks: Wildcards first, then the list's collections, then the rest by name. */
+/** One tab per collection with picks: Wildcards first, then the list's collections, then the rest by name. Recently used ones go first on screen. */
 function collTabs(picks: readonly PickCard[], cards: readonly Card[], order: readonly string[]): CollTab[] {
   const m = new Map<string, CollTab>();
   for (const p of picks) {
@@ -115,7 +116,11 @@ export function PicksView() {
 
   const { collections } = useCollections();
   const order = useMemo(() => collections.map((c) => c.name), [collections]);
-  const tabs = useMemo(() => collTabs(picks, cards, order), [picks, cards, order]);
+  const used = useRecentCollections();
+  const tabs = useMemo(
+    () => byRecentUse(collTabs(picks, cards, order), (t) => t.name, used),
+    [picks, cards, order, used],
+  );
   const openAll = useMemo(
     () => new Set(picks.filter((p) => isOpen(cards, p)).map(pickKey)).size,
     [picks, cards],
@@ -236,8 +241,10 @@ export function PicksView() {
       </div>
     );
 
-  const showTab = (next: string) =>
+  const showTab = (next: string) => {
+    if (next !== ALL_PICKS) noteCollectionUse(next);
     void navigate({ search: (prev) => ({ ...prev, coll: next }), replace: true });
+  };
   const clearArtist = () =>
     void navigate({ search: (prev) => ({ ...prev, artist: undefined }), replace: true });
 

@@ -84,3 +84,7 @@ export function fillEmpty(slots: Slots, pockets: number, ids: readonly string[])
   while (rest.length) out.push(...emptySlots(pockets).map(() => rest.shift() ?? null));
   return out;
 }
+
+/** A new binder's pockets: two empty pages, or the given list cards in order on as many pages as they need. */
+export const startingSlots = (pockets: number, ids: readonly string[] = []): Slots =>
+  fillEmpty(emptySlots(pockets * 2), pockets, ids);

@@ -31,6 +31,16 @@ export interface LightboxItem {
   caption: string;
   /** Opens the card's sheet, from the Details button under the photo. */
   onDetails?: () => void;
+  /** One quick action beside Details, like marking the card as got. */
+  action?: LightboxAction;
+}
+
+export interface LightboxAction {
+  label: string;
+  /** What the button reads once the action has worked. */
+  doneLabel: string;
+  /** Resolves true when it worked. */
+  run: () => Promise<boolean>;
 }
 
 interface LightboxApi {
@@ -79,6 +89,9 @@ interface Opened {
  */
 export function LightboxProvider({ children }: { children: ReactNode }) {
   const [opened, setOpened] = useState<Opened | null>(null);
+  // Photos whose action already ran in this viewing, by picture, so stepping back shows it done.
+  const [done, setDone] = useState<ReadonlySet<string>>(() => new Set());
+  const [busy, setBusy] = useState(false);
   const drag = useRef<Drag | null>(null);
   // A drag ends with a click on the backdrop; this keeps that click from closing the photo.
   const dragged = useRef(false);
@@ -134,6 +147,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
   const open = useCallback(
     (next: LightboxItem) => {
       lastFocus.current = document.activeElement;
+      setDone(new Set());
       const items = sequenceRef.current;
       const index = items.findIndex((i) => sameCard(i, next));
       morph({
@@ -269,25 +283,41 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
             <b>{item.name}</b>
             {item.caption}
           </div>
-          {item.onDetails ? (
-            <button
-              className="btn lb-details"
-              type="button"
-              onClick={() => {
-                const details = item.onDetails;
-                // The picture flies into the card's sheet as it opens.
-                morph({
-                  from: photo.current,
-                  update: () => {
-                    setOpened(null);
-                    details?.();
-                  },
-                  to: sheetPicture,
-                });
-              }}
-            >
-              Details
-            </button>
+          {item.onDetails || item.action ? (
+            <div className="lb-acts">
+              {item.action ? (
+                <ActionButton
+                  action={item.action}
+                  done={done.has(item.src)}
+                  busy={busy}
+                  onRun={async (action) => {
+                    setBusy(true);
+                    const ok = await action.run().finally(() => setBusy(false));
+                    if (ok) setDone((d) => new Set(d).add(item.src));
+                  }}
+                />
+              ) : null}
+              {item.onDetails ? (
+                <button
+                  className="btn lb-details"
+                  type="button"
+                  onClick={() => {
+                    const details = item.onDetails;
+                    // The picture flies into the card's sheet as it opens.
+                    morph({
+                      from: photo.current,
+                      update: () => {
+                        setOpened(null);
+                        details?.();
+                      },
+                      to: sheetPicture,
+                    });
+                  }}
+                >
+                  Details
+                </button>
+              ) : null}
+            </div>
           ) : null}
           {count > 1 ? (
             <div className="lb-nav">
@@ -315,6 +345,26 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
         </div>
       ) : null}
     </LightboxContext>
+  );
+}
+
+interface ActionButtonProps {
+  action: LightboxAction;
+  done: boolean;
+  busy: boolean;
+  onRun: (action: LightboxAction) => Promise<void>;
+}
+
+function ActionButton({ action, done, busy, onRun }: ActionButtonProps) {
+  return (
+    <button
+      className={"btn lb-action" + (done ? " done" : "")}
+      type="button"
+      disabled={done || busy}
+      onClick={() => void onRun(action)}
+    >
+      {done ? action.doneLabel : action.label}
+    </button>
   );
 }
 

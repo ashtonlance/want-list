@@ -1,5 +1,7 @@
+import { useMemo } from "react";
 import type { CollectionSummary } from "~/features/cards/collections";
 import { useOverlayNav } from "~/app/overlayNav";
+import { byRecentUse, useRecentCollections } from "~/features/cards/recentCollections";
 import { patchListUi, showCollection } from "./state";
 
 interface TabProps {
@@ -28,6 +30,8 @@ interface Props {
 
 export function CollectionTabs({ colls, current, cardCount, canWrite }: Props) {
   const { open } = useOverlayNav();
+  const used = useRecentCollections();
+  const ordered = useMemo(() => byRecentUse(colls, (c) => c.name, used), [colls, used]);
   return (
     <div className="colltabs">
       <Tab
@@ -36,7 +40,7 @@ export function CollectionTabs({ colls, current, cardCount, canWrite }: Props) {
         pressed={!current}
         onClick={() => showCollection(null)}
       />
-      {colls.map((c) => (
+      {ordered.map((c) => (
         <Tab
           key={c.name}
           label={c.name}

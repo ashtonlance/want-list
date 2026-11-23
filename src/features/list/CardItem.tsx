@@ -29,6 +29,7 @@ export function CardTile({ card: c, selecting, selected, onActivate, onPhoto }: 
   const sp = shortPrice(c);
   const label =
     c.name +
+    (c.variant ? `, ${c.variant}` : "") +
     (c.set ? `, ${c.set}` : "") +
     (got ? ", got it" : sp?.amt ? `, ${sp.amt}` : "") +
     (selecting ? (selected ? ", selected" : ", not selected") : "");
@@ -73,6 +74,8 @@ export function CardTile({ card: c, selecting, selected, onActivate, onPhoto }: 
       <div className="tile-sub">
         {[c.lang === "JP" ? "JP" : "", c.set, c.number ? `#${c.number}` : ""].filter(Boolean).join(" · ")}
       </div>
+      {/* Two printings of one card look alike in the grid; this tells them apart. */}
+      {c.variant ? <div className="tile-sub tile-variant">{c.variant}</div> : null}
     </article>
   );
 }

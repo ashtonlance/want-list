@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { prefs } from "~/app/prefs";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
-import { useCards } from "~/features/cards/api";
+import { useCards, useCardWrites } from "~/features/cards/api";
 import { visibleCards } from "~/features/cards/filters";
 import type { Card } from "~/features/cards/types";
 import { useEnterAnimation } from "~/lib/motion";
@@ -10,6 +10,7 @@ import { useScrollRestoration } from "~/lib/scroll";
 import { useStore } from "~/lib/store";
 import { cardImageSrc } from "~/features/cards/image";
 import { lightboxItem } from "~/features/cards/lightboxItem";
+import { isGot } from "~/features/cards/pricing";
 import { usePhotoGrid } from "~/ui/Lightbox";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { BulkBar } from "./BulkBar";
@@ -70,12 +71,23 @@ export function ListView() {
     [ui.selecting, open],
   );
 
+  const { save } = useCardWrites();
   const toPhoto = useCallback(
     (c: Card) => {
       const src = cardImageSrc(c);
-      return src ? { ...lightboxItem(c, src), onDetails: () => open({ card: c.id }) } : null;
+      if (!src) return null;
+      const item = { ...lightboxItem(c, src), onDetails: () => open({ card: c.id }) };
+      if (!canWrite || isGot(c)) return item;
+      return {
+        ...item,
+        action: {
+          label: "Got it",
+          doneLabel: "Got it ✓",
+          run: () => save(c, { status: "got", checkRequested: false }, "Marked as got"),
+        },
+      };
     },
-    [open],
+    [open, canWrite, save],
   );
   const photoOf = usePhotoGrid(binder ? NO_CARDS : rows, toPhoto);
 

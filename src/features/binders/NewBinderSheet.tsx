@@ -1,11 +1,13 @@
-import { useState, type SubmitEvent } from "react";
+import { useMemo, useState, type SubmitEvent } from "react";
 import { POCKETS, type Pockets } from "~/app/prefs";
-import { cleanName } from "~/lib/format";
+import { useCollections } from "~/features/cards/useCollections";
+import { cleanName, plural } from "~/lib/format";
 import { Select } from "~/ui/Select";
 
 interface NewBinderSheetProps {
   canScan: boolean;
-  onMake: (name: string, pockets: Pockets) => void;
+  /** `from` is a collection whose cards fill the pockets in collection order, or "" for empty pages. */
+  onMake: (name: string, pockets: Pockets, from: string) => void;
   onImport: () => void;
   onScan: () => void;
 }
@@ -15,10 +17,26 @@ const POCKET_OPTIONS = POCKETS.map((n) => ({ value: n, label: `${n} pockets` }))
 export function NewBinderSheet({ canScan, onMake, onImport, onScan }: NewBinderSheetProps) {
   const [name, setName] = useState("");
   const [pockets, setPockets] = useState<Pockets>(9);
+  const [from, setFrom] = useState("");
+  const { collections } = useCollections();
+  const fromOptions = useMemo(
+    () => [
+      { value: "", label: "Empty pages" },
+      ...collections
+        .filter((c) => c.total > 0)
+        .map((c) => ({ value: c.name, label: `${c.name} · ${plural(c.total, "card")}` })),
+    ],
+    [collections],
+  );
+  const pickFrom = (coll: string) => {
+    // Name it after the collection unless a name of their own is already typed.
+    if (!cleanName(name) || name === from) setName(coll);
+    setFrom(coll);
+  };
   const submit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const n = cleanName(name);
-    if (n) onMake(n, pockets);
+    if (n) onMake(n, pockets, from);
   };
   return (
     <form className="sheet-form" autoComplete="off" onSubmit={submit}>
@@ -32,6 +50,10 @@ export function NewBinderSheet({ canScan, onMake, onImport, onScan }: NewBinderS
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
+      </label>
+      <label>
+        Start with
+        <Select value={from} options={fromOptions} onChange={pickFrom} />
       </label>
       <label>
         Pockets per page
