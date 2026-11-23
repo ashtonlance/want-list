@@ -7,9 +7,12 @@ import type { CardFeatures } from "./features";
  * Two kinds of feature:
  * - Identity (the Pokémon, the artist): any match counts, more matches count more.
  *   affinity = (yes - no) / (yes + no + 1.5), so one add is 0.4, three adds 0.67, one pass -0.4.
+ *   A pass counts a quarter as much against a Pokémon or artist the collection already has, and never
+ *   enough to turn it negative: passing on Mew cards in a Mew collection says something about those cards
+ *   (their look, era or price, which still count), not about Mew.
  * - Distribution (rarity tier, era, price band): how typical the value is of the adds, relative to the
- *   most typical one, minus how typical it is of the passes. Neighbouring tiers, eras and price bands
- *   count half, so one band over still scores.
+ *   most typical one, less however much more typical it is of the passes (weighted by the passes' share).
+ *   Neighbouring tiers, eras and price bands count half, so one band over still scores.
  */
 export type IdentityFamily = "species" | "artist";
 export type DistributionFamily = "tier" | "era" | "band";
@@ -37,6 +40,8 @@ export interface Taste {
   /** Plain counts of the listed and added cards' artists and Pokémon, for the reason line. */
   artistCount: Map<string, number>;
   speciesCount: Map<string, number>;
+  /** How many listed and added cards there are. */
+  kept: number;
   /** The highest price among the positive examples, or 0. */
   maxPrice: number;
   /** Share of the positive examples that are commons or uncommons (tier 0). */
@@ -56,6 +61,7 @@ export function buildTaste(examples: readonly Example[]): Taste {
     no: 0,
     artistCount: new Map(),
     speciesCount: new Map(),
+    kept: 0,
     maxPrice: 0,
     commonShare: 0,
   };
@@ -76,6 +82,7 @@ export function buildTaste(examples: readonly Example[]): Taste {
     }
     // Only cards he listed or added are counted by name; a suggestion's weight is below 1.
     if (weight >= 1) {
+      t.kept++;
       if (f.artist) t.artistCount.set(f.artist, (t.artistCount.get(f.artist) ?? 0) + 1);
       for (const s of new Set(f.species)) t.speciesCount.set(s, (t.speciesCount.get(s) ?? 0) + 1);
     }
@@ -89,13 +96,19 @@ export function buildTaste(examples: readonly Example[]): Taste {
 }
 
 const SMOOTH = 1.5;
+/** How much a pass counts against a Pokémon or artist that cards he kept also have... */
+const PASS_WHEN_KEPT = 0.25;
+/** ...and at most, as a share of those cards, so passes can lower a collection's own Pokémon but never turn it against it. */
+const KEPT_FLOOR = 0.5;
 
 /** -1 to 1: how much he likes cards with this Pokémon or artist. */
 export function identityAffinity(t: Taste, family: IdentityFamily, value: string): number {
   if (!value) return 0;
   const c = t.identity[family];
   const yes = c.yes.get(value) ?? 0;
-  const no = c.no.get(value) ?? 0;
+  const passes = c.no.get(value) ?? 0;
+  const kept = (family === "species" ? t.speciesCount : t.artistCount).get(value) ?? 0;
+  const no = kept > 0 ? Math.min(passes * PASS_WHEN_KEPT, yes * KEPT_FLOOR) : passes;
   return (yes - no) / (yes + no + SMOOTH);
 }
 
@@ -110,12 +123,15 @@ function topOf(m: Map<string | number, number>): number {
   return top;
 }
 
-/** -1 to 1: how typical this tier, era or price band is of what he adds, less what he passes on. */
+/** -1 to 1: how typical this tier, era or price band is of what he adds, less what he passes on instead. */
 export function distributionAffinity(t: Taste, family: DistributionFamily, value: number): number {
   if (value < 0) return 0;
   const c = t.distribution[family];
-  const against = t.no ? t.no / (t.no + t.yes) : 0;
   const yes = c.topYes ? smoothed(c.yes, value) / c.topYes : 0;
   const no = c.topNo ? smoothed(c.no, value) / c.topNo : 0;
-  return yes - against * no;
+  // Passes count only where they're more typical than the adds (passing on cards of the collection's own
+  // rarity or era says nothing against it), and by their share of the examples, so one pass among many
+  // adds barely counts.
+  const against = t.no / (t.no + t.yes);
+  return yes - against * Math.max(0, no - yes);
 }

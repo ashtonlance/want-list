@@ -32,6 +32,8 @@ const COMMON_SHARE = 0.2;
 const ART_ALONE = 0.95;
 /** Points an artist, Pokémon or look must add to be named as the reason over rarity or era. */
 const SPECIFIC_REASON = 0.75;
+/** A Pokémon or artist on at least this share of a collection's cards may fill more than the usual share of picks. */
+const MOSTLY = 0.3;
 /** At most this many cards' fingerprints stand for a collection, newest first. */
 const MAX_SEEDS = 16;
 
@@ -41,6 +43,11 @@ export interface Scored {
   f: CardFeatures;
   score: number;
   kind: ReasonKind;
+  /**
+   * Caps the refill can lift: a Pokémon or artist making up a good part of the collection (MOSTLY) may
+   * fill more than the usual share of picks.
+   */
+  uncapped: { species: boolean; artist: boolean };
   /** The reason line, e.g. "Art by Mitsuhiro Arita, like 3 cards in Spooky"; worded only for cards that become picks. */
   explain: () => string;
 }
@@ -228,7 +235,14 @@ function scoreCard(
     specific ??
     "plain";
   const seed = art?.seed;
-  return { f, score, kind, explain: () => reasonFor(kind, f, t, coll, speciesName, seed) };
+  const mostly = (n: number | undefined) => (n ?? 0) >= t.kept * MOSTLY;
+  const uncapped = {
+    // The Pokémon the refill's cap counts the card under.
+    species: mostly(t.speciesCount.get(f.species[0] ?? "")),
+    // One card by an artist isn't a theme yet.
+    artist: t.kept >= 2 && mostly(t.artistCount.get(f.artist)),
+  };
+  return { f, score, kind, uncapped, explain: () => reasonFor(kind, f, t, coll, speciesName, seed) };
 }
 
 function reasonFor(
@@ -271,6 +285,7 @@ export interface WildInput {
   day: string;
 }
 
+const CAPPED = { species: false, artist: false } as const;
 const WILD_REASON = `A fun full art card under $${String(WILD_PRICE[1])}`;
 
 /**
@@ -301,12 +316,13 @@ export function rankWildcards({ liked, passed, features, collected, art, rows, d
         f,
         score,
         kind: "artist",
+        uncapped: CAPPED,
         explain: () => `Art by ${f.artist}, who drew ${cardsWord(drew)} you collect`,
       });
     } else if (seed) {
-      out.push({ f, score, kind: "art", explain: () => `Looks like your ${seed.name}` });
+      out.push({ f, score, kind: "art", uncapped: CAPPED, explain: () => `Looks like your ${seed.name}` });
     } else {
-      out.push({ f, score, kind: "plain", explain: () => WILD_REASON });
+      out.push({ f, score, kind: "plain", uncapped: CAPPED, explain: () => WILD_REASON });
     }
   }
   return out.sort((a, b) => b.score - a.score);

@@ -82,7 +82,10 @@ describe("refill ranking", () => {
   });
 
   it("learns from passes: passing on one artist's card ranks their other cards lower", () => {
-    const before = spooky(refillPicks({ ...base, cards: listed, picks: [] })).map((p) => p.tcgProduct);
+    // Leaving out the passed card itself, which can't come back.
+    const before = spooky(refillPicks({ ...base, cards: listed, picks: [] }))
+      .map((p) => p.tcgProduct)
+      .filter((id) => id !== 23);
     const after = spooky(refillPicks({ ...base, cards: listed, picks: [pick({})] })).map((p) => p.tcgProduct);
     expect(after).not.toContain(23); // the passed card itself
     const at = (ids: (number | null)[]) => (ids.includes(25) ? ids.indexOf(25) : Infinity);
@@ -135,6 +138,32 @@ describe("refill ranking", () => {
     const at = (ps: PickCard[]) => ps.findIndex((p) => p.tcgProduct === 25);
     expect(at(withArt)).toBeLessThan(at(plain) === -1 ? Infinity : at(plain));
     expect(withArt.find((p) => p.tcgProduct === 25)?.reason).toMatch(/^Looks like your Gengar|^Art by/);
+  });
+
+  it("keeps filling a one-Pokémon collection, even after passes on that Pokémon", () => {
+    const mews = parseCatalog({
+      asOf: cat.asOf,
+      sets: [["Mask Set", 0, SV]],
+      rarities: ["Common", "Illustration Rare"],
+      artists: ["Aya", "Kai", "Rin", "Sho", "Tomo"],
+      cards: Array.from({ length: 20 }, (_, i) => [
+        100 + i,
+        i % 2 ? "Mew ex" : "Mew",
+        0,
+        String(100 + i),
+        1,
+        10 + i,
+        i % 5,
+      ]),
+    });
+    const mine = [0].map((i) =>
+      card({ id: String(i), name: "Mew", number: String(100 + i), collections: ["Mew"] }),
+    );
+    const passes = [2, 3, 4, 5, 6, 7, 8, 9, 10].map((i) =>
+      pick({ id: String(i), name: "Mew", number: String(100 + i), tcgProduct: 100 + i, coll: "Mew" }),
+    );
+    const out = refillPicks({ ...base, catalog: mews, collections: ["Mew"], cards: mine, picks: passes });
+    expect(out.filter((p) => p.coll === "Mew")).toHaveLength(8);
   });
 
   it("counts a pick he added once, as the card it put on the list", () => {

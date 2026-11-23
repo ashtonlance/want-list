@@ -10,9 +10,13 @@ import type { Example } from "./recs/taste";
 /** Every collection keeps at least this many picks waiting for an answer. */
 export const MIN_OPEN = 8;
 
-/** At most this many refill picks of one Pokémon, and of one artist, per collection. */
+/**
+ * At most this many refill picks of one Pokémon, and of one artist, per collection, unless the collection
+ * is about that Pokémon or mostly that artist's work.
+ */
 const PER_SPECIES = 2;
 const PER_ARTIST = 3;
+const UNCAPPED = { species: true, artist: true } as const;
 
 /** How much each kind of example counts. Claude's own open suggestions only hint, so a new collection has something. */
 const LISTED = 1;
@@ -295,11 +299,22 @@ export function refillPicks(input: RefillInput): PickCard[] {
       need--;
     };
 
-    const fits = (f: CardFeatures) =>
+    // Kept picks were capped when they were first chosen, so only ranked picks are capped here.
+    // Open picks already saved count toward the caps too.
+    for (const p of picks) {
+      if (p.coll !== coll || p.status !== "new") continue;
+      const f = ofPick(p);
+      if (!f) continue;
+      const sp = f.species[0] ?? f.name;
+      perSpecies.set(sp, (perSpecies.get(sp) ?? 0) + 1);
+      if (f.artist) perArtist.set(f.artist, (perArtist.get(f.artist) ?? 0) + 1);
+    }
+
+    const fits = (f: CardFeatures, uncapped: Scored["uncapped"] = UNCAPPED) =>
       unseen(f.c.pid) &&
       (reserved.get(f.c.pid) ?? coll) === coll &&
-      (perSpecies.get(f.species[0] ?? f.name) ?? 0) < PER_SPECIES &&
-      (!f.artist || (perArtist.get(f.artist) ?? 0) < PER_ARTIST);
+      (uncapped.species || (perSpecies.get(f.species[0] ?? f.name) ?? 0) < PER_SPECIES) &&
+      (uncapped.artist || !f.artist || (perArtist.get(f.artist) ?? 0) < PER_ARTIST);
 
     for (const k of keep) {
       if (need <= 0) break;
@@ -312,7 +327,7 @@ export function refillPicks(input: RefillInput): PickCard[] {
 
     for (const s of rankedFor(coll, art)) {
       if (need <= 0) break;
-      if (fits(s.f)) place(s.f, s.explain());
+      if (fits(s.f, s.uncapped)) place(s.f, s.explain());
     }
   }
   return out;
