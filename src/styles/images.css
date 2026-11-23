@@ -6,8 +6,11 @@
   background-color: var(--sunk);
 }
 /* The shimmer's highlight is a layer of its own that slides across, so it moves on the GPU instead of
-   repainting every loading frame on every frame of a scroll. Each frame clips it (overflow: hidden). */
-:is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img, .cmp-img):has(.fade-img:not(.ready))::after {
+   repainting every loading frame on every frame of a scroll. Each frame clips it (overflow: hidden).
+   It's ::before so badges drawn inside the frame (JP, price) stay on top of it. */
+:is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img, .cmp-img):has(
+    .fade-img:not(.ready)
+  )::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -52,7 +55,7 @@
 @media (prefers-reduced-motion: reduce) {
   :is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img, .cmp-img):has(
       .fade-img:not(.ready)
-    )::after,
+    )::before,
   .lb-photo::before {
     animation: none;
   }

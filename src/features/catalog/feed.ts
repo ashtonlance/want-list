@@ -1,4 +1,4 @@
-import { numberSortKey } from "~/lib/format";
+import { numberSortKey, today } from "~/lib/format";
 import { realPrice, type Catalog } from "./catalog";
 import { inEra, type Era } from "./era";
 import { textMatcher } from "~/lib/textSearch";
@@ -142,6 +142,8 @@ export function feedRows(cat: Catalog, options: FeedOptions): readonly number[] 
     options.look ?? "any",
     options.era ?? "any",
     options.q ?? "",
+    // "Not out yet" depends on the day, so a list kept from yesterday isn't reused.
+    options.era === "soon" ? today() : "",
   ]);
   let feeds = feedCache.get(cat);
   if (!feeds) feedCache.set(cat, (feeds = new Map<string, readonly number[]>()));

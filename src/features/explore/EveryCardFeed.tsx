@@ -98,7 +98,7 @@ export function EveryCardFeed({ cat, rows, lang, scrollKey, q = "", filtered = f
   return (
     <>
       {total ? (
-        <VirtualGrid ref={grid} className="ex-grid" items={rows} renderItem={tile} cacheKey={scrollKey} />
+        <VirtualGrid ref={grid} className="ex-grid" items={rows} renderItem={tile} scrollKey={scrollKey} />
       ) : (
         <Empty>
           {q

@@ -19,9 +19,37 @@ interface Spot {
   y: number;
   /** How many rows an endless list had loaded, so it can load as many again before restoring. */
   shown?: number;
+  /** The anchor's place in a list that only draws the rows near the screen (see `findRowsWith`). */
+  item?: number;
 }
 
 const isSpot = (v: unknown): v is Spot => isRecord(v) && typeof v.y === "number";
+
+/**
+ * Lists that only draw the rows near the screen (ui/VirtualGrid), by scroll key: where the row holding
+ * an item starts on the page, so an anchor that isn't drawn yet can be scrolled to and then found.
+ * Such a list marks each row with `data-item`, the place of the row's first item.
+ */
+const rowFinders = new Map<string, (item: number) => number | undefined>();
+
+/** Tells restoration where the row holding each of `key`'s items starts; returns the undo. */
+export function findRowsWith(key: string, find: (item: number) => number | undefined): () => void {
+  rowFinders.set(key, find);
+  return () => {
+    if (rowFinders.get(key) === find) rowFinders.delete(key);
+  };
+}
+
+/** An anchor's place in a list marked with `data-item` rows, or undefined in any other list. */
+function itemOf(el: HTMLElement): number | undefined {
+  const row = el.closest<HTMLElement>("[data-item]");
+  let tile: Element = el;
+  while (row && tile.parentElement && tile.parentElement !== row) tile = tile.parentElement;
+  const first = Number(row?.dataset.item);
+  return row && Number.isInteger(first)
+    ? first + Array.prototype.indexOf.call(row.children, tile)
+    : undefined;
+}
 
 const STORE_KEY = "wl-scroll";
 /** How long scrolling has to pause before the position is saved. */
@@ -78,7 +106,10 @@ function currentSpot(shown: number | undefined): Spot {
   const y = window.scrollY;
   for (const el of document.querySelectorAll<HTMLElement>("[data-sr]")) {
     const r = el.getBoundingClientRect();
-    if (r.bottom > top) return { id: el.dataset.sr, off: r.top, y, shown };
+    if (r.bottom > top) {
+      const item = itemOf(el);
+      return { id: el.dataset.sr, off: r.top, y, shown, ...(item === undefined ? {} : { item }) };
+    }
   }
   return { y, shown };
 }
@@ -128,7 +159,13 @@ export function useScrollRestoration(key: string, ready: boolean, shown?: number
         return;
       }
       const el = spot.id ? findAnchor(spot.id) : null;
-      const target = el ? window.scrollY + el.getBoundingClientRect().top - (spot.off ?? 0) : spot.y;
+      // An anchor not drawn yet: head for its row, where it'll be drawn and found on a later try.
+      const rowTop = !el && spot.item !== undefined ? rowFinders.get(key)?.(spot.item) : undefined;
+      const target = el
+        ? window.scrollY + el.getBoundingClientRect().top - (spot.off ?? 0)
+        : rowTop !== undefined
+          ? rowTop - (spot.off ?? 0)
+          : spot.y;
       const reachable = document.documentElement.scrollHeight - window.innerHeight >= target - 1;
       if (reachable || tries > 120) {
         window.scrollTo(0, Math.max(0, target));
