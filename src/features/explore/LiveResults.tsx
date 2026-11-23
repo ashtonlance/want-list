@@ -8,7 +8,7 @@ import { useEnterAnimation } from "~/lib/motion";
 import { savedRowCount, useScrollRestoration } from "~/lib/scroll";
 import { usePhotoGrid } from "~/ui/Lightbox";
 import { SkeletonGrid } from "~/ui/Skeleton";
-import { catalogLightbox, exploreLightbox } from "./display";
+import { catalogLightbox, exploreLightbox, listMark } from "./display";
 import { LoadError } from "~/ui/LoadError";
 import { AddedMark, ExCard, PriceTag, QuickWant } from "./ExCard";
 import { useLiveCards, useTdSetCards, useTdSets } from "./live";
@@ -60,7 +60,12 @@ export function LiveResults({ set }: { set: string }) {
       if (!src) return null;
       // Until its details arrive the card can't be matched to the list or added, so it shows plain.
       const item = d
-        ? catalogLightbox(d, src, onList(d), canWrite ? () => fromLive(d, "want", addTo) : null)
+        ? catalogLightbox(
+            d,
+            src,
+            listMark(onList(d)),
+            canWrite ? { coll: addTo, run: () => fromLive(d, "want", addTo) } : null,
+          )
         : exploreLightbox({ name: b.name, set: "", number: b.localId, market: null }, src);
       return { ...item, onDetails: () => open({ live: b.id }) };
     },

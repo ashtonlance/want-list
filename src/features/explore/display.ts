@@ -27,18 +27,19 @@ export function exploreLightbox(
 }
 
 /**
- * The photo of a catalog card in a swipeable grid: marked when it's on the list already, otherwise
- * with a Want it button when `want` is given (signed in as an editor).
+ * The photo of a catalog card in a grid: tagged with `mark` when it's on the list already, otherwise
+ * with a Want it button when `want` is given (signed in as an editor) that adds it to `want.coll`.
  */
 export function catalogLightbox(
   c: { id: string; name: string; set: string; number: string; market: number | null },
   src: string,
-  have: Card | null,
-  want: (() => Promise<boolean>) | null,
+  mark: string | undefined,
+  want: { coll: string; run: () => Promise<boolean> } | null,
 ): LightboxItem {
-  const item = exploreLightbox(c, src, listMark(have));
-  if (have || !want) return item;
-  return { ...item, action: { key: c.id, label: "Want it", doneLabel: "On your list", run: want } };
+  const item = exploreLightbox(c, src, mark);
+  if (mark || !want) return item;
+  const { title } = quickWantLabels(c.name, want.coll);
+  return { ...item, action: { key: c.id, label: title, doneLabel: "On your list", run: want.run } };
 }
 
 /** "Want Pikachu, add to Kanto" and "Want it (adds to Kanto)", for a quick add button. */

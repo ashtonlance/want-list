@@ -11,7 +11,7 @@ import { Sheet, SheetHead } from "~/ui/Sheet";
 import { useCloseWhen } from "~/ui/useCloseWhen";
 import { exploreLightbox } from "./display";
 import { useLiveCard } from "./live";
-import { isPickAdded, pickImage, WILDCARDS, withLive, type PickCard, type PickStatus } from "./picks";
+import { pickImage, pickMark, WILDCARDS, withLive, type PickCard, type PickStatus } from "./picks";
 import { ALL_PICKS } from "./search";
 import { ShopLinks } from "./ShopLinks";
 import { usePickStatus } from "./usePickStatus";
@@ -40,7 +40,7 @@ function PickDetail({ pick }: { pick: PickCard }) {
   const navigate = useNavigate();
   const src = pickImage(p, live ?? undefined);
   const why = p.reason.replace(` · ${p.rarity}`, "");
-  const mark = isPickAdded(cards, p) ? (p.status === "owned" ? "Got it" : "On your list") : undefined;
+  const mark = pickMark(cards, p);
 
   // Replacing the sheet's own history entry, so going back from the artist's picks skips the sheet.
   const showArtist = (artist: string) =>

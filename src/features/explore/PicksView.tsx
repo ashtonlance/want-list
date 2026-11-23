@@ -26,8 +26,8 @@ import { useCatalog } from "~/features/catalog/catalog";
 import { sanitizedDates } from "~/features/catalog/feed";
 import { fullArtCards, isFullArt } from "~/features/catalog/rarity";
 import { usePhotoGrid } from "~/ui/Lightbox";
-import { exploreLightbox } from "./display";
-import { isPickAdded, pickImage, pickOnList, WILDCARDS, withLive, type PickCard } from "./picks";
+import { catalogLightbox } from "./display";
+import { isPickAdded, pickImage, pickMark, pickOnList, WILDCARDS, withLive, type PickCard } from "./picks";
 import { ALL_PICKS } from "./search";
 import { byRecentUse, noteCollectionUse, useRecentCollections } from "~/features/cards/recentCollections";
 import {
@@ -64,6 +64,8 @@ interface CollTab {
   open: number;
 }
 
+/** The collection a quick Want adds a pick to: its own, or none for a wildcard. */
+const quickCollOf = (p: PickCard) => (p.coll === WILDCARDS ? "" : p.coll);
 const isOpen = (cards: readonly Card[], p: PickCard) => p.status === "new" && !pickOnList(cards, p);
 
 /** One tab per collection with picks: Wildcards first, then the list's collections, then the rest by name. Recently used ones go first on screen. */
@@ -216,9 +218,12 @@ export function PicksView() {
   const toPhoto = useCallback(
     (p: PickCard) => {
       const src = pickImage(p, p.tcgdexId ? live.map.get(p.tcgdexId) : undefined);
-      return src ? { ...exploreLightbox(p, src), onDetails: () => open({ pick: p.id }) } : null;
+      if (!src) return null;
+      const coll = quickCollOf(p);
+      const want = canWrite && p.status !== "passed" ? { coll, run: () => fromPick(p, "want", coll) } : null;
+      return { ...catalogLightbox(p, src, pickMark(cards, p), want), onDetails: () => open({ pick: p.id }) };
     },
-    [live.map, open],
+    [live.map, cards, canWrite, fromPick, open],
   );
   const photoOf = usePhotoGrid(shown, toPhoto);
 
@@ -402,8 +407,8 @@ export function PicksView() {
       ) : null}
       <div className="ex-grid" ref={grid}>
         {shown.map((p, i) => {
-          const already = isPickAdded(cards, p);
-          const quickColl = p.coll === WILDCARDS ? "" : p.coll;
+          const mark = pickMark(cards, p);
+          const quickColl = quickCollOf(p);
           return (
             <Fragment key={p.id}>
               {i === earlierAt ? <div className="ex-sep">Earlier picks</div> : null}
@@ -421,8 +426,8 @@ export function PicksView() {
                 line={
                   <>
                     <PriceTag market={p.market} prefix="~" />
-                    {already ? (
-                      <AddedMark have={p.status === "owned"} />
+                    {mark ? (
+                      <AddedMark have={mark === "Got it"} />
                     ) : canWrite && p.status !== "passed" ? (
                       <span className="ex-acts">
                         <PassButton name={p.name} onPass={() => pass(p)} />

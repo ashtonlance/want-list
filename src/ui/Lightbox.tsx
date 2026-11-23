@@ -300,9 +300,10 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
                   busy={busy.has(item.action.key)}
                   onRun={async ({ key, run }) => {
                     setBusy((b) => new Set(b).add(key));
-                    const ok = await run().finally(() =>
-                      setBusy((b) => new Set([...b].filter((k) => k !== key))),
-                    );
+                    // A run that throws counts as one that didn't work.
+                    const ok = await run()
+                      .catch(() => false)
+                      .finally(() => setBusy((b) => new Set([...b].filter((k) => k !== key))));
                     if (ok) setDone((d) => new Set(d).add(key));
                   }}
                 />
