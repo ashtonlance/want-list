@@ -25,6 +25,8 @@ import { useProgressiveSrc } from "./useProgressiveSrc";
 import { useOverlay } from "./overlay";
 
 export interface LightboxItem {
+  /** Tells apart two cards that share a picture, like two printings. */
+  id?: string;
   src: string;
   name: string;
   /** The line under the name: set, number, price. */
@@ -72,7 +74,8 @@ interface Drag {
   vy: number;
 }
 
-const sameCard = (a: LightboxItem, b: LightboxItem) => bigImage(a.src) === bigImage(b.src);
+const sameCard = (a: LightboxItem, b: LightboxItem) =>
+  a.id && b.id ? a.id === b.id : bigImage(a.src) === bigImage(b.src);
 
 interface Opened {
   items: readonly LightboxItem[];

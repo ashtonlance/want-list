@@ -18,6 +18,8 @@ describe("textMatcher", () => {
     expect(matches("pikachu 49", "pikachu promos sv049")).toBe(true);
     expect(matches("umbreon 5", "umbreon tg05")).toBe(true);
     expect(matches("umbreon 5", "umbreon 15")).toBe(false);
+    expect(matches("pikachu 25", "pikachu 25th anniversary 5")).toBe(false);
+    expect(matches("gengar 2", "gengar pt2 bonds 40")).toBe(false);
   });
   it("matches words inside other words", () => {
     expect(matches("chu", "pikachu 151 173")).toBe(true);

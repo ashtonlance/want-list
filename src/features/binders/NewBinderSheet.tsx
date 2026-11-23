@@ -18,6 +18,8 @@ export function NewBinderSheet({ canScan, onMake, onImport, onScan }: NewBinderS
   const [name, setName] = useState("");
   const [pockets, setPockets] = useState<Pockets>(9);
   const [from, setFrom] = useState("");
+  // True while the name is one this sheet filled in, so picking another collection may replace it.
+  const [autoName, setAutoName] = useState(false);
   const { collections } = useCollections();
   const fromOptions = useMemo(
     () => [
@@ -30,7 +32,10 @@ export function NewBinderSheet({ canScan, onMake, onImport, onScan }: NewBinderS
   );
   const pickFrom = (coll: string) => {
     // Name it after the collection unless a name of their own is already typed.
-    if (coll && (!cleanName(name) || name === from)) setName(coll);
+    if (coll && (!cleanName(name) || autoName)) {
+      setName(coll);
+      setAutoName(true);
+    }
     setFrom(coll);
   };
   const submit = (e: SubmitEvent<HTMLFormElement>) => {
@@ -48,7 +53,10 @@ export function NewBinderSheet({ canScan, onMake, onImport, onScan }: NewBinderS
           required
           autoFocus
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+            setAutoName(false);
+          }}
         />
       </label>
       <label>

@@ -7,6 +7,7 @@ import type { LightboxItem } from "~/ui/Lightbox";
 export function lightboxItem(c: Card, src: string): LightboxItem {
   const price = priceOf(c);
   return {
+    id: c.id,
     src,
     name: c.name + (c.variant ? ` · ${c.variant}` : ""),
     caption: [

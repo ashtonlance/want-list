@@ -27,10 +27,12 @@ interface FeedProps {
   scrollKey: string;
   /** The search these rows answer, or "" for every card. */
   q?: string;
+  /** True when look, rarity, price or era filters narrow the feed. */
+  filtered?: boolean;
 }
 
 /** "Every card", or a search of it: the daily catalog, loading another page as the end comes into view. */
-export function EveryCardFeed({ cat, rows, lang, scrollKey, q = "" }: FeedProps) {
+export function EveryCardFeed({ cat, rows, lang, scrollKey, q = "", filtered = false }: FeedProps) {
   // Coming back to a feed loads as many pages as it had before, so its saved card is there to scroll to.
   const startShown = () => Math.min(Math.max(savedRowCount(scrollKey) ?? PAGE, PAGE), rows.length);
   const [page, setPage] = useState(() => ({ rows, shown: startShown() }));
@@ -114,7 +116,7 @@ export function EveryCardFeed({ cat, rows, lang, scrollKey, q = "" }: FeedProps)
         {total ? null : (
           <div className="empty-state">
             {q
-              ? `No ${lang === "en" ? "English " : lang === "jp" ? "Japanese " : ""}cards match “${q}” with these filters. Check the language and filters under Filter and sort.`
+              ? `No ${lang === "en" ? "English " : lang === "jp" ? "Japanese " : ""}cards match “${q}”.${filtered ? " Try clearing filters under Filter and sort." : lang === "both" ? "" : " Try another language under Filter and sort."}`
               : "No cards match these filters."}
           </div>
         )}

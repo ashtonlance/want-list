@@ -17,11 +17,10 @@ export interface SetRename {
   to: string;
 }
 
+const plain = (s: string): string => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+
 const words = (s: string): string[] =>
-  s
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .toLowerCase()
+  plain(s)
     .split(/[^a-z0-9]+/)
     .filter(Boolean);
 
@@ -29,11 +28,7 @@ const hasAll = (big: readonly string[], small: readonly string[]): boolean =>
   small.length > 0 && small.every((w) => big.includes(w));
 
 /** A catalog card's own name, without a listing's " - 050/088" or " (Cosmos Holo)". */
-const baseName = (n: string): string =>
-  n
-    .replace(/\s+(-\s|\().*$/, "")
-    .trim()
-    .toLowerCase();
+const baseName = (n: string): string => plain(n.replace(/\s+(-\s|\().*$/, "")).trim();
 
 export function setNameFixes(cards: readonly Card[], cat: Catalog): SetRename[] {
   const catalogNames = new Map<string, { jp: boolean; idx: number }>();
@@ -77,5 +72,5 @@ function byName(
   const only = fits.length === 1 ? fits[0] : undefined;
   if (!only) return null;
   const [name, { idx }] = only;
-  return namesIn.get(idx)?.has(card.name.trim().toLowerCase()) ? name : null;
+  return namesIn.get(idx)?.has(baseName(card.name)) ? name : null;
 }

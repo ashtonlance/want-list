@@ -23,6 +23,7 @@ const cat = parseCatalog({
     [31, "Gengar", 2, "18", 0, 1],
     [40, "Tangela", 3, "178", 0, 1],
     [12, "Mewtwo", 0, "150", 0, 1],
+    [13, "Flabebe - 069/165", 0, "69", 0, 1],
     [50, "Charizard", 4, "4", 0, 1],
     [51, "Charizard", 5, "4", 0, 1],
   ],
@@ -69,7 +70,7 @@ describe("setNameFixes", () => {
     expect(
       fixes([
         testCard({ id: "a", name: "Wartortle", set: "Scarlet & Violet 151" }),
-        testCard({ id: "b", name: "Mew", set: "151" }),
+        testCard({ id: "b", name: "Bulbasaur", set: "151" }),
       ]),
     ).toEqual([]);
   });
@@ -81,6 +82,15 @@ describe("setNameFixes", () => {
         testCard({ id: "b", name: "Mew", set: "151" }),
       ]),
     ).toEqual([]);
+  });
+
+  it("matches names without accents or a listing's suffix", () => {
+    expect(
+      fixes([
+        testCard({ id: "a", name: "Wartortle", set: "Scarlet & Violet 151" }),
+        testCard({ id: "b", name: "Flabébé", set: "151" }),
+      ]),
+    ).toEqual([["b", "151", "Scarlet & Violet 151"]]);
   });
 
   it("leaves a set alone when more than one catalog set fits, even if only one is on the list", () => {

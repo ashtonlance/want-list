@@ -381,6 +381,7 @@ export function LiveView() {
             rows={rows}
             lang={ui.lang}
             q={q}
+            filtered={filtered}
             scrollKey={`${FEED_SCROLL}${q ? `q:${q}:` : ""}${ui.lang}:${ui.feedSort}:${ui.feedPrice}:${ui.look}:${ui.era}:${ui.rarity}`}
           />
         </>

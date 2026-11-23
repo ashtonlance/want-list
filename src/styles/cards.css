@@ -191,10 +191,6 @@
 .row:active {
   background: var(--sunk);
 }
-.row.got .thumb,
-.row.got .who {
-  opacity: 0.5;
-}
 .row.sel {
   background: color-mix(in srgb, var(--ink) 6%, var(--surface));
 }
@@ -476,10 +472,6 @@
   font-weight: 600;
   color: var(--muted);
   line-height: 1.25;
-}
-.tile.got .tile-img img {
-  opacity: 0.42;
-  filter: grayscale(0.6);
 }
 .tile-badge {
   position: absolute;
