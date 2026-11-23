@@ -80,7 +80,11 @@ export function useOverlay(open: boolean, onClose: () => void, options: OverlayO
     const entry: Entry = {
       close: () => closeRef.current(),
       el: el?.current ?? null,
-      returnTo: opener?.isConnected ? opener : handoff,
+      // With nothing focused (Safari doesn't focus a tapped button), body is no opener: use the handoff.
+      returnTo:
+        opener?.isConnected && opener !== document.body && opener !== document.documentElement
+          ? opener
+          : handoff,
     };
     stack.push(entry);
     sync();

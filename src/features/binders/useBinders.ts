@@ -137,36 +137,54 @@ export function useBinders(): BindersApi {
           toast(writeFailure(e, "Couldn't save. Check your connection and try again."));
           return false;
         }
+        // The account can't edit after all: switch to this device, and say where the change went.
+        markReadOnly();
         viewOnly.set(true);
         saveLocally(next);
         toast("Saved on this device. Sign in to save to the shared binders.");
       }
       return true;
     },
-    [local, saveLocally, write, toast],
+    [local, saveLocally, write, toast, markReadOnly],
   );
 
   const remove = useCallback<BindersApi["remove"]>(
     async (b) => {
       if (local) {
-        localBinders.set(localBinders.get().filter((x) => x.id !== b.id));
-        if (shared.some((x) => x.id === b.id)) localDeleted.set([...localDeleted.get(), b.id]);
-      } else
-        try {
-          await write.mutateAsync({ kind: "delete", id: b.id });
-        } catch (e) {
-          if (e instanceof WriteError && e.code === "denied")
-            toast("You can view the shared binders but not delete them");
-          else toast(writeFailure(e, "Couldn't delete it. Check your connection and try again."));
+        const keptLocal = localBinders.get();
+        const keptDeleted = localDeleted.get();
+        localBinders.set(keptLocal.filter((x) => x.id !== b.id));
+        if (shared.some((x) => x.id === b.id)) localDeleted.set([...keptDeleted, b.id]);
+        // On this device, undo is putting the lists back as they were.
+        toastUndo(`Deleted ${b.name}. Your cards are untouched.`, () => {
+          localBinders.set(keptLocal);
+          localDeleted.set(keptDeleted);
+          prefs.binder.set(b.id);
+        });
+        return;
+      }
+      try {
+        await write.mutateAsync({ kind: "delete", id: b.id });
+      } catch (e) {
+        if (!(e instanceof WriteError && e.code === "denied")) {
+          toast(writeFailure(e, "Couldn't delete it. Check your connection and try again."));
           return;
         }
+        // A delete that touched nothing reads as refused; it may just be gone already (deleted elsewhere).
+        const fresh = await docs.refetch();
+        if (fresh.data?.some((d) => d.id === b.id) ?? true) {
+          markReadOnly();
+          toast("You can view the shared binders but not delete them");
+          return;
+        }
+      }
       // Saving the same binder again brings it back as it was, and back on screen.
       toastUndo(`Deleted ${b.name}. Your cards are untouched.`, () => {
         prefs.binder.set(b.id);
         void save(b, `Put ${b.name} back`);
       });
     },
-    [local, shared, write, toast, toastUndo, save],
+    [local, shared, write, docs, toast, toastUndo, save, markReadOnly],
   );
 
   const deviceOnly = useMemo(() => {
@@ -212,8 +230,9 @@ export function useBinders(): BindersApi {
 
   return {
     binders,
-    loaded: docs.data !== undefined,
-    failed: docs.isError && docs.data === undefined,
+    // On this device, binders saved here show whether or not the shared ones loaded.
+    loaded: docs.data !== undefined || local,
+    failed: docs.isError && docs.data === undefined && !local,
     retry,
     local,
     save,

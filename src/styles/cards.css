@@ -410,6 +410,16 @@
   position: relative;
   z-index: 2;
 }
+/* A got row's dimmed text makes its own layer, so lift that layer above .card-open and let plain text taps
+   through to it; the chips inside still take their own taps. */
+.row .who {
+  position: relative;
+  z-index: 2;
+  pointer-events: none;
+}
+.row .who .collchip {
+  pointer-events: auto;
+}
 
 /* ---------- card grid ---------- */
 .list.grid {
