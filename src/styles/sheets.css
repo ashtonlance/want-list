@@ -22,6 +22,10 @@
   animation: up var(--t-slow) var(--ease-sheet);
   touch-action: pan-y;
 }
+/* Focused as it opens so the keyboard and screen readers start inside; the dialog itself needs no ring. */
+.sheet-card:focus {
+  outline: none;
+}
 @media (min-width: 700px) {
   .sheet {
     align-items: center;
@@ -30,6 +34,7 @@
   .sheet-card {
     border-radius: 20px;
     max-height: 86vh;
+    max-height: 86dvh;
     padding-bottom: 20px;
   }
 }
@@ -102,8 +107,9 @@
 }
 .sheet-form textarea {
   width: 100%;
+  /* 16px or more, or iOS zooms the page in when the field is focused. */
   font:
-    13px/1.4 ui-monospace,
+    16px/1.35 ui-monospace,
     Menlo,
     monospace;
 }
@@ -168,7 +174,7 @@
 }
 .cm-acts {
   display: flex;
-  gap: 4px;
+  gap: 8px;
 }
 .cm-acts button {
   border: 0;

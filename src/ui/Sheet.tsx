@@ -23,12 +23,15 @@ interface SheetProps {
 /**
  * A bottom sheet: tap the backdrop, press Escape or drag the grip down to close. It slides up as it
  * opens and down as it closes (app/pageTransition.ts), or appears with a card's picture flying in.
+ * While open it holds focus (ui/overlay.ts): a field marked autoFocus gets it, else the sheet itself.
  */
 export function Sheet({ label, onClose, children, contentKey }: SheetProps) {
-  useOverlay(true, onClose);
+  const card = useRef<HTMLDivElement>(null);
+  // Read while rendering, before an autoFocus field inside takes focus.
+  const [opener] = useState(() => document.activeElement);
+  useOverlay(true, onClose, { el: card, returnTo: () => opener });
   // Opened inside a transition: that already animates it, so skip the slide-up. Fixed at mount.
   const [noEnter] = useState(isTransitioning);
-  const card = useRef<HTMLDivElement>(null);
   const drag = useRef<{ y0: number; dy: number } | null>(null);
   useLayoutEffect(() => {
     card.current?.scrollTo({ top: 0 });
@@ -69,6 +72,7 @@ export function Sheet({ label, onClose, children, contentKey }: SheetProps) {
           role="dialog"
           aria-modal="true"
           aria-label={label}
+          tabIndex={-1}
           ref={card}
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}

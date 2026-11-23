@@ -216,8 +216,9 @@ input[type="search"]::-webkit-search-decoration {
   gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
-  margin: 0 calc(-1 * var(--gx));
-  padding: 2px var(--gx);
+  /* Room above and below for the chips' tap areas, which the scrolling would otherwise clip. */
+  margin: -4px calc(-1 * var(--gx));
+  padding: 6px var(--gx);
   scroll-padding: 0 var(--gx);
 }
 .scroller::-webkit-scrollbar {
@@ -225,6 +226,55 @@ input[type="search"]::-webkit-search-decoration {
 }
 .scroller > * {
   flex: 0 0 auto;
+}
+
+/* ---------- tap areas ----------
+ * Controls drawn smaller than 44px keep their look but take a 44px target: an invisible layer
+ * centred on the control. No specificity, so a control's own position (absolute, say) still wins.
+ */
+:where(
+  .icon-btn,
+  .acct-btn,
+  .sheet-x,
+  .seg button,
+  .btn.small,
+  .chip-toggle,
+  .colltab,
+  .collchip,
+  .star,
+  .cm-acts button,
+  .ex-quick,
+  .mv button,
+  .toast-undo,
+  .lightbox .close,
+  .lb-nav button
+) {
+  position: relative;
+}
+:where(
+  .icon-btn,
+  .acct-btn,
+  .sheet-x,
+  .seg button,
+  .btn.small,
+  .chip-toggle,
+  .colltab,
+  .collchip,
+  .star,
+  .cm-acts button,
+  .ex-quick,
+  .mv button,
+  .toast-undo,
+  .lightbox .close,
+  .lb-nav button
+)::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max(100%, 44px);
+  height: max(100%, 44px);
+  transform: translate(-50%, -50%);
 }
 
 /* ---------- loading & empty ---------- */

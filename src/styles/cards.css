@@ -47,8 +47,9 @@
   gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
-  margin: 0 calc(-1 * var(--gx));
-  padding: 2px var(--gx);
+  /* Room for the tabs' tap areas, as in .scroller. */
+  margin: -4px calc(-1 * var(--gx));
+  padding: 6px var(--gx);
 }
 .colltabs::-webkit-scrollbar {
   display: none;
@@ -99,7 +100,7 @@
 .collops select {
   width: auto;
   min-height: 36px;
-  font-size: 14px;
+  line-height: 1.2;
   padding-top: 6px;
   padding-bottom: 6px;
 }
@@ -219,13 +220,10 @@
 .thumb.empty {
   box-shadow: none;
   font-size: 10px;
-  color: var(--faint);
+  color: var(--muted);
   text-align: center;
   line-height: 1.15;
   padding: 3px;
-}
-.thumb.pick {
-  cursor: pointer;
 }
 .check {
   position: absolute;
@@ -342,7 +340,7 @@
   cursor: pointer;
   padding: 6px;
   margin: -6px;
-  color: var(--faint);
+  color: var(--muted);
   line-height: 0;
 }
 .star svg {
@@ -366,6 +364,51 @@
   width: 13px;
   height: 13px;
   fill: currentColor;
+}
+
+/* ---------- opening a card ----------
+ * A tile or row is a plain container (features/list/CardItem.tsx, features/explore/ExCard.tsx).
+ * .card-open, stretched over it, opens the card; the controls inside sit above it.
+ */
+.card-open {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 0;
+  border-radius: 8px;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+}
+.row .card-open {
+  border-radius: 0;
+  outline-offset: -2px;
+}
+/* The picture lets taps through to .card-open, except where its own button shows it full screen. */
+.tile .tile-img,
+.ex-card .tile-img,
+.row .thumb {
+  z-index: 2;
+  pointer-events: none;
+}
+.photo-open {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  pointer-events: auto;
+}
+/* Inside the picture's clipped corners, so the ring is drawn inward, with a light edge to show on art. */
+.photo-open:focus-visible {
+  outline-offset: -2px;
+  box-shadow: inset 0 0 0 4px var(--surface);
+}
+.row :is(.collchip, .star),
+.ex-line :is(button, a) {
+  position: relative;
+  z-index: 2;
 }
 
 /* ---------- card grid ---------- */
@@ -498,7 +541,19 @@
   color: var(--ink-2);
 }
 
-/* ---------- bulk select toolbar ---------- */
+/* ---------- bulk select toolbar ----------
+ * It stands in for the tab bar (features/list/BulkBar.tsx). --bulk is its height, so the last cards
+ * can scroll clear of it and the toast sits above it: 10px padding, the 36px top row, 8px gap and the
+ * 44px name field, plus the 8px gap and 36px "Remove from this collection" button when that shows.
+ * The taller height is the fallback where :has() isn't supported.
+ */
+body.selecting {
+  --bulk: calc(153px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(var(--bulk) + 24px);
+}
+body.selecting:not(:has(.bulk .inner > .btn)) {
+  --bulk: calc(109px + env(safe-area-inset-bottom, 0px));
+}
 .bulk {
   position: fixed;
   left: 0;

@@ -109,10 +109,8 @@
   width: 100%;
   max-width: 520px;
 }
-.tabbar button {
+.tabbar a {
   flex: 1;
-  border: 0;
-  background: none;
   height: 56px;
   display: flex;
   flex-direction: column;
@@ -120,16 +118,21 @@
   justify-content: center;
   gap: 3px;
   cursor: pointer;
-  color: var(--faint);
+  color: var(--muted);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.01em;
+  text-decoration: none;
+  touch-action: manipulation;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
-.tabbar button svg {
+.tabbar a svg {
   width: 24px;
   height: 24px;
 }
-.tabbar button[aria-pressed="true"] {
+.tabbar a[aria-current="page"] {
   color: var(--ink);
 }
 body.selecting .tabbar {
