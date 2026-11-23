@@ -54,3 +54,25 @@
 .about p {
   margin: 0;
 }
+.code-input {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: 0.4em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  padding-left: 0.4em;
+}
+.code-input::placeholder {
+  color: var(--muted);
+  opacity: 0.35;
+}
+.code-error {
+  margin: -2px 0 0;
+  font-size: 14px;
+  color: var(--danger);
+}
+.code-links {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}

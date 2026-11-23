@@ -875,3 +875,22 @@
     font-size: 22px;
   }
 }
+.add-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 14px 0 12px;
+}
+.add-bar .hint {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.add-results {
+  margin-bottom: 4px;
+}
+.add-manual {
+  margin-top: 14px;
+}

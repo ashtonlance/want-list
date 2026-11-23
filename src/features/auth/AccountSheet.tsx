@@ -1,103 +1,156 @@
-import { useState, type SubmitEvent } from "react";
+import { useRef, useState } from "react";
 import { Sheet, SheetHead } from "~/ui/Sheet";
 import { useToast } from "~/ui/Toast";
 import { useAuth } from "./AuthProvider";
-import { isStandalone, sendSignInLink, signInWithPastedLink } from "./signIn";
+import {
+  CODE_LENGTH,
+  codeDigits,
+  isStandalone,
+  sendSignInEmail,
+  signInWithCode,
+  signInWithPastedLink,
+} from "./signIn";
 
-function PasteLinkForm({ standalone }: { standalone: boolean }) {
-  const [link, setLink] = useState("");
+const looksLikeLink = (v: string) => /^\s*https?:\/\//i.test(v);
+
+/**
+ * The 6-digit code from the email, which signs in as soon as the last digit is in. The email's link
+ * pasted here works too, as a fallback.
+ */
+function CodeForm({ email, onResend, onBack }: { email: string; onResend: () => void; onBack: () => void }) {
+  const [value, setValue] = useState("");
   const [busy, setBusy] = useState(false);
-  const { toast } = useToast();
-  const submit = async (e: SubmitEvent) => {
-    e.preventDefault();
+  const [error, setError] = useState("");
+  const tried = useRef("");
+  const link = looksLikeLink(value);
+
+  const attempt = async (v: string, force = false) => {
+    const isLink = looksLikeLink(v);
+    if (busy || (!isLink && v.length !== CODE_LENGTH) || (!force && tried.current === v)) return;
+    tried.current = v;
     setBusy(true);
-    const error = await signInWithPastedLink(link);
+    setError("");
+    const err = isLink ? await signInWithPastedLink(v) : await signInWithCode(email, v);
     setBusy(false);
-    if (error) toast(error);
+    if (err) setError(err);
   };
+
   return (
-    <form style={{ marginTop: 14 }} onSubmit={(e) => void submit(e)}>
-      <p className="hint">
-        {standalone
-          ? "Using the home-screen app: copy the link from the email instead of tapping it, then paste it here."
-          : "Paste the link from the sign-in email to sign in here."}
-      </p>
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        void attempt(value, true);
+      }}
+    >
+      <div className="msg">
+        Enter the {CODE_LENGTH}-digit code sent to <b>{email}</b>.
+        {isStandalone()
+          ? " Or press and hold the email's link, tap Copy Link, and paste it here."
+          : " Or open the email's link on this device."}
+      </div>
       <input
-        type="url"
-        value={link}
-        onChange={(e) => setLink(e.target.value)}
-        placeholder="Paste the sign-in link"
-        aria-label="Sign-in link from the email"
-        autoComplete="off"
+        className={link ? undefined : "code-input"}
+        type="text"
+        value={value}
+        onChange={(e) => {
+          const raw = e.target.value;
+          const v = looksLikeLink(raw) ? raw.trim() : codeDigits(raw);
+          setValue(v);
+          if (error) setError("");
+          if (looksLikeLink(v)) void attempt(v);
+          else if (v.length === CODE_LENGTH) void attempt(v);
+        }}
+        inputMode={link ? "url" : "numeric"}
+        autoComplete="one-time-code"
         autoCapitalize="off"
         spellCheck={false}
-        autoFocus={!standalone}
+        placeholder={"0".repeat(CODE_LENGTH)}
+        aria-label="Sign-in code from the email"
+        aria-invalid={error ? true : undefined}
+        enterKeyHint="done"
+        autoFocus
       />
-      <button className="btn" type="submit" disabled={busy}>
-        {busy ? "Signing in…" : "Sign in with link"}
+      {error ? (
+        <p className="code-error" role="alert">
+          {error}
+        </p>
+      ) : null}
+      <button
+        className="btn primary"
+        type="submit"
+        disabled={busy || (!link && value.length !== CODE_LENGTH)}
+      >
+        {busy ? "Signing in…" : "Sign in"}
       </button>
+      <div className="code-links">
+        <button className="linkbtn" type="button" onClick={onResend}>
+          Send a new code
+        </button>
+        <button className="linkbtn" type="button" onClick={onBack}>
+          Use a different email
+        </button>
+      </div>
     </form>
   );
 }
 
-function SignInForm() {
-  const standalone = isStandalone();
-  const [email, setEmail] = useState("");
-  const [state, setState] = useState<"idle" | "sending" | { sent: string } | { error: string }>("idle");
-  const [showPaste, setShowPaste] = useState(standalone);
+type SignInState = "idle" | "sending" | { sent: string } | { error: string };
 
-  const submit = async (e: SubmitEvent) => {
-    e.preventDefault();
-    const to = email.trim();
+function SignInForm() {
+  const [email, setEmail] = useState("");
+  const [state, setState] = useState<SignInState>("idle");
+  const { toast } = useToast();
+
+  const send = async (to: string) => {
     setState("sending");
-    const error = await sendSignInLink(to);
+    const error = await sendSignInEmail(to);
     setState(error ? { error } : { sent: to });
-    setShowPaste(true);
+    return error;
   };
 
+  if (typeof state === "object" && "sent" in state)
+    return (
+      <CodeForm
+        key={state.sent}
+        email={state.sent}
+        onResend={() =>
+          void send(state.sent).then((err) =>
+            toast(err ? `Couldn't send it: ${err}` : `Sent a new code to ${state.sent}`),
+          )
+        }
+        onBack={() => setState("idle")}
+      />
+    );
+
   return (
-    <>
+    <form
+      autoComplete="on"
+      onSubmit={(e) => {
+        e.preventDefault();
+        void send(email.trim());
+      }}
+    >
+      <p className="hint">
+        Anyone can view the list. Editors sign in with a code from their email, no password.
+      </p>
       {typeof state === "object" ? (
-        <div className="msg">
-          {"error" in state
-            ? `Couldn't send the link: ${state.error}`
-            : `Check ${state.sent} for a sign-in link.` +
-              (standalone
-                ? " Since you're in the home-screen app, don't tap the link: press and hold it, tap Copy Link, then paste it below."
-                : " Open it on this device.")}
-        </div>
-      ) : (
-        <form autoComplete="on" onSubmit={(e) => void submit(e)}>
-          <p className="hint">Anyone can view the list. Editors sign in with an email link, no password.</p>
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Your email"
-            aria-label="Email to sign in"
-            autoComplete="email"
-            inputMode="email"
-            enterKeyHint="send"
-          />
-          <button className="btn primary" type="submit" disabled={state === "sending"}>
-            {state === "sending" ? "Sending…" : "Email me a sign-in link"}
-          </button>
-        </form>
-      )}
-      {showPaste ? (
-        <PasteLinkForm standalone={standalone} />
-      ) : (
-        <button
-          className="linkbtn"
-          type="button"
-          style={{ marginTop: 10 }}
-          onClick={() => setShowPaste(true)}
-        >
-          Got a link already? Paste it
-        </button>
-      )}
-    </>
+        <div className="msg">Couldn&apos;t send the code: {state.error}</div>
+      ) : null}
+      <input
+        type="email"
+        required
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Your email"
+        aria-label="Email to sign in"
+        autoComplete="email"
+        inputMode="email"
+        enterKeyHint="send"
+      />
+      <button className="btn primary" type="submit" disabled={state === "sending"}>
+        {state === "sending" ? "Sending…" : "Email me a sign-in code"}
+      </button>
+    </form>
   );
 }
 
