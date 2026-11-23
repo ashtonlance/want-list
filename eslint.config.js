@@ -31,6 +31,7 @@ export default tseslint.config(
             "useLightbox",
             "useLightboxSequence",
             "usePhotoGrid",
+            "usePhotoFeed",
           ],
         },
       ],

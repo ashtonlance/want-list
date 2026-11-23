@@ -56,10 +56,34 @@ export interface LightboxAction {
   run: () => Promise<boolean>;
 }
 
+/**
+ * The cards the photo view can swipe through, in order. A short list is an array; a feed of thousands
+ * builds each card only when the photo reaches it (usePhotoFeed).
+ */
+export interface PhotoSequence {
+  readonly length: number;
+  /** The card at `index`, or undefined where that row has no picture (swiping steps over it). */
+  at: (index: number) => LightboxItem | undefined;
+  /** Where `item` sits, or -1. */
+  indexOf: (item: LightboxItem) => number;
+}
+
+const arraySequence = (items: readonly LightboxItem[]): PhotoSequence => ({
+  length: items.length,
+  at: (i) => items[i],
+  indexOf: (item) => items.findIndex((i) => sameCard(i, item)),
+});
+
+const NO_PHOTOS = arraySequence([]);
+
+// Arrays have an `at` too, so a list is told from a sequence by being an array.
+const isPhotoList = (v: readonly LightboxItem[] | PhotoSequence): v is readonly LightboxItem[] =>
+  Array.isArray(v);
+
 interface LightboxApi {
   open: (item: LightboxItem) => void;
   /** The cards on screen right now, in order, so the photo can swipe to the next one. */
-  sequenceRef: { current: readonly LightboxItem[] };
+  sequenceRef: { current: PhotoSequence };
 }
 
 const LightboxContext = createContext<LightboxApi | null>(null);
@@ -87,7 +111,7 @@ const sameCard = (a: LightboxItem, b: LightboxItem) =>
   a.id && b.id ? a.id === b.id : bigImage(a.src) === bigImage(b.src);
 
 interface Opened {
-  items: readonly LightboxItem[];
+  seq: PhotoSequence;
   index: number;
   href: string;
   /** Plays its own fade in; off when the picture flew in from its tile instead. */
@@ -110,7 +134,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
   const drag = useRef<Drag | null>(null);
   // A drag ends with a click on the backdrop; this keeps that click from closing the photo.
   const dragged = useRef(false);
-  const sequenceRef = useRef<readonly LightboxItem[]>([]);
+  const sequenceRef = useRef<PhotoSequence>(NO_PHOTOS);
   const lastFocus = useRef<Element | null>(null);
   const closeBtn = useRef<HTMLButtonElement>(null);
   const box = useRef<HTMLDivElement>(null);
@@ -119,8 +143,8 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
   const href = useLocation({ select: (l) => l.href });
   // Navigating anywhere closes the photo.
   const shown = opened?.href === href ? opened : null;
-  const item = shown ? shown.items[shown.index] : undefined;
-  const count = shown?.items.length ?? 0;
+  const item = shown ? shown.seq.at(shown.index) : undefined;
+  const count = shown?.seq.length ?? 0;
   const zoom = usePhotoZoom(box, photo, shown ? shown.index : null);
 
   const close = () => {
@@ -136,8 +160,10 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
   const step = useCallback((dir: -1 | 1) => {
     setOpened((o) => {
       if (!o) return o;
-      const index = o.index + dir;
-      return index >= 0 && index < o.items.length ? { ...o, index, dir: dir > 0 ? "next" : "prev" } : o;
+      // Rows without a picture are stepped over.
+      let index = o.index + dir;
+      while (index >= 0 && index < o.seq.length && !o.seq.at(index)) index += dir;
+      return index >= 0 && index < o.seq.length ? { ...o, index, dir: dir > 0 ? "next" : "prev" } : o;
     });
   }, []);
   useEffect(() => {
@@ -154,7 +180,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener("keydown", onKey);
     // Load the neighbours ahead of time so a swipe shows them at once.
-    for (const n of [shown.items[shown.index - 1], shown.items[shown.index + 1]])
+    for (const n of [shown.seq.at(shown.index - 1), shown.seq.at(shown.index + 1)])
       if (n) new Image().src = bigImage(n.src);
     return () => window.removeEventListener("keydown", onKey);
   }, [shown, step, zoom]);
@@ -163,14 +189,18 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
     (next: LightboxItem) => {
       lastFocus.current = takeOpener();
       setDone(new Set());
-      const items = sequenceRef.current;
-      const index = items.findIndex((i) => sameCard(i, next));
+      const seq = sequenceRef.current;
+      const index = seq.indexOf(next);
       morph({
         from: findPicture(next.src),
         update: () => {
           // Inside a transition the picture flies in, so the photo view skips its own fade.
           const enter = !isTransitioning();
-          setOpened(index >= 0 ? { items, index, href, enter } : { items: [next], index: 0, href, enter });
+          setOpened(
+            index >= 0
+              ? { seq, index, href, enter }
+              : { seq: arraySequence([next]), index: 0, href, enter },
+          );
         },
         to: () => photo.current,
       });
@@ -520,14 +550,15 @@ export function useLightbox(): (item: LightboxItem) => void {
  * Tells the photo view which cards are on screen, in order, so it can swipe between them.
  * The list on screen calls this; whatever opens the photo from it then gets swiping for free.
  */
-export function useLightboxSequence(items: readonly LightboxItem[]): void {
+export function useLightboxSequence(items: readonly LightboxItem[] | PhotoSequence): void {
   const { sequenceRef } = useLightboxApi();
+  const seq = useMemo(() => (isPhotoList(items) ? arraySequence(items) : items), [items]);
   useEffect(() => {
-    sequenceRef.current = items;
+    sequenceRef.current = seq;
     return () => {
-      if (sequenceRef.current === items) sequenceRef.current = [];
+      if (sequenceRef.current === seq) sequenceRef.current = NO_PHOTOS;
     };
-  }, [sequenceRef, items]);
+  }, [sequenceRef, seq]);
 }
 
 /**
@@ -555,5 +586,40 @@ export function usePhotoGrid<T>(
       return it ? () => open(it) : undefined;
     },
     [byRow, open],
+  );
+}
+
+/**
+ * usePhotoGrid for a feed too long to build every card up front (Explore's every card, thousands of
+ * rows): each card is built when its tile is drawn or the photo swipes to it. Returns, for a row's
+ * index, what tapping its picture does. `toItem` must be stable.
+ */
+export function usePhotoFeed<T>(
+  rows: readonly T[],
+  toItem: (row: T) => LightboxItem | null,
+): (index: number) => (() => void) | undefined {
+  const open = useLightbox();
+  const seq = useMemo((): PhotoSequence => {
+    const built = new Map<number, LightboxItem | null>();
+    const where = new Map<LightboxItem, number>();
+    const at = (i: number): LightboxItem | undefined => {
+      let it = built.get(i);
+      if (it === undefined) {
+        const row = rows[i];
+        it = row === undefined ? null : toItem(row);
+        built.set(i, it);
+        if (it) where.set(it, i);
+      }
+      return it ?? undefined;
+    };
+    return { length: rows.length, at, indexOf: (item) => where.get(item) ?? -1 };
+  }, [rows, toItem]);
+  useLightboxSequence(seq);
+  return useCallback(
+    (index: number) => {
+      const it = seq.at(index);
+      return it ? () => open(it) : undefined;
+    },
+    [seq, open],
   );
 }

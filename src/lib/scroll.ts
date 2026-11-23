@@ -24,6 +24,8 @@ interface Spot {
 const isSpot = (v: unknown): v is Spot => isRecord(v) && typeof v.y === "number";
 
 const STORE_KEY = "wl-scroll";
+/** How long scrolling has to pause before the position is saved. */
+const SAVE_IDLE_MS = 120;
 const TTL = 2 * 60 * 60_000;
 
 function loadSpots(): Map<string, Spot> {
@@ -130,8 +132,9 @@ export function useScrollRestoration(key: string, ready: boolean, shown?: number
       const reachable = document.documentElement.scrollHeight - window.innerHeight >= target - 1;
       if (reachable || tries > 120) {
         window.scrollTo(0, Math.max(0, target));
-        // Pictures above the anchor may still be loading; check again for a moment.
-        if (el && tries < 20) {
+        // Pictures above the anchor may still be loading, or (in a grid that only draws the rows near the
+        // screen) the anchor's row is only drawn once scrolled to: check again for a moment.
+        if ((el || spot.id) && tries < 20) {
           tries += 1;
           frame = requestAnimationFrame(attempt);
           return;
@@ -146,20 +149,28 @@ export function useScrollRestoration(key: string, ready: boolean, shown?: number
     return done;
   }, [key, ready]);
 
-  useEffect(() => {
-    let frame = 0;
+  // Saved once scrolling pauses rather than every frame: finding the anchor reads the layout, which
+  // mid-fling would force the browser to lay the page out again on every frame. Leaving the view with
+  // a save still due makes it at once, while the old screen is still there to read.
+  useLayoutEffect(() => {
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const save = () => {
+      timer = undefined;
+      if (restoring.current === activeKey.current) return;
+      spots.set(activeKey.current, currentSpot(shownRef.current));
+      persistSoon();
+    };
     const onScroll = () => {
-      cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => {
-        if (restoring.current === activeKey.current) return;
-        spots.set(activeKey.current, currentSpot(shownRef.current));
-        persistSoon();
-      });
+      clearTimeout(timer);
+      timer = setTimeout(save, SAVE_IDLE_MS);
     };
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
-      cancelAnimationFrame(frame);
       window.removeEventListener("scroll", onScroll);
+      if (timer !== undefined) {
+        clearTimeout(timer);
+        save();
+      }
     };
   }, []);
 }
