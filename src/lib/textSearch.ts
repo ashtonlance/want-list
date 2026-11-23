@@ -9,10 +9,16 @@
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
-/** Put in searchable text to mark the card's own number, so number searches can find it. */
+/** Marks the card's own number in searchable text: a private-use character nobody types. */
+const TAG = String.fromCharCode(0xe000);
+
+/**
+ * The card's own number for searchable text, so number searches can find it: "SWSH-050" and
+ * "#16/99" become the tagged "swsh050" and "16".
+ */
 export function numberTag(number: string): string {
-  const n = number.trim().toLowerCase().split("/")[0] ?? "";
-  return n ? `~${n}` : "";
+  const n = (number.trim().toLowerCase().split("/")[0] ?? "").replace(/[^a-z0-9]/g, "");
+  return n ? TAG + n : "";
 }
 
 /** The words of a query, lowercased, with "#16" and "16/99" both read as 16. */
@@ -32,8 +38,8 @@ export function textMatcher(query: string): ((text: string) => boolean) | null {
   const tests = words.map((w) => {
     if (/^\d+$/.test(w)) {
       const n = escape(w.replace(/^0+(?=\d)/, ""));
-      const own = new RegExp(`~[a-z]{0,4}0*${n}[a-z]?(?=$|\\s)`);
-      const loose = new RegExp(`(^|[\\s(])0*${n}(?=$|[\\s),.])`);
+      const own = new RegExp(`${TAG}[a-z]{0,4}0*${n}[a-z]?(?=$|\\s)`);
+      const loose = new RegExp(`(^|[\\s(])0*${n}(?=$|[^a-z0-9:+])`);
       return (t: string) => own.test(t) || loose.test(t);
     }
     return (t: string) => t.includes(w);

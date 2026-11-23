@@ -33,7 +33,16 @@ const SORTS: Record<ListSort, (a: Card, b: Card) => number> = {
 };
 
 const haystack = (c: Card): string =>
-  [c.name, c.set, numberTag(c.number), c.variant, c.note, c.lang === "JP" ? "japanese" : "", ...c.collections]
+  [
+    c.name,
+    c.set,
+    c.number,
+    numberTag(c.number),
+    c.variant,
+    c.note,
+    c.lang === "JP" ? "japanese" : "",
+    ...c.collections,
+  ]
     .join(" ")
     .toLowerCase();
 

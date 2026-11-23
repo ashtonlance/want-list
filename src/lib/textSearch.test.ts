@@ -20,9 +20,13 @@ describe("textMatcher", () => {
     expect(matches("crobat 5", card("crobat (h5) skyridge", "H05"))).toBe(true);
     expect(matches("pikachu 4", card("pikachu jungle", "4a"))).toBe(true);
     expect(matches("pikachu 103", card("pikachu", "SM103a"))).toBe(true);
+    expect(matches("gengar 16", card("gengar", "#16"))).toBe(true);
+    expect(matches("zacian 50", card("zacian", "SWSH-050"))).toBe(true);
     expect(matches("umbreon 5", card("umbreon", "15"))).toBe(false);
   });
   it("matches other numbers only when they stand alone", () => {
+    expect(matches("10", "gengar psa 10/10")).toBe(true);
+    expect(matches("50", `gengar ~50 shipped ${numberTag("3")}`)).toBe(false);
     expect(matches("151 pikachu", `pikachu scarlet & violet 151 ${numberTag("173")}`)).toBe(true);
     expect(matches("pikachu 25", `pikachu 25th anniversary ${numberTag("5")}`)).toBe(false);
     expect(matches("gengar 2", `gengar pt2: bonds to the end of time ${numberTag("40")}`)).toBe(false);
