@@ -41,5 +41,16 @@ export function HeroImage({ src, name }: { src: string; name: string }) {
   const shown = useProgressiveSrc(src);
   const [failed, setFailed] = useState(false);
   if (failed) return <span className="noimg">{name}</span>;
-  return <img src={shown} alt={`${name} card`} decoding="async" onError={() => setFailed(true)} />;
+  // Fades in over the frame's shimmer; the swap to the large picture keeps it shown, so it never blinks.
+  return (
+    <img
+      src={shown}
+      alt={`${name} card`}
+      decoding="async"
+      className="fade-img"
+      ref={markReady}
+      onLoad={onArrive}
+      onError={() => setFailed(true)}
+    />
+  );
 }

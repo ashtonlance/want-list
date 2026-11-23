@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { CardImage } from "~/ui/CardImage";
 import { tcgProductUrl } from "~/features/cards/links";
 import { formatMoney } from "~/lib/format";
 import type { SlotInfo } from "./slots";
@@ -30,13 +30,14 @@ export function PocketSheet({
   onRemove,
   onAddToList,
 }: PocketSheetProps) {
-  const [imgFailed, setImgFailed] = useState(false);
   const { web } = info;
   return (
     <>
       <div className="pocket-detail">
-        {info.img && !imgFailed ? (
-          <img src={info.img} alt={info.name} onError={() => setImgFailed(true)} />
+        {info.img ? (
+          <span className="pd-img">
+            <CardImage src={info.img} name={info.name} alt={info.name} />
+          </span>
         ) : null}
         <div>
           <b>{info.name}</b>

@@ -1,0 +1,59 @@
+/* ---------- card pictures while they load ----------
+   Every frame a card picture sits in keeps the card's 63:88 shape (tile, row thumb, pocket, pick, card sheet),
+   so nothing moves when the picture arrives. Until then the frame shimmers; the picture fades in over it
+   (.fade-img in motion.css). A picture that fails shows the card's name instead (.noimg). */
+:is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img):has(.fade-img:not(.ready)) {
+  background-image: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, var(--surface) 55%, transparent) 50%,
+    transparent 80%
+  );
+  background-color: var(--sunk);
+  background-size: 220% 100%;
+  background-repeat: no-repeat;
+  animation: img-shimmer 1.4s infinite ease-in-out;
+}
+@keyframes img-shimmer {
+  from {
+    background-position: 130% 0;
+  }
+  to {
+    background-position: -30% 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  :is(.tile-img, .thumb, .pocket, .pick-img, .detail-img, .pd-img):has(.fade-img:not(.ready)) {
+    animation: none;
+  }
+}
+
+/* The picture in a pocket's sheet. */
+.pd-img {
+  display: block;
+  width: 110px;
+  aspect-ratio: 63/88;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--sunk);
+  box-shadow: var(--card-shadow);
+  position: relative;
+}
+.pocket-detail .pd-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border-radius: 0;
+  box-shadow: none;
+}
+.pd-img .noimg {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+  font-size: 11px;
+  text-align: center;
+  color: var(--muted);
+}
