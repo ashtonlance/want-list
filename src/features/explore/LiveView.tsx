@@ -140,7 +140,11 @@ export function LiveView() {
   const commit = useCallback(
     (v: string) => {
       if (v === q || (v && v.length < 2)) return;
-      void navigate({ search: (prev) => ({ ...prev, q: v || undefined }), replace: true });
+      // A search covers every card, so it leaves the set being shown.
+      void navigate({
+        search: (prev) => ({ ...prev, q: v || undefined, set: v ? undefined : prev.set }),
+        replace: true,
+      });
     },
     [q, navigate],
   );

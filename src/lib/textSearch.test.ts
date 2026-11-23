@@ -15,6 +15,9 @@ describe("textMatcher", () => {
     expect(matches("gengar 16/99", "gengar arceus 16")).toBe(true);
     expect(matches("gengar 16", "gengar arceus 116")).toBe(false);
     expect(matches("151 pikachu", "pikachu 151 173")).toBe(true);
+    expect(matches("pikachu 49", "pikachu promos sv049")).toBe(true);
+    expect(matches("umbreon 5", "umbreon tg05")).toBe(true);
+    expect(matches("umbreon 5", "umbreon 15")).toBe(false);
   });
   it("matches words inside other words", () => {
     expect(matches("chu", "pikachu 151 173")).toBe(true);

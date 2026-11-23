@@ -2,6 +2,7 @@ import { prefs } from "~/app/prefs";
 import { useOverlayNav } from "~/app/overlayNav";
 import type { StatusFilter } from "~/features/cards/filters";
 import { plural } from "~/lib/format";
+import { queryWords } from "~/lib/textSearch";
 import { useStore } from "~/lib/store";
 import { SlidersIcon } from "~/ui/icons";
 import { Seg } from "~/ui/Seg";
@@ -39,7 +40,7 @@ export function Filters({ count }: { count: number }) {
         </button>
       </div>
       <div className="filter-row">
-        {q.trim() ? (
+        {queryWords(q).length ? (
           // A search looks through wanted and collected cards together (see visibleCards).
           <span className="search-scope">Searching Want and Got</span>
         ) : (

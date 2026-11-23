@@ -11,6 +11,8 @@ const cat = parseCatalog({
     ["30th Celebration", 0, "2026-09-16"],
     ["30th Celebration Classic Collection", 0, "2026-09-16"],
     ["Pokemon Card 151", 1, "2023-06-16"],
+    ["Base Set", 0, "1999-01-09"],
+    ["Base Set 2", 0, "2000-02-24"],
   ],
   rarities: [],
   cards: [
@@ -20,6 +22,9 @@ const cat = parseCatalog({
     [30, "Charizard", 2, "4", 0, 1],
     [31, "Gengar", 2, "18", 0, 1],
     [40, "Tangela", 3, "178", 0, 1],
+    [12, "Mewtwo", 0, "150", 0, 1],
+    [50, "Charizard", 4, "4", 0, 1],
+    [51, "Charizard", 5, "4", 0, 1],
   ],
 });
 
@@ -65,6 +70,24 @@ describe("setNameFixes", () => {
       fixes([
         testCard({ id: "a", name: "Wartortle", set: "Scarlet & Violet 151" }),
         testCard({ id: "b", name: "Mew", set: "151" }),
+      ]),
+    ).toEqual([]);
+  });
+
+  it("needs a card of exactly that name, not one that starts with it", () => {
+    expect(
+      fixes([
+        testCard({ id: "a", name: "Wartortle", set: "Scarlet & Violet 151" }),
+        testCard({ id: "b", name: "Mew", set: "151" }),
+      ]),
+    ).toEqual([]);
+  });
+
+  it("leaves a set alone when more than one catalog set fits, even if only one is on the list", () => {
+    expect(
+      fixes([
+        testCard({ id: "a", name: "Charizard", set: "Base Set 2" }),
+        testCard({ id: "b", name: "Charizard", set: "Base" }),
       ]),
     ).toEqual([]);
   });

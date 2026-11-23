@@ -30,7 +30,7 @@ export function NewBinderSheet({ canScan, onMake, onImport, onScan }: NewBinderS
   );
   const pickFrom = (coll: string) => {
     // Name it after the collection unless a name of their own is already typed.
-    if (!cleanName(name) || name === from) setName(coll);
+    if (coll && (!cleanName(name) || name === from)) setName(coll);
     setFrom(coll);
   };
   const submit = (e: SubmitEvent<HTMLFormElement>) => {

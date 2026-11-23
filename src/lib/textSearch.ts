@@ -1,7 +1,7 @@
 /**
  * Search as people type it: every word must match, in any order. Words are matched anywhere in the
  * text ("chu" finds Pikachu); numbers must match a whole number, so "gengar 16" finds #16 or #016
- * but not #116. A leading # and a printed total ("16/99") are ignored.
+ * but not #116, and "49" finds the promo SV049. A leading # and a printed total ("16/99") are ignored.
  */
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -22,7 +22,8 @@ export function textMatcher(query: string): ((text: string) => boolean) | null {
   if (!words.length) return null;
   const tests = words.map((w) => {
     if (/^\d+$/.test(w)) {
-      const re = new RegExp(`(^|[^a-z0-9])0*${escape(w.replace(/^0+(?=\d)/, ""))}($|[^a-z0-9])`);
+      // Letters may come first, as in promo numbers like SV049 or TG05; other digits may not.
+      const re = new RegExp(`(^|[^0-9])0*${escape(w.replace(/^0+(?=\d)/, ""))}($|[^0-9])`);
       return (t: string) => re.test(t);
     }
     return (t: string) => t.includes(w);

@@ -36,6 +36,8 @@ export interface LightboxItem {
 }
 
 export interface LightboxAction {
+  /** Names what it acts on (a card's id), since two printings can share a picture. */
+  key: string;
   label: string;
   /** What the button reads once the action has worked. */
   doneLabel: string;
@@ -89,9 +91,9 @@ interface Opened {
  */
 export function LightboxProvider({ children }: { children: ReactNode }) {
   const [opened, setOpened] = useState<Opened | null>(null);
-  // Photos whose action already ran in this viewing, by picture, so stepping back shows it done.
+  // Actions that already ran in this viewing, or are running, by key, so stepping back shows them.
   const [done, setDone] = useState<ReadonlySet<string>>(() => new Set());
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<ReadonlySet<string>>(() => new Set());
   const drag = useRef<Drag | null>(null);
   // A drag ends with a click on the backdrop; this keeps that click from closing the photo.
   const dragged = useRef(false);
@@ -288,12 +290,14 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
               {item.action ? (
                 <ActionButton
                   action={item.action}
-                  done={done.has(item.src)}
-                  busy={busy}
-                  onRun={async (action) => {
-                    setBusy(true);
-                    const ok = await action.run().finally(() => setBusy(false));
-                    if (ok) setDone((d) => new Set(d).add(item.src));
+                  done={done.has(item.action.key)}
+                  busy={busy.has(item.action.key)}
+                  onRun={async ({ key, run }) => {
+                    setBusy((b) => new Set(b).add(key));
+                    const ok = await run().finally(() =>
+                      setBusy((b) => new Set([...b].filter((k) => k !== key))),
+                    );
+                    if (ok) setDone((d) => new Set(d).add(key));
                   }}
                 />
               ) : null}

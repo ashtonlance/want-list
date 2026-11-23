@@ -114,7 +114,7 @@ export function EveryCardFeed({ cat, rows, lang, scrollKey, q = "" }: FeedProps)
         {total ? null : (
           <div className="empty-state">
             {q
-              ? `No ${lang === "en" ? "English " : lang === "jp" ? "Japanese " : ""}cards match “${q}”.${lang === "both" ? "" : " Try another language under Filter and sort."}`
+              ? `No ${lang === "en" ? "English " : lang === "jp" ? "Japanese " : ""}cards match “${q}” with these filters. Check the language and filters under Filter and sort.`
               : "No cards match these filters."}
           </div>
         )}

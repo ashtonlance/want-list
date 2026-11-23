@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDocsQuery, useDocWrite } from "~/data/useDocs";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCatalog } from "~/features/catalog/catalog";
@@ -29,10 +29,22 @@ export function useSetNameCleanup(): void {
   const cat = catalog.data;
   const docs = layouts.data;
   // Fresh from the server, not this device's saved copy, so a rename can't write back stale fields.
+  // A saved copy may be young enough not to refetch on its own, so this asks once.
+  const [fresh, setFresh] = useState(false);
+  const { refetch: refetchCards } = cardDocs;
+  const { refetch: refetchLayouts } = layouts;
+  useEffect(() => {
+    if (!canWrite || fresh) return;
+    let live = true;
+    void Promise.all([refetchCards(), refetchLayouts()]).then(([c, l]) => {
+      if (live && c.isSuccess && l.isSuccess) setFresh(true);
+    });
+    return () => {
+      live = false;
+    };
+  }, [canWrite, fresh, refetchCards, refetchLayouts]);
   // Prices carry each card's TCGplayer product, the surest way to tell its set.
-  const fresh = (q: { isFetchedAfterMount: boolean; isFetching: boolean }) =>
-    q.isFetchedAfterMount && !q.isFetching;
-  const ready = canWrite && loaded && fresh(cardDocs) && fresh(layouts) && prices.data !== undefined;
+  const ready = canWrite && loaded && fresh && !cardDocs.isFetching && prices.data !== undefined;
   useEffect(() => {
     if (!ready || !cat || !docs || ran.current) return;
     ran.current = true;
