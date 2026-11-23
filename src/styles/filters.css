@@ -4,42 +4,10 @@
   gap: 8px;
   align-items: center;
 }
-.ex-bar input[type="search"],
-.ex-bar form {
-  flex: 1;
-  min-width: 0;
-}
-.ex-bar form input {
-  width: 100%;
-}
-.ex-bar input[type="search"] {
-  min-height: 40px;
-  padding-top: 8px;
-  padding-bottom: 8px;
-}
-.ex-bar .opt-btn {
-  width: 40px;
-  height: 40px;
-}
 
 /* What's on, under the toolbar: quiet outlined chips that each turn one filter off. */
 .active-filters {
   align-items: center;
-}
-.chip-toggle.on-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 32px;
-  padding: 5px 10px 5px 12px;
-  font-size: 13px;
-  background: var(--sunk);
-  border-color: transparent;
-}
-.chip-toggle.on-chip span {
-  font-size: 16px;
-  line-height: 1;
-  color: var(--muted);
 }
 
 /* The sheet: titled sections of chips, with the actions pinned to the bottom. */
@@ -60,28 +28,10 @@
 .filter-sec h4 {
   margin: 0;
 }
-.filter-sec select {
-  width: 100%;
-}
 .choice-wrap {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-.choice-wrap .chip-toggle {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-}
-.choice-n {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-}
-.chip-toggle[aria-pressed="true"] .choice-n {
-  color: inherit;
-  opacity: 0.65;
 }
 .filter-foot {
   position: sticky;
@@ -92,12 +42,6 @@
   padding: 12px var(--gx) calc(14px + env(safe-area-inset-bottom, 0px));
   background: var(--surface);
   border-top: 1px solid var(--line);
-}
-.filter-foot .btn {
-  flex: 1;
-}
-.filter-foot .btn.primary {
-  flex: 2;
 }
 @media (min-width: 700px) {
   .filter-foot {

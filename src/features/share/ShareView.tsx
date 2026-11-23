@@ -1,3 +1,6 @@
+import { Alert } from "~/components/ui/alert";
+import { Button } from "~/components/ui/button";
+import { Empty, EmptyDescription } from "~/components/ui/empty";
 import { useCallback, useMemo } from "react";
 import { useCards } from "~/features/cards/api";
 import { cardImageSrc } from "~/features/cards/image";
@@ -34,9 +37,11 @@ function ShareTile({ card: c, onPhoto }: { card: Card; onPhoto: (() => void) | u
       {printing ? <div className="tile-sub tile-variant">{printing}</div> : null}
       <div className="share-buy">
         <span className="share-price num">{sp?.amt ?? "No price yet"}</span>
-        <a href={buyUrl(c)} target="_blank" rel="noopener">
-          Buy
-        </a>
+        <Button asChild variant="default" size="sm" className="rounded-full">
+          <a href={buyUrl(c)} target="_blank" rel="noopener">
+            Buy
+          </a>
+        </Button>
       </div>
     </article>
   );
@@ -78,9 +83,13 @@ export function ShareView({ coll }: { coll: string | null }) {
 
   let body;
   if (!loaded && !failed) body = <SkeletonGrid className="list grid" count={9} />;
-  else if (failed)
-    body = <div className="banner">Couldn&apos;t load the list. Check your connection and try again.</div>;
-  else if (!rows.length) body = <div className="empty-state">Nothing on this list right now.</div>;
+  else if (failed) body = <Alert>Couldn&apos;t load the list. Check your connection and try again.</Alert>;
+  else if (!rows.length)
+    body = (
+      <Empty>
+        <EmptyDescription>Nothing on this list right now.</EmptyDescription>
+      </Empty>
+    );
   else
     body = (
       <>

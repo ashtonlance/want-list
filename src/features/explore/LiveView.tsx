@@ -12,6 +12,8 @@ import {
   type FeedSort,
 } from "~/features/catalog/feed";
 import { LOOK_OPTIONS, lookCards } from "~/features/catalog/looks";
+import { Button } from "~/components/ui/button";
+import { Toggle } from "~/components/ui/toggle";
 import {
   ActiveFilters,
   Choices,
@@ -29,6 +31,7 @@ import { EveryCardFeed } from "./EveryCardFeed";
 import { LoadError } from "~/ui/LoadError";
 import { useTdSets } from "./live";
 import { LiveResults } from "./LiveResults";
+import { SearchInput } from "~/ui/SearchInput";
 import { CAP_OPTIONS, DEFAULT_LIVE_UI, patchLiveUi, useLiveUi, type LiveSort, type LiveUi } from "./state";
 import { useCollections } from "~/features/cards/useCollections";
 
@@ -244,7 +247,7 @@ export function LiveView() {
       <div className="ex-tools">
         <div className="ex-bar">
           <form
-            className="lv-search"
+            className="flex min-w-0 flex-1"
             role="search"
             autoComplete="off"
             onSubmit={(e) => {
@@ -253,9 +256,9 @@ export function LiveView() {
               commit(typed.trim());
             }}
           >
-            <input
+            <SearchInput
               ref={input}
-              type="search"
+              wrapClassName="flex-1"
               placeholder={placeholder}
               aria-label="Search live cards"
               enterKeyHint="search"
@@ -266,17 +269,15 @@ export function LiveView() {
           <FilterButton on={active.length > 0 || sorted} onClick={sheet.show} />
         </div>
         <div className="colltabs">
-          <button
-            className="colltab"
-            type="button"
-            aria-pressed={all && !soon}
-            onClick={() => {
+          <Toggle
+            pressed={all && !soon}
+            onPressedChange={() => {
               showSet("");
               if (soon) feed("era")("any");
             }}
           >
             <b>Every card</b>
-          </button>
+          </Toggle>
           {catalog.data ? (
             <SoonChip
               cat={catalog.data}
@@ -289,19 +290,18 @@ export function LiveView() {
             />
           ) : null}
           {chipSets.map((s) => (
-            <button
-              key={s.id}
-              className="colltab"
-              type="button"
-              aria-pressed={!q && set === s.id}
-              onClick={() => showSet(s.id)}
-            >
+            <Toggle key={s.id} pressed={!q && set === s.id} onPressedChange={() => showSet(s.id)}>
               <b>{s.name}</b>
-            </button>
+            </Toggle>
           ))}
-          <button className="colltab new" type="button" onClick={() => open({ panel: "sets" })}>
-            <b>All sets</b>
-          </button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-full"
+            onClick={() => open({ panel: "sets" })}
+          >
+            All sets
+          </Button>
         </div>
         <ActiveFilters items={active} onClearAll={clearFilters} />
         {resultLine ? <p className="ex-meta">{resultLine}</p> : null}

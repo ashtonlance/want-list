@@ -1,4 +1,6 @@
 import { useOverlayNav } from "~/app/overlayNav";
+import { Alert } from "~/components/ui/alert";
+import { Button } from "~/components/ui/button";
 import { useAuth } from "./AuthProvider";
 
 /**
@@ -10,23 +12,32 @@ export function SignInHint({ line = false, action = "make changes" }: { line?: b
   const { open } = useOverlayNav();
   if (!ready || canWrite) return null;
 
-  const button = (
-    <button className="link-btn" type="button" onClick={() => open({ panel: "account" })}>
-      {email ? "Account" : "Sign in"}
-    </button>
-  );
+  const button = <SignInLink signedIn={!!email} onClick={() => open({ panel: "account" })} />;
   if (line)
     return (
-      <p className="hint signin-hint">
+      <p className="hint mt-1">
         {email ? `${email} can view this list but not change it.` : `Sign in to ${action}.`} {button}
       </p>
     );
   return (
-    <div className="banner">
+    <Alert>
       {email
         ? `You're signed in as ${email}, which can view Ashton's list but not change it.`
         : `You're viewing Ashton's list. Sign in to ${action}.`}{" "}
       {button}
-    </div>
+    </Alert>
+  );
+}
+
+/** The inline "Sign in" (or "Account") link that opens the account sheet, set in running text. */
+export function SignInLink({ signedIn, onClick }: { signedIn: boolean; onClick: () => void }) {
+  return (
+    <Button
+      variant="link"
+      className="-my-2.5 px-0.5 py-2.5 align-baseline text-[length:inherit] decoration-current"
+      onClick={onClick}
+    >
+      {signedIn ? "Account" : "Sign in"}
+    </Button>
   );
 }

@@ -3,8 +3,13 @@ import { POCKETS, type Pockets } from "~/app/prefs";
 import { collectionCards } from "~/features/cards/collections";
 import type { Card } from "~/features/cards/types";
 import { cleanName, plural } from "~/lib/format";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Textarea } from "~/components/ui/textarea";
 import { Select } from "~/ui/Select";
 import { useToast } from "~/ui/Toast";
+import { CODE_FIELD } from "./ImportSheet";
 import { shareCode } from "./shareCode";
 import { cardIdsIn, fillEmpty, repage, type Slots } from "./slots";
 import type { Binder } from "./types";
@@ -82,17 +87,17 @@ export function OptionsSheet({ binder: b, cards, local, onSave, onFill, onDelete
 
   return (
     <div className="sheet-form">
-      <label>
+      <Label>
         Name
-        <input type="text" aria-label="Binder name" value={name} onChange={(e) => setName(e.target.value)} />
-      </label>
-      <label>
+        <Input aria-label="Binder name" value={name} onChange={(e) => setName(e.target.value)} />
+      </Label>
+      <Label>
         Page size
         <Select aria-label="Pockets per page" value={pockets} options={PAGE_SIZES} onChange={setPockets} />
-      </label>
-      <button className="btn primary" type="button" onClick={save}>
+      </Label>
+      <Button variant="default" onClick={save}>
         Save changes
-      </button>
+      </Button>
 
       <h4>Fill from a collection</h4>
       <p className="hint">
@@ -100,9 +105,7 @@ export function OptionsSheet({ binder: b, cards, local, onSave, onFill, onDelete
         are skipped.
       </p>
       <Select aria-label="Collection to fill from" value={coll} options={collOptions} onChange={setColl} />
-      <button className="btn" type="button" onClick={fill}>
-        Fill empty pockets
-      </button>
+      <Button onClick={fill}>Fill empty pockets</Button>
 
       <h4>Share</h4>
       <p className="hint">
@@ -110,45 +113,43 @@ export function OptionsSheet({ binder: b, cards, local, onSave, onFill, onDelete
           ? "Copy this code and text it to Ashton. He can import it from his binders."
           : "Copy this code to send the layout to someone who isn't signed in, or to keep a backup."}
       </p>
-      <a
-        className="btn primary"
-        href={
-          "sms:?&body=" +
-          encodeURIComponent(`Binder layout for the want list (${b.name}). ${HOW_TO_IMPORT}${code}`)
-        }
-      >
-        Text it
-      </a>
-      <a
-        className="btn"
-        href={
-          "mailto:?subject=" +
-          encodeURIComponent(`Binder layout: ${b.name}`) +
-          "&body=" +
-          encodeURIComponent(HOW_TO_IMPORT + code)
-        }
-      >
-        Email it
-      </a>
-      <button className="btn" type="button" onClick={copy}>
-        Copy share code
-      </button>
+      <Button asChild variant="default">
+        <a
+          href={
+            "sms:?&body=" +
+            encodeURIComponent(`Binder layout for the want list (${b.name}). ${HOW_TO_IMPORT}${code}`)
+          }
+        >
+          Text it
+        </a>
+      </Button>
+      <Button asChild>
+        <a
+          href={
+            "mailto:?subject=" +
+            encodeURIComponent(`Binder layout: ${b.name}`) +
+            "&body=" +
+            encodeURIComponent(HOW_TO_IMPORT + code)
+          }
+        >
+          Email it
+        </a>
+      </Button>
+      <Button onClick={() => void copy()}>Copy share code</Button>
       {showCode ? <CodeBox code={code} /> : null}
 
       <h4>Delete</h4>
       {confirming ? (
         <div className="row-btns">
-          <button className="btn" type="button" onClick={() => setConfirming(false)}>
-            Keep
-          </button>
-          <button className="btn danger" type="button" onClick={onDelete}>
+          <Button onClick={() => setConfirming(false)}>Keep</Button>
+          <Button variant="destructive" onClick={onDelete}>
             Yes, delete
-          </button>
+          </Button>
         </div>
       ) : (
-        <button className="btn danger" type="button" onClick={() => setConfirming(true)}>
+        <Button variant="destructive" onClick={() => setConfirming(true)}>
           Delete this binder
-        </button>
+        </Button>
       )}
     </div>
   );
@@ -156,7 +157,7 @@ export function OptionsSheet({ binder: b, cards, local, onSave, onFill, onDelete
 
 /** Shown when the clipboard is refused: the code, selected and in view, to copy by hand. */
 function CodeBox({ code }: { code: string }) {
-  return <textarea rows={4} readOnly value={code} ref={selectInView} />;
+  return <Textarea rows={4} readOnly value={code} ref={selectInView} className={CODE_FIELD} />;
 }
 
 function selectInView(el: HTMLTextAreaElement | null) {

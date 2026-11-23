@@ -1,4 +1,8 @@
 import { useState, type SubmitEvent } from "react";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { NativeSelect, NativeSelectOption } from "~/components/ui/native-select";
 import { SET_LIST } from "~/features/list/Datalists";
 import { today } from "~/lib/format";
 import { useCardWrites } from "./api";
@@ -14,6 +18,9 @@ interface Props {
   onPhoto: () => void;
   onSaved: () => void;
 }
+
+/** The form sits on the sunken Manage panel, so its fields are drawn on the surface color instead. */
+const onPanel = "bg-card";
 
 const money = (v: string): number | null => (v.trim() === "" ? null : Math.round(parseFloat(v) * 100) / 100);
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -87,58 +94,66 @@ export function EditForm({ card: c, knownSets, onPhoto, onSaved }: Props) {
 
   return (
     <form className="edit" onSubmit={submit}>
-      <label className="wide">
+      <Label className="wide">
         Card name
-        <input type="text" name="name" defaultValue={c.name} />
-      </label>
-      <label>
+        <Input className={onPanel} name="name" defaultValue={c.name} />
+      </Label>
+      <Label>
         Number
-        <input type="text" name="number" defaultValue={c.number} />
-      </label>
-      <label>
+        <Input className={onPanel} name="number" defaultValue={c.number} />
+      </Label>
+      <Label>
         Variant
-        <input type="text" name="variant" defaultValue={c.variant} />
-      </label>
-      <label className="wide">
+        <Input className={onPanel} name="variant" defaultValue={c.variant} />
+      </Label>
+      <Label className="wide">
         Set
-        <input type="text" name="set" defaultValue={c.set} list={SET_LIST} />
-      </label>
-      <label>
+        <Input className={onPanel} name="set" defaultValue={c.set} list={SET_LIST} />
+      </Label>
+      <Label>
         Language
-        <select name="lang" defaultValue={c.lang}>
-          <option value="EN">English</option>
-          <option value="JP">Japanese</option>
-        </select>
-      </label>
-      <label>
+        <NativeSelect selectClassName={onPanel} name="lang" defaultValue={c.lang}>
+          <NativeSelectOption value="EN">English</NativeSelectOption>
+          <NativeSelectOption value="JP">Japanese</NativeSelectOption>
+        </NativeSelect>
+      </Label>
+      <Label>
         Note
-        <input type="text" name="note" defaultValue={c.note} />
-      </label>
-      <label className="wide">
+        <Input className={onPanel} name="note" defaultValue={c.note} />
+      </Label>
+      <Label className="wide">
         DoubleHolo page
-        <input
+        <Input
+          className={onPanel}
           type="url"
           name="dhUrl"
           defaultValue={c.dhUrl ?? ""}
           placeholder="https://doubleholo.com/card/…"
         />
-      </label>
-      <label className="wide">
+      </Label>
+      <Label className="wide">
         Your listing link
-        <input type="url" name="link" defaultValue={c.listing?.url ?? ""} placeholder="https://" />
-      </label>
+        <Input
+          className={onPanel}
+          type="url"
+          name="link"
+          defaultValue={c.listing?.url ?? ""}
+          placeholder="https://"
+        />
+      </Label>
       <h4>Best deal found (shipping included)</h4>
-      <label>
+      <Label>
         Site
-        <input type="text" name="dSite" defaultValue={d?.site ?? ""} placeholder="TCGplayer" />
-      </label>
-      <label>
+        <Input className={onPanel} name="dSite" defaultValue={d?.site ?? ""} placeholder="TCGplayer" />
+      </Label>
+      <Label>
         Seller
-        <input type="text" name="dSeller" defaultValue={d?.seller ?? ""} />
-      </label>
-      <label>
+        <Input className={onPanel} name="dSeller" defaultValue={d?.seller ?? ""} />
+      </Label>
+      <Label>
         Card price
-        <input
+        <Input
+          className={onPanel}
           type="number"
           name="dPrice"
           defaultValue={d?.price ?? ""}
@@ -146,10 +161,11 @@ export function EditForm({ card: c, knownSets, onPhoto, onSaved }: Props) {
           min="0"
           inputMode="decimal"
         />
-      </label>
-      <label>
+      </Label>
+      <Label>
         Shipping
-        <input
+        <Input
+          className={onPanel}
           type="number"
           name="dShip"
           defaultValue={d?.shipping ?? ""}
@@ -157,30 +173,32 @@ export function EditForm({ card: c, knownSets, onPhoto, onSaved }: Props) {
           min="0"
           inputMode="decimal"
         />
-      </label>
-      <label>
+      </Label>
+      <Label>
         Condition
-        <input type="text" name="dCond" defaultValue={d?.condition ?? ""} placeholder="Near Mint" />
-      </label>
-      <label className="wide">
+        <Input className={onPanel} name="dCond" defaultValue={d?.condition ?? ""} placeholder="Near Mint" />
+      </Label>
+      <Label className="wide">
         Deal link
-        <input type="url" name="dUrl" defaultValue={d?.url ?? ""} placeholder="https://" />
-      </label>
+        <Input
+          className={onPanel}
+          type="url"
+          name="dUrl"
+          defaultValue={d?.url ?? ""}
+          placeholder="https://"
+        />
+      </Label>
       <span />
       <div className="actions">
-        <button className="btn primary small" type="submit" disabled={saving}>
+        <Button size="sm" variant="default" className="flex-1" type="submit" disabled={saving}>
           {saving ? "Saving…" : "Save changes"}
-        </button>
-        <button className="btn small" type="button" onClick={onPhoto}>
+        </Button>
+        <Button size="sm" className="flex-1" onClick={onPhoto}>
           {c.img ? "Replace photo" : "Add photo"}
-        </button>
-        <button
-          className="btn small"
-          type="button"
-          onClick={() => void save(c, { deal: null }, "Deal cleared")}
-        >
+        </Button>
+        <Button size="sm" className="flex-1" onClick={() => void save(c, { deal: null }, "Deal cleared")}>
           Clear deal
-        </button>
+        </Button>
       </div>
     </form>
   );

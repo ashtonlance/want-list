@@ -1,10 +1,19 @@
+import { ArrowDownIcon, ArrowUpIcon } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "~/features/auth/AuthProvider";
 import type { CollectionSummary } from "~/features/cards/collections";
 import { useCollections, useCollectionWrites } from "~/features/cards/useCollections";
 import { cleanName, formatMoney } from "~/lib/format";
 import { Sheet, SheetHead } from "~/ui/Sheet";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import { showCollection } from "./state";
+
+/** A name field in an inline form: it takes the room left on the line, and wraps under below 180px. */
+const inlineInput = "w-auto flex-[1_1_180px]";
+/** The collection's name and progress, a plain text row that opens it. */
+const nameClass =
+  "cm-name block min-h-0 min-w-0 flex-[1_1_140px] rounded-none bg-transparent px-0 py-1 text-left font-normal whitespace-normal hover:bg-transparent active:scale-100 active:opacity-70";
 
 /** Every collection in one place: make one (empty is fine), rename, reorder, delete. */
 export function CollectionsSheet({ onClose }: { onClose: () => void }) {
@@ -49,16 +58,16 @@ export function CollectionsSheet({ onClose }: { onClose: () => void }) {
               });
             }}
           >
-            <input
-              type="text"
+            <Input
+              className={inlineInput}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="New collection, e.g. Kids' binder"
               aria-label="New collection name"
             />
-            <button className="btn primary small" type="submit">
+            <Button size="sm" variant="default" type="submit">
               Add
-            </button>
+            </Button>
           </form>
         ) : (
           <p className="hint">Sign in to make or change collections.</p>
@@ -80,50 +89,52 @@ export function CollectionsSheet({ onClose }: { onClose: () => void }) {
                     <span className="cm-ask">
                       Delete {c.name}? {c.total ? "Its cards stay on your list." : ""}
                     </span>
-                    <button className="btn small" type="button" onClick={() => setDeleting(null)}>
+                    <Button size="sm" onClick={() => setDeleting(null)}>
                       Keep
-                    </button>
-                    <button
-                      className="btn small danger"
-                      type="button"
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
                       onClick={() => {
                         setDeleting(null);
                         void writes.remove(c.name);
                       }}
                     >
                       Yes, delete
-                    </button>
+                    </Button>
                   </div>
                 ) : (
                   <div className="cm-row">
-                    <button className="cm-name" type="button" onClick={() => go(c.name)}>
+                    <Button variant="ghost" className={nameClass} onClick={() => go(c.name)}>
                       <b>{c.name}</b>
                       <small>{summary(c)}</small>
-                    </button>
+                    </Button>
                     {canWrite ? (
                       <span className="cm-acts">
-                        <button
-                          type="button"
+                        <Button
+                          size="sm"
+                          variant="secondary"
                           aria-label={`Move ${c.name} up`}
                           disabled={i === 0}
                           onClick={() => move(i, -1)}
                         >
-                          ↑
-                        </button>
-                        <button
-                          type="button"
+                          <ArrowUpIcon />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
                           aria-label={`Move ${c.name} down`}
                           disabled={i === collections.length - 1}
                           onClick={() => move(i, 1)}
                         >
-                          ↓
-                        </button>
-                        <button type="button" onClick={() => setEditing(c.name)}>
+                          <ArrowDownIcon />
+                        </Button>
+                        <Button size="sm" onClick={() => setEditing(c.name)}>
                           Rename
-                        </button>
-                        <button type="button" className="danger" onClick={() => setDeleting(c.name)}>
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => setDeleting(c.name)}>
                           Delete
-                        </button>
+                        </Button>
                       </span>
                     ) : null}
                   </div>
@@ -160,19 +171,19 @@ function RenameRow({ name, onDone }: { name: string; onDone: (to: string | null)
         onDone(cleanName(value) || null);
       }}
     >
-      <input
-        type="text"
+      <Input
+        className={inlineInput}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         aria-label={`New name for ${name}`}
         autoFocus
       />
-      <button className="btn primary small" type="submit">
+      <Button size="sm" variant="default" type="submit">
         Save
-      </button>
-      <button className="btn small" type="button" onClick={() => onDone(null)}>
+      </Button>
+      <Button size="sm" onClick={() => onDone(null)}>
         Cancel
-      </button>
+      </Button>
     </form>
   );
 }

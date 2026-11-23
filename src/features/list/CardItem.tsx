@@ -1,4 +1,7 @@
+import { CheckIcon } from "lucide-react";
+import { Toggle } from "~/components/ui/toggle";
 import { useCardWrites } from "~/features/cards/api";
+import { CollChip } from "~/features/cards/CollChip";
 import { cardImageSrc } from "~/features/cards/image";
 import { sharePct, usePriceDrop, type PriceDrop } from "~/features/cards/history";
 import { ownedBadge, ownedOf } from "~/features/cards/owned";
@@ -21,7 +24,11 @@ interface ItemProps {
 }
 
 function Check({ on }: { on: boolean }) {
-  return <span className={"check" + (on ? " on" : "")}>{on ? "✓" : ""}</span>;
+  return (
+    <span className={"check" + (on ? " on" : "")}>
+      {on ? <CheckIcon className="size-3.5" strokeWidth={3} aria-hidden="true" /> : null}
+    </span>
+  );
 }
 
 /** What a card's open button reads out: name, printing, set, and whether it's got or its price. */
@@ -130,31 +137,23 @@ export function CardRow({ card: c, selecting, selected, canWrite, onActivate, on
           <div className="flags">
             {got ? <span className="flag">{ownedBadge(ownedOf(c))}</span> : null}
             {c.collections.map((n) => (
-              <button
-                key={n}
-                className="collchip"
-                type="button"
-                title={`Show ${n}`}
-                onClick={() => showCollection(n)}
-              >
-                {n}
-              </button>
+              <CollChip key={n} name={n} onClick={() => showCollection(n)} />
             ))}
           </div>
         ) : null}
       </div>
       <div className="rprice">
         {canWrite && !selecting ? (
-          <button
-            className="star"
-            type="button"
-            aria-pressed={c.priority}
+          <Toggle
+            variant="default"
+            className="star -m-1.5 min-h-0 p-1.5 leading-none [&_svg]:size-[18px]"
+            pressed={c.priority}
             aria-label="Priority"
             title="Mark as priority"
-            onClick={() => void save(c, { priority: !c.priority })}
+            onPressedChange={(on) => void save(c, { priority: on })}
           >
-            <StarIcon />
-          </button>
+            <StarIcon filled={c.priority} />
+          </Toggle>
         ) : c.priority ? (
           <span className="prio-mark" aria-label="Priority">
             <StarMark />

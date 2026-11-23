@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { copyFile, mkdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import tailwindcss from "@tailwindcss/vite";
 import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import type { Plugin } from "vite";
@@ -177,6 +178,7 @@ export default defineConfig({
   plugins: [
     tanstackRouter({ target: "react", autoCodeSplitting: true }),
     react(),
+    tailwindcss(),
     siteData(),
     spaFallback(),
     offline,

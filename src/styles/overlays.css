@@ -1,35 +1,12 @@
 /* toast & lightbox */
-.toast {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: calc(var(--tab) + 14px);
-  background: var(--ink);
-  color: var(--bg);
-  padding: 11px 18px;
-  border-radius: 999px;
-  font-weight: 600;
-  font-size: 14px;
-  z-index: 60;
-  max-width: calc(100% - 32px);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
-  animation: fade 0.2s;
+/* Toasts (components/ui/sonner.tsx) sit above the tab bar, or above the select toolbar while it shows. */
+:root {
+  --toast-bottom: calc(var(--tab) + 14px);
+}
+body.selecting {
+  --toast-bottom: calc(var(--bulk) + 14px);
 }
 /* Above the select toolbar, which stands in for the tab bar (--bulk, styles/cards.css). */
-body.selecting .toast {
-  bottom: calc(var(--bulk) + 14px);
-}
-.toast-undo {
-  margin-left: 10px;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-weight: 800;
-  text-decoration: underline;
-  cursor: pointer;
-  padding: 4px;
-}
 .lightbox {
   position: fixed;
   inset: 0;
@@ -97,21 +74,6 @@ body.selecting .toast {
   font-size: 16px;
   color: #fff;
 }
-.lightbox .close {
-  position: absolute;
-  top: calc(12px + env(safe-area-inset-top, 0px));
-  right: max(12px, env(safe-area-inset-right, 0px));
-  border: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-  width: 40px;
-  height: 40px;
-  font-size: 22px;
-  cursor: pointer;
-  /* Above a zoomed photo, which stacks over what comes before it. */
-  z-index: 1;
-}
 /* Every gesture here is ours (step, pull down to close, pinch to zoom the photo), so the page never zooms. */
 .lightbox {
   touch-action: none;
@@ -137,7 +99,7 @@ body.selecting .toast {
   will-change: transform;
 }
 .lightbox > .cap,
-.lightbox > .close,
+.lightbox > .lb-close,
 .lightbox > .lb-acts,
 .lightbox > .lb-nav {
   transition:
@@ -146,7 +108,7 @@ body.selecting .toast {
 }
 /* While pulling down, only the photo shows, as in Photos. */
 .lightbox.dragging-y > .cap,
-.lightbox.dragging-y > .close,
+.lightbox.dragging-y > .lb-close,
 .lightbox.dragging-y > .lb-acts,
 .lightbox.dragging-y > .lb-nav {
   opacity: 0;
@@ -173,28 +135,6 @@ body.selecting .toast {
   display: flex;
   gap: 10px;
 }
-.lightbox .lb-details,
-.lightbox .lb-action {
-  background: #fff;
-  color: #111114;
-  border: 0;
-  border-radius: 999px;
-  padding: 10px 22px;
-  font: 600 15px/1.2 inherit;
-  cursor: pointer;
-}
-/* Beside the action, Details steps back so the action reads first. */
-.lightbox .lb-action + .lb-details {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-}
-.lightbox .lb-action:disabled {
-  cursor: default;
-}
-.lightbox .lb-action.done {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-}
 .lb-nav {
   display: flex;
   align-items: center;
@@ -202,30 +142,4 @@ body.selecting .toast {
   color: #ededf0;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
-}
-.lb-nav button {
-  width: 40px;
-  height: 40px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff;
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-}
-.lb-nav button:disabled {
-  opacity: 0.3;
-  cursor: default;
-}
-.update-toast {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-}
-.update-toast .toast-undo + .toast-undo {
-  margin-left: 0;
-  font-weight: 600;
-  opacity: 0.7;
 }

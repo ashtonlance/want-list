@@ -1,3 +1,4 @@
+import { Empty } from "~/components/ui/empty";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
@@ -117,11 +118,11 @@ export function EveryCardFeed({ cat, rows, lang, scrollKey, q = "", filtered = f
           );
         })}
         {total ? null : (
-          <div className="empty-state">
+          <Empty>
             {q
               ? `No ${lang === "en" ? "English " : lang === "jp" ? "Japanese " : ""}cards match “${q}”.${filtered ? ` Try clearing filters${lang === "both" ? "" : " or another language"} under Filter and sort.` : lang === "both" ? "" : " Try another language under Filter and sort."}`
               : "No cards match these filters."}
-          </div>
+          </Empty>
         )}
       </div>
       <p className="hint lv-foot" ref={foot}>

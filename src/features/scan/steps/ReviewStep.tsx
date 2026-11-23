@@ -1,3 +1,4 @@
+import { Button } from "~/components/ui/button";
 import { useState, type CSSProperties } from "react";
 import { cleanName, plural } from "~/lib/format";
 import { tcgImage } from "~/lib/images";
@@ -68,12 +69,12 @@ export function ReviewStep({
         <p className="hint">
           Saving marks these cards as owned (adding any that aren't on your list) and {where}.
         </p>
-        <button className="btn primary wide" type="button" disabled={!cards} onClick={onSave}>
+        <Button variant="default" className="w-full" disabled={!cards} onClick={onSave}>
           Save {plural(cards, "card")}
-        </button>
-        <button className="btn wide" type="button" onClick={onStartOver}>
+        </Button>
+        <Button className="w-full" onClick={onStartOver}>
           Start over
-        </button>
+        </Button>
       </div>
     </>
   );

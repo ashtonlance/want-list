@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { prefs } from "~/app/prefs";
+import { Empty } from "~/components/ui/empty";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { SignInHint } from "~/features/auth/SignInHint";
@@ -100,8 +101,7 @@ export function ListView() {
   else if (failed)
     body = <LoadError text="Couldn't load the list. Check your connection and try again." onRetry={retry} />;
   else if (!loaded) body = <SkeletonGrid className="list grid" count={9} />;
-  else if (!rows.length)
-    body = <div className="empty-state">{emptyText(cards.length > 0, coll, canWrite)}</div>;
+  else if (!rows.length) body = <Empty>{emptyText(cards.length > 0, coll, canWrite)}</Empty>;
   else
     body = (
       <div className={"list " + layout} ref={grid}>

@@ -18,12 +18,17 @@ import { addSearch } from "~/features/catalog/search";
 import { parseLink, parseQuick, type ParsedCard, type ParsedLink } from "~/features/cards/quickAdd";
 import type { Lang } from "~/features/cards/types";
 import { cleanName, today } from "~/lib/format";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { NativeSelect, NativeSelectOption } from "~/components/ui/native-select";
 import { Seg } from "~/ui/Seg";
 import { Sheet, SheetHead } from "~/ui/Sheet";
 import { CameraIcon } from "~/ui/icons";
 import { useToast } from "~/ui/Toast";
 import { CatalogTiles } from "./CatalogTiles";
 import { COLL_LIST, SET_LIST } from "./Datalists";
+import { SearchInput } from "~/ui/SearchInput";
 import { useActiveCollection } from "./useActiveCollection";
 
 interface Draft {
@@ -209,8 +214,8 @@ export function AddSheet({ onClose }: { onClose: () => void }) {
       ) : (
         <section>
           <form ref={quickForm} className="add-row" autoComplete="off" onSubmit={submitQuick}>
-            <input
-              type="search"
+            <SearchInput
+              wrapClassName="flex-1"
               value={quick}
               onChange={(e) => {
                 setQuick(e.target.value);
@@ -230,15 +235,15 @@ export function AddSheet({ onClose }: { onClose: () => void }) {
               spellCheck={false}
               autoFocus
             />
-            <button
-              className="icon-btn"
-              type="button"
+            <Button
+              size="icon-lg"
+              className="rounded-md"
               aria-label="Scan a card with the camera"
               title="Scan a card"
               onClick={() => setScanning(true)}
             >
               <CameraIcon />
-            </button>
+            </Button>
           </form>
           {searching ? (
             <>
@@ -251,9 +256,9 @@ export function AddSheet({ onClose }: { onClose: () => void }) {
               ) : catalog.isError ? null : (
                 <p className="hint">Loading every Pokémon card…</p>
               )}
-              <button className="linkbtn add-manual" type="button" onClick={next}>
+              <Button variant="link" className="add-manual" onClick={next}>
                 Not here? Type in the details
-              </button>
+              </Button>
             </>
           ) : draft ? null : (
             <p className="hint">
@@ -265,69 +270,59 @@ export function AddSheet({ onClose }: { onClose: () => void }) {
           {draft ? (
             <form className="confirm" onSubmit={(e) => void save(e)}>
               {draft.note0 ? <p className="parsed-note">{draft.note0}</p> : null}
-              <label className="wide">
+              <Label className="wide">
                 Card name
-                <input type="text" required autoFocus={!draft.name} {...field("name")} />
-              </label>
-              <label>
+                <Input required autoFocus={!draft.name} {...field("name")} />
+              </Label>
+              <Label>
                 Number
-                <input
-                  type="text"
-                  placeholder="161"
-                  autoFocus={!!draft.name && !!draft.set}
-                  {...field("number")}
-                />
-              </label>
-              <label>
+                <Input placeholder="161" autoFocus={!!draft.name && !!draft.set} {...field("number")} />
+              </Label>
+              <Label>
                 Variant
-                <input type="text" placeholder="Reverse Holo" {...field("variant")} />
-              </label>
-              <label className="wide">
+                <Input placeholder="Reverse Holo" {...field("variant")} />
+              </Label>
+              <Label className="wide">
                 Set
-                <input type="text" list={SET_LIST} autoFocus={!!draft.name && !draft.set} {...field("set")} />
-              </label>
-              <label>
+                <Input list={SET_LIST} autoFocus={!!draft.name && !draft.set} {...field("set")} />
+              </Label>
+              <Label>
                 Language
-                <select {...field("lang")}>
-                  <option value="EN">English</option>
-                  <option value="JP">Japanese</option>
-                </select>
-              </label>
-              <label>
+                <NativeSelect {...field("lang")}>
+                  <NativeSelectOption value="EN">English</NativeSelectOption>
+                  <NativeSelectOption value="JP">Japanese</NativeSelectOption>
+                </NativeSelect>
+              </Label>
+              <Label>
                 Status
-                <select {...field("status")}>
-                  <option value="want">I want it</option>
-                  <option value="got">I already have it</option>
-                </select>
-              </label>
-              <label className="wide">
+                <NativeSelect {...field("status")}>
+                  <NativeSelectOption value="want">I want it</NativeSelectOption>
+                  <NativeSelectOption value="got">I already have it</NativeSelectOption>
+                </NativeSelect>
+              </Label>
+              <Label className="wide">
                 Collection
-                <input
-                  type="text"
-                  list={COLL_LIST}
-                  placeholder="Optional, e.g. Gengar binder"
-                  {...field("coll")}
-                />
-              </label>
-              <label className="wide">
+                <Input list={COLL_LIST} placeholder="Optional, e.g. Gengar binder" {...field("coll")} />
+              </Label>
+              <Label className="wide">
                 Note
-                <input type="text" placeholder="Optional" {...field("note")} />
-              </label>
-              <label className="full">
+                <Input placeholder="Optional" {...field("note")} />
+              </Label>
+              <Label className="full">
                 Listing link
-                <input
+                <Input
                   type="url"
                   placeholder="Optional: a listing you're eyeing, or the card's DoubleHolo page"
                   {...field("link")}
                 />
-              </label>
+              </Label>
               <div className="actions">
-                <button className="btn" type="button" onClick={() => setDraft(null)}>
+                <Button className="flex-1" onClick={() => setDraft(null)}>
                   Cancel
-                </button>
-                <button className="btn primary" type="submit" disabled={saving}>
+                </Button>
+                <Button variant="default" className="flex-1" type="submit" disabled={saving}>
                   Save to list
-                </button>
+                </Button>
               </div>
             </form>
           ) : null}

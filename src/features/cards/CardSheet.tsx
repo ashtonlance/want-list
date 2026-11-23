@@ -1,8 +1,18 @@
+import { ChevronRightIcon } from "lucide-react";
 import { useMemo, useState } from "react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+  accordionRowClass,
+} from "~/components/ui/accordion";
+import { Button } from "~/components/ui/button";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { SignInHint } from "~/features/auth/SignInHint";
 import { showCollection } from "~/features/list/state";
 import { formatDate, formatMoney } from "~/lib/format";
+import { cn } from "~/lib/utils";
 import { HeroImage } from "~/ui/CardImage";
 import { StarIcon } from "~/ui/icons";
 import { useCloseWhen } from "~/ui/useCloseWhen";
@@ -10,6 +20,7 @@ import { useToast } from "~/ui/Toast";
 import { useLightbox } from "~/ui/Lightbox";
 import { Sheet, SheetHead } from "~/ui/Sheet";
 import { useCardWrites, useCards } from "./api";
+import { CollChip } from "./CollChip";
 import { knownSets } from "./collections";
 import { EditForm } from "./EditForm";
 import { cardImageSrc } from "./image";
@@ -25,6 +36,9 @@ import type { Card } from "./types";
 import { usePhotoUpload } from "./usePhotoUpload";
 
 type Panel = "tags" | "edit" | "remove" | null;
+
+/** A Manage row that acts straight away instead of opening: drawn like the accordion's rows, divider included. */
+const actionRow = "rounded-none border-t-[0.5px] border-input hover:bg-transparent active:scale-100";
 
 /** A card on the list: photo, price, quick actions, shops and edits. */
 export function CardSheet({ id, onClose }: { id: string; onClose: () => void }) {
@@ -55,7 +69,6 @@ function CardDetail({
   const photo = usePhotoUpload(c);
   const sets = useMemo(() => knownSets(cards), [cards]);
   const [panel, setPanel] = useState<Panel>(null);
-  const toggle = (p: Panel) => setPanel((cur) => (cur === p ? null : p));
   const got = isGot(c);
   const src = cardImageSrc(c);
   const checkPrice = usePriceCheck();
@@ -99,28 +112,23 @@ function CardDetail({
       {/* The actions come first, so they're in reach without scrolling past the big picture. */}
       {canWrite ? (
         <div className="detail-acts">
-          <button
-            className={"btn" + (got ? "" : " primary")}
-            type="button"
+          <Button
+            variant={got ? "secondary" : "default"}
+
             onClick={() =>
               void save(c, { status: got ? "want" : "got" }, got ? "Moved back to want" : "Marked as got")
             }
           >
             {got ? "Move back to want" : "Got it"}
-          </button>
-          <button
-            className="btn"
-            type="button"
-            aria-pressed={c.priority}
-            onClick={() => void save(c, { priority: !c.priority })}
-          >
-            <StarIcon filled={c.priority} style={{ width: 18, height: 18 }} />
+          </Button>
+          <Button aria-pressed={c.priority} onClick={() => void save(c, { priority: !c.priority })}>
+            <StarIcon filled={c.priority} />
             {c.priority ? "Priority" : "Mark priority"}
-          </button>
+          </Button>
           {got ? null : (
-            <button className="btn wide" type="button" disabled={checking} onClick={() => void runCheck()}>
+            <Button className="col-span-full" disabled={checking} onClick={() => void runCheck()}>
               {checking ? "Checking price…" : "Check price"}
-            </button>
+            </Button>
           )}
         </div>
       ) : (
@@ -160,18 +168,14 @@ function CardDetail({
             <div className="flags">
               {c.priority ? <span className="flag">★ Priority</span> : null}
               {c.collections.map((n) => (
-                <button
+                <CollChip
                   key={n}
-                  className="collchip"
-                  type="button"
-                  title={`Show ${n}`}
+                  name={n}
                   onClick={() => {
                     showCollection(n);
                     onClose();
                   }}
-                >
-                  {n}
-                </button>
+                />
               ))}
             </div>
           ) : null}
@@ -214,46 +218,48 @@ function CardDetail({
       {canWrite ? (
         <div className="sec">
           <h4 className="sec-title">Manage</h4>
-          <div className="menu">
-            <button type="button" aria-expanded={panel === "tags"} onClick={() => toggle("tags")}>
-              Collections
-            </button>
-            {panel === "tags" ? (
-              <div className="sub">
+          <Accordion
+            type="single"
+            collapsible
+            value={panel === "tags" || panel === "edit" ? panel : ""}
+            onValueChange={(v) => setPanel(v === "tags" || v === "edit" ? v : null)}
+          >
+            <AccordionItem value="tags">
+              <AccordionTrigger>Collections</AccordionTrigger>
+              <AccordionContent>
                 <TagPicker card={c} cards={cards} />
-              </div>
-            ) : null}
-            <button type="button" aria-expanded={panel === "edit"} onClick={() => toggle("edit")}>
-              Edit details
-            </button>
-            {panel === "edit" ? (
-              <div className="sub">
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="edit">
+              <AccordionTrigger>Edit details</AccordionTrigger>
+              <AccordionContent>
                 <EditForm card={c} knownSets={sets} onPhoto={photo.pick} onSaved={() => setPanel(null)} />
-              </div>
-            ) : null}
-            <button type="button" onClick={photo.pick}>
+              </AccordionContent>
+            </AccordionItem>
+            <Button variant="ghost" className={cn(accordionRowClass, actionRow)} onClick={photo.pick}>
               {c.img && /^https?:/.test(c.img) ? "Replace photo" : "Add your own photo"}
-            </button>
+              <ChevronRightIcon aria-hidden="true" className="size-5 text-faint" />
+            </Button>
             {panel === "remove" ? (
-              <div className="sub" style={{ paddingTop: 14 }}>
-                <p className="hint" style={{ marginBottom: 10 }}>
-                  Remove {c.name} from the list?
-                </p>
+              <div className="border-t-[0.5px] border-input px-3.5 py-3.5">
+                <p className="hint mb-2.5">Remove {c.name} from the list?</p>
                 <div className="row-btns">
-                  <button className="btn" type="button" onClick={() => setPanel(null)}>
-                    Keep
-                  </button>
-                  <button className="btn danger" type="button" onClick={() => void remove(c)}>
+                  <Button onClick={() => setPanel(null)}>Keep</Button>
+                  <Button variant="destructive" onClick={() => void remove(c)}>
                     Yes, remove
-                  </button>
+                  </Button>
                 </div>
               </div>
             ) : (
-              <button className="danger" type="button" onClick={() => setPanel("remove")}>
+              <Button
+                variant="ghost"
+                className={cn(accordionRowClass, actionRow, "text-destructive")}
+                onClick={() => setPanel("remove")}
+              >
                 Remove from list
-              </button>
+              </Button>
             )}
-          </div>
+          </Accordion>
         </div>
       ) : null}
       {photo.fileInput}

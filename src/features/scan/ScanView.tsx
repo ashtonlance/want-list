@@ -5,7 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useBinders } from "~/features/binders/useBinders";
 import { useCatalog } from "~/features/catalog/catalog";
-import { useOverlay } from "~/ui/overlay";
+import { Dialog as DialogPrimitive } from "radix-ui";
 import { useToast } from "~/ui/Toast";
 import type { Quad } from "./engine/image";
 import { useSaveScan } from "./save";
@@ -70,10 +70,11 @@ export function ScanView() {
   const { step, pockets } = state;
   const [cols, rows] = GRID[pockets];
 
-  useOverlay(true, () => {
+  // Escape steps out of fixing a pocket, else leaves the scan (asking first if there's work to lose).
+  const onEscape = () => {
     if (step === "fix") dispatch({ type: "closeFix" });
     else leave();
-  });
+  };
 
   // Scanning adds cards and binder pages, so it's for editors of the shared list only. The flag keeps a
   // second run of the effect from going back twice.
@@ -118,15 +119,32 @@ export function ScanView() {
         : null;
 
   return (
-    <div className="scanview" ref={root}>
-      <div className="scan-in" role="dialog" aria-modal="true" aria-label="Scan binder pages">
-        <ScanHead title={titleOf(state)[step]} onBack={back} onClose={leave} />
-        {blocker.status === "blocked" ? (
-          <LeaveConfirm onLeave={blocker.proceed} onStay={blocker.reset} />
-        ) : null}
-        {body()}
-      </div>
-    </div>
+    // A full-screen shadcn/ui Dialog (Radix): holds focus, keeps the page behind still, Escape steps out.
+    <DialogPrimitive.Root open>
+      <DialogPrimitive.Portal>
+        {/* Clear, under the full-screen view: Radix locks the page's scrolling through its overlay. */}
+        <DialogPrimitive.Overlay className="fixed inset-0" />
+        <DialogPrimitive.Content
+          ref={root}
+          className="scanview"
+          aria-describedby={undefined}
+          onEscapeKeyDown={(e) => {
+            e.preventDefault();
+            onEscape();
+          }}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <div className="scan-in">
+            <DialogPrimitive.Title className="sr-only">Scan binder pages</DialogPrimitive.Title>
+            <ScanHead title={titleOf(state)[step]} onBack={back} onClose={leave} />
+            {blocker.status === "blocked" ? (
+              <LeaveConfirm onLeave={blocker.proceed} onStay={blocker.reset} />
+            ) : null}
+            {body()}
+          </div>
+        </DialogPrimitive.Content>
+      </DialogPrimitive.Portal>
+    </DialogPrimitive.Root>
   );
 
   function body() {

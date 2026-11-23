@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { Catalog } from "~/features/catalog/catalog";
 import type { FeedLang } from "~/features/catalog/feed";
+import { Toggle } from "~/components/ui/toggle";
 import { formatDate, plural, today } from "~/lib/format";
 
 interface Props {
@@ -41,7 +42,12 @@ export function SoonChip({
   // Still shown while it's the filter in use, so there's always a pressed chip to tap back out of.
   if (!first && !on) return null;
   return (
-    <button className="colltab soon-chip" type="button" aria-pressed={on} onClick={onClick}>
+    <Toggle
+      pressed={on}
+      onPressedChange={onClick}
+      // Dashed while off: these sets aren't out yet.
+      className="data-[state=off]:border-dashed data-[state=off]:bg-transparent"
+    >
       {!first ? (
         <b>Coming soon</b>
       ) : (
@@ -50,7 +56,7 @@ export function SoonChip({
           <span>{sets.length === 1 ? `out ${when(first.date)}` : `next ${when(first.date)}`}</span>
         </>
       )}
-    </button>
+    </Toggle>
   );
 }
 

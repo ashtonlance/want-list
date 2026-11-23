@@ -1,4 +1,6 @@
 import { prefs } from "~/app/prefs";
+import { Label } from "~/components/ui/label";
+import { Toggle } from "~/components/ui/toggle";
 import { LIST_SORTS } from "~/features/cards/filters";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useStore } from "~/lib/store";
@@ -23,36 +25,29 @@ export function OptionsSheet({ onClose }: { onClose: () => void }) {
     <Sheet label="Sort and view" onClose={onClose}>
       <SheetHead title="Sort and view" />
       <div className="sheet-form">
-        <label>
+        <Label>
           Sort by
           <Select aria-label="Sort" value={sort} options={LIST_SORTS} onChange={(v) => prefs.sort.set(v)} />
-        </label>
+        </Label>
         <div className="field">
           <span>Layout</span>
           <Seg label="Layout" value={layout} options={LAYOUTS} onChange={(v) => prefs.layout.set(v)} />
         </div>
         <div className="row-btns">
-          <button
-            type="button"
-            className="chip-toggle"
-            aria-pressed={prio}
-            onClick={() => patchListUi({ prio: !prio })}
-          >
+          <Toggle pressed={prio} onPressedChange={(on) => patchListUi({ prio: on })}>
             Priority only
-          </button>
+          </Toggle>
           {canWrite ? (
-            <button
-              type="button"
-              className="chip-toggle"
-              aria-pressed={selecting}
-              onClick={() => {
+            <Toggle
+              pressed={selecting}
+              onPressedChange={(on) => {
                 onClose();
-                if (selecting) stopSelecting();
-                else startSelecting("", coll);
+                if (on) startSelecting("", coll);
+                else stopSelecting();
               }}
             >
               {selecting ? "Stop selecting" : "Select cards"}
-            </button>
+            </Toggle>
           ) : null}
         </div>
       </div>

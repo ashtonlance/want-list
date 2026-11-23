@@ -1,5 +1,7 @@
+import { XIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { createPortal } from "react-dom";
+import { Button } from "~/components/ui/button";
+import { Toggle } from "~/components/ui/toggle";
 import { SlidersIcon } from "./icons";
 import { Sheet, SheetHead } from "./Sheet";
 
@@ -11,15 +13,15 @@ import { Sheet, SheetHead } from "./Sheet";
 /** The toolbar button that opens the sheet. The dot says something is filtered or re-sorted. */
 export function FilterButton({ on, onClick }: { on: boolean; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      className="icon-btn opt-btn"
+    <Button
+      size="icon-lg"
+      className="opt-btn"
       aria-label={on ? "Filter and sort, some on" : "Filter and sort"}
       onClick={onClick}
     >
       <SlidersIcon />
       {on ? <span className="dot" /> : null}
-    </button>
+    </Button>
   );
 }
 
@@ -41,21 +43,21 @@ export function ActiveFilters({
   return (
     <div className="scroller active-filters" role="group" aria-label="Filters on">
       {items.map((f) => (
-        <button
+        <Button
           key={f.key}
-          type="button"
-          className="chip-toggle on-chip"
+          size="sm"
+          className="rounded-full"
           aria-label={`Remove ${f.label}`}
           onClick={f.clear}
         >
           {f.label}
-          <span aria-hidden="true">×</span>
-        </button>
+          <XIcon className="size-3.5 text-muted-foreground" strokeWidth={2.4} />
+        </Button>
       ))}
       {items.length > 1 ? (
-        <button type="button" className="linkbtn" onClick={onClearAll}>
+        <Button variant="link" onClick={onClearAll}>
           Clear all
-        </button>
+        </Button>
       ) : null}
     </div>
   );
@@ -73,20 +75,19 @@ interface FilterSheetProps {
 
 /** The sheet itself: sections of choices, with Reset and Show results kept in reach at the bottom. */
 export function FilterSheet({ onClose, onReset, changed, showLabel, children }: FilterSheetProps) {
-  return createPortal(
+  return (
     <Sheet label="Filter and sort" onClose={onClose}>
       <SheetHead title="Filter and sort" />
       <div className="sheet-form filter-form">{children}</div>
       <div className="filter-foot">
-        <button type="button" className="btn" disabled={!changed} onClick={onReset}>
+        <Button className="flex-1" disabled={!changed} onClick={onReset}>
           Reset
-        </button>
-        <button type="button" className="btn primary" onClick={onClose}>
+        </Button>
+        <Button variant="default" className="flex-2" onClick={onClose}>
           {showLabel}
-        </button>
+        </Button>
       </div>
-    </Sheet>,
-    document.body,
+    </Sheet>
   );
 }
 
@@ -111,16 +112,10 @@ export function Choices<T extends string | number>({ label, value, options, onCh
       <h4>{label}</h4>
       <div className="choice-wrap" role="group" aria-label={label}>
         {options.map((o) => (
-          <button
-            key={String(o.value)}
-            type="button"
-            className="chip-toggle"
-            aria-pressed={o.value === value}
-            onClick={() => onChange(o.value)}
-          >
+          <Toggle key={String(o.value)} pressed={o.value === value} onPressedChange={() => onChange(o.value)}>
             {o.label}
-            {o.count != null ? <span className="choice-n">{o.count.toLocaleString()}</span> : null}
-          </button>
+            {o.count != null ? <span>{o.count.toLocaleString()}</span> : null}
+          </Toggle>
         ))}
       </div>
     </section>

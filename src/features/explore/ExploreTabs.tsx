@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import type { ExploreTab } from "~/app/prefs";
 import { exploreTabOf } from "~/app/sections";
-import { Seg } from "~/ui/Seg";
+import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 import { tabSearch } from "./state";
 
 const TABS: readonly { value: ExploreTab; label: string }[] = [
@@ -24,5 +24,25 @@ export function ExploreTabs() {
       : navigate({ to: "/explore", search: saved.live }));
   };
 
-  return <Seg label="Explore source" className="ex-seg" value={tab} options={TABS} onChange={switchTo} />;
+  // A slimmer segmented control (shadcn/ui Toggle Group) than elsewhere, to fit the top bar.
+  return (
+    <ToggleGroup
+      type="single"
+      aria-label="Explore source"
+      // ex-seg names its view transition (styles/motion.css).
+      className="ex-seg flex w-full max-w-60"
+      value={tab}
+      // Tapping the chosen tab again would clear it; one is always chosen.
+      onValueChange={(v) => {
+        const hit = TABS.find((t) => t.value === v);
+        if (hit) switchTo(hit.value);
+      }}
+    >
+      {TABS.map((t) => (
+        <ToggleGroupItem key={t.value} value={t.value} className="min-h-[30px] px-3 py-1">
+          {t.label}
+        </ToggleGroupItem>
+      ))}
+    </ToggleGroup>
+  );
 }

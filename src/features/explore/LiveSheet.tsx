@@ -1,4 +1,8 @@
 import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import { Label } from "~/components/ui/label";
+import { NativeSelect, NativeSelectOption } from "~/components/ui/native-select";
+import { Skeleton } from "~/components/ui/skeleton";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { SignInHint } from "~/features/auth/SignInHint";
 import { useCards } from "~/features/cards/api";
@@ -29,10 +33,10 @@ export function LiveSheet({ id, onClose }: { id: string; onClose: () => void }) 
       ) : (
         <>
           <div className="detail-hero">
-            <div className="detail-img skel" />
+            <Skeleton className="detail-img rounded-[14px]" />
             <div className="detail-info">
-              <div className="skel skel-line" style={{ width: "60%" }} />
-              <div className="skel skel-line" style={{ width: "40%" }} />
+              <Skeleton className="h-[11px] w-3/5" />
+              <Skeleton className="h-[11px] w-2/5" />
             </div>
           </div>
           {failed ? <LoadError text="Couldn't load this card." onRetry={retry} /> : null}
@@ -120,27 +124,27 @@ function LiveActions({ card: d }: { card: LiveCard }) {
 
   return (
     <div className="sec">
-      <label className="ex-to">
+      <Label className="mb-2.5">
         <span>Add to</span>
-        <select
+        <NativeSelect
           aria-label={`Collection for ${d.name}`}
           value={coll}
           onChange={(e) => setColl(e.target.value)}
         >
           {["", ...names].map((n) => (
-            <option key={n} value={n}>
+            <NativeSelectOption key={n} value={n}>
               {n || "No collection"}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
-      </label>
+        </NativeSelect>
+      </Label>
       <div className="detail-acts" style={{ marginTop: 4 }}>
-        <button className="btn primary" type="button" disabled={busy} onClick={() => void add("want")}>
+        <Button variant="default" disabled={busy} onClick={() => void add("want")}>
           Want it
-        </button>
-        <button className="btn" type="button" disabled={busy} onClick={() => void add("got")}>
+        </Button>
+        <Button disabled={busy} onClick={() => void add("got")}>
           Got it
-        </button>
+        </Button>
       </div>
     </div>
   );

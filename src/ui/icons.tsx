@@ -1,98 +1,40 @@
-import type { SVGProps } from "react";
+import {
+  Camera,
+  Check,
+  Compass,
+  GalleryVerticalEnd,
+  Grid2x2,
+  Plus,
+  Share,
+  SlidersHorizontal,
+  Star,
+  X,
+  type LucideProps,
+} from "lucide-react";
 
-type IconProps = SVGProps<SVGSVGElement>;
-
-const base: IconProps = { viewBox: "0 0 24 24", "aria-hidden": true, focusable: false };
-
-export const PlusIcon = (p: IconProps) => (
-  <svg {...base} fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" {...p}>
-    <path d="M12 5v14M5 12h14" />
-  </svg>
-);
-
-export const TickIcon = (p: IconProps) => (
-  <svg
-    {...base}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={2.4}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...p}
-  >
-    <path d="M5 12.5l4.5 4.5L19 7.5" />
-  </svg>
-);
-
-export const CrossIcon = (p: IconProps) => (
-  <svg {...base} fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" {...p}>
-    <path d="M6.5 6.5l11 11M17.5 6.5l-11 11" />
-  </svg>
-);
+/**
+ * The app's icons, from Lucide (shadcn/ui's icon set), named for what they mean here. Strokes match the
+ * weight each was drawn at: bolder for small action marks, lighter for the tab bar.
+ */
+export const PlusIcon = (p: LucideProps) => <Plus strokeWidth={2.4} {...p} />;
+export const TickIcon = (p: LucideProps) => <Check strokeWidth={2.4} {...p} />;
+export const CrossIcon = (p: LucideProps) => <X strokeWidth={2.4} {...p} />;
 
 /** Outline star; pass `filled` for the solid version. */
-export const StarIcon = ({ filled, ...p }: IconProps & { filled?: boolean }) => (
-  <svg {...base} fill={filled ? "currentColor" : "none"} {...p}>
-    <path
-      d="M12 3.6l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.5l-5.1 2.7 1-5.6-4.1-4 5.7-.8z"
-      stroke="currentColor"
-      strokeWidth={1.7}
-      strokeLinejoin="round"
-    />
-  </svg>
+export const StarIcon = ({ filled, ...p }: LucideProps & { filled?: boolean }) => (
+  <Star strokeWidth={1.7} strokeLinejoin="round" fill={filled ? "currentColor" : "none"} {...p} />
 );
 
 /** Solid star used as a priority marker on tiles. */
-export const StarMark = (p: IconProps) => <StarIcon filled {...p} />;
+export const StarMark = (p: LucideProps) => <StarIcon filled {...p} />;
 
-export const SlidersIcon = (p: IconProps) => (
-  <svg {...base} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" {...p}>
-    <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
-    <circle cx="16" cy="7" r="2" />
-    <circle cx="10" cy="17" r="2" />
-  </svg>
-);
+export const SlidersIcon = (p: LucideProps) => <SlidersHorizontal {...p} />;
 
-export const ListIcon = (p: IconProps) => (
-  <svg {...base} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinejoin="round" {...p}>
-    <rect x="7" y="3.5" width="12" height="16" rx="2" />
-    <path d="M4.5 7v11.5a2 2 0 0 0 2 2H15" />
-  </svg>
-);
-
-export const CompassIcon = (p: IconProps) => (
-  <svg {...base} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinejoin="round" {...p}>
-    <circle cx="12" cy="12" r="8.5" />
-    <path d="M15.5 8.5l-2 5-5 2 2-5z" />
-  </svg>
-);
-
-export const BinderIcon = (p: IconProps) => (
-  <svg {...base} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinejoin="round" {...p}>
-    <rect x="4" y="4" width="16" height="16" rx="2.5" />
-    <path d="M12 4v16M4 12h16" />
-  </svg>
-);
-
+/** My list: a stack of cards. */
+export const ListIcon = (p: LucideProps) => <GalleryVerticalEnd strokeWidth={1.8} {...p} />;
+export const CompassIcon = (p: LucideProps) => <Compass strokeWidth={1.8} {...p} />;
+/** Binders: a page of pockets. */
+export const BinderIcon = (p: LucideProps) => <Grid2x2 strokeWidth={1.8} {...p} />;
 /** The iPhone share mark: a box with an arrow out of the top. */
-export const ShareIcon = (p: IconProps) => (
-  <svg
-    {...base}
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.9}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    {...p}
-  >
-    <path d="M12 3.5v11M8 7l4-3.5L16 7" />
-    <path d="M8.5 10.5H7a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-1.5" />
-  </svg>
-);
-
-export const CameraIcon = (p: IconProps) => (
-  <svg {...base} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinejoin="round" {...p}>
-    <path d="M4 8.5A2 2 0 0 1 6 6.5h2l1.5-2h5L16 6.5h2a2 2 0 0 1 2 2V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
-    <circle cx="12" cy="12.5" r="3.4" />
-  </svg>
-);
+export const ShareIcon = (p: LucideProps) => <Share strokeWidth={1.9} {...p} />;
+export const CameraIcon = (p: LucideProps) => <Camera strokeWidth={1.8} {...p} />;

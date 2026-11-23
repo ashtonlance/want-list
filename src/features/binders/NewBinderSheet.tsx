@@ -2,6 +2,9 @@ import { useMemo, useState, type SubmitEvent } from "react";
 import { POCKETS, type Pockets } from "~/app/prefs";
 import { useCollections } from "~/features/cards/useCollections";
 import { cleanName, plural } from "~/lib/format";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { Select } from "~/ui/Select";
 
 interface NewBinderSheetProps {
@@ -49,10 +52,9 @@ export function NewBinderSheet({ canScan, onMake, onImport, onScan }: NewBinderS
   };
   return (
     <form className="sheet-form" autoComplete="off" onSubmit={submit}>
-      <label>
+      <Label>
         Binder name
-        <input
-          type="text"
+        <Input
           placeholder="e.g. Gengar binder"
           required
           autoFocus
@@ -62,26 +64,20 @@ export function NewBinderSheet({ canScan, onMake, onImport, onScan }: NewBinderS
             setAutoName(false);
           }}
         />
-      </label>
-      <label>
+      </Label>
+      <Label>
         Start with
         <Select value={from} options={fromOptions} onChange={pickFrom} />
-      </label>
-      <label>
+      </Label>
+      <Label>
         Pockets per page
         <Select value={pockets} options={POCKET_OPTIONS} onChange={setPockets} />
-      </label>
-      <button className="btn primary" type="submit">
+      </Label>
+      <Button variant="default" type="submit">
         Make binder
-      </button>
-      <button className="btn" type="button" onClick={onImport}>
-        Import a shared code
-      </button>
-      {canScan ? (
-        <button className="btn" type="button" onClick={onScan}>
-          Scan photos of binder pages
-        </button>
-      ) : null}
+      </Button>
+      <Button onClick={onImport}>Import a shared code</Button>
+      {canScan ? <Button onClick={onScan}>Scan photos of binder pages</Button> : null}
     </form>
   );
 }

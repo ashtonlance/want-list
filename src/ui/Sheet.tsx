@@ -1,16 +1,8 @@
-import {
-  createContext,
-  use,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type ReactNode,
-  type TouchEvent,
-} from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { Sheet as SheetRoot, SheetContent, SheetHeader, SheetTitle } from "~/components/ui/sheet";
+import { isInToaster } from "~/components/ui/sonner";
 import { isTransitioning } from "~/lib/motion";
-import { useOverlay } from "./overlay";
-
-const SheetClose = createContext<() => void>(() => undefined);
+import { returnFocus, takeOpener } from "./focusReturn";
 
 interface SheetProps {
   label: string;
@@ -20,80 +12,58 @@ interface SheetProps {
   contentKey?: string;
 }
 
+/** Taps on a toast (its Undo) don't count as a tap outside the sheet. */
 /**
- * A bottom sheet: tap the backdrop, press Escape or drag the grip down to close. It slides up as it
- * opens and down as it closes (app/pageTransition.ts), or appears with a card's picture flying in.
- * While open it holds focus (ui/overlay.ts): a field marked autoFocus gets it, else the sheet itself.
+ * An open bottom sheet (shadcn/ui Sheet). It's open while mounted: tap outside, press Escape or drag it
+ * down to close. It slides up as it opens and down as it closes (app/pageTransition.ts), or appears with
+ * a card's picture flying in. A field marked autoFocus gets focus as it opens, else the sheet itself, and
+ * focus goes back to what opened it on close.
  */
 export function Sheet({ label, onClose, children, contentKey }: SheetProps) {
   const card = useRef<HTMLDivElement>(null);
   // Read while rendering, before an autoFocus field inside takes focus.
-  const [opener] = useState(() => document.activeElement);
-  useOverlay(true, onClose, { el: card, returnTo: () => opener });
+  const [opener] = useState(takeOpener);
   // Opened inside a transition: that already animates it, so skip the slide-up. Fixed at mount.
   const [noEnter] = useState(isTransitioning);
-  const drag = useRef<{ y0: number; dy: number } | null>(null);
   useLayoutEffect(() => {
     card.current?.scrollTo({ top: 0 });
   }, [contentKey]);
 
-  const onTouchStart = (e: TouchEvent) => {
-    const t = e.target as Element;
-    if (!t.closest(".sheet-grip,.sheet-head") || t.closest("button,input,select,a")) return;
-    drag.current = { y0: e.touches[0]?.clientY ?? 0, dy: 0 };
-    if (card.current) card.current.style.transition = "none";
-  };
-  const onTouchMove = (e: TouchEvent) => {
-    const d = drag.current;
-    if (!d || !card.current) return;
-    d.dy = Math.max(0, (e.touches[0]?.clientY ?? 0) - d.y0);
-    card.current.style.transform = `translateY(${d.dy}px)`;
-  };
-  const onTouchEnd = () => {
-    const d = drag.current;
-    drag.current = null;
-    const el = card.current;
-    if (!d || !el) return;
-    el.style.transition = "transform .24s cubic-bezier(0.2, 0.8, 0.2, 1)";
-    if (d.dy > 110) onClose();
-    else el.style.transform = "";
-  };
-
   return (
-    <SheetClose value={onClose}>
-      <div
-        className={"sheet" + (noEnter ? " no-enter" : "")}
-        onClick={(e) => {
-          if (e.target === e.currentTarget) onClose();
+    <SheetRoot
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      <SheetContent
+        ref={card}
+        aria-describedby={undefined}
+        noEnter={noEnter}
+        onDragClose={onClose}
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          if (!card.current?.contains(document.activeElement)) card.current?.focus({ preventScroll: true });
+        }}
+        onCloseAutoFocus={(e) => {
+          e.preventDefault();
+          returnFocus(opener);
+        }}
+        onInteractOutside={(e) => {
+          if (isInToaster(e.target)) e.preventDefault();
         }}
       >
-        <div
-          className="sheet-card"
-          role="dialog"
-          aria-modal="true"
-          aria-label={label}
-          tabIndex={-1}
-          ref={card}
-          onTouchStart={onTouchStart}
-          onTouchMove={onTouchMove}
-          onTouchEnd={onTouchEnd}
-        >
-          <div className="sheet-grip" aria-hidden="true" />
-          {children}
-        </div>
-      </div>
-    </SheetClose>
+        <SheetTitle className="sr-only">{label}</SheetTitle>
+        {children}
+      </SheetContent>
+    </SheetRoot>
   );
 }
 
 export function SheetHead({ title }: { title: string }) {
-  const close = use(SheetClose);
   return (
-    <div className="sheet-head">
-      <h3>{title}</h3>
-      <button className="sheet-x" type="button" aria-label="Close" onClick={close}>
-        ×
-      </button>
-    </div>
+    <SheetHeader>
+      <h3 className="m-0 min-w-0 text-lg leading-tight font-bold tracking-[-0.01em]">{title}</h3>
+    </SheetHeader>
   );
 }

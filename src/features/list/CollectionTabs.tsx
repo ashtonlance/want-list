@@ -1,4 +1,7 @@
-import { useMemo } from "react";
+import { PlusIcon } from "lucide-react";
+import { useMemo, type ReactNode } from "react";
+import { Button } from "~/components/ui/button";
+import { Toggle } from "~/components/ui/toggle";
 import type { CollectionSummary } from "~/features/cards/collections";
 import { useOverlayNav } from "~/app/overlayNav";
 import { byRecentUse, useRecentCollections } from "~/features/cards/recentCollections";
@@ -6,18 +9,27 @@ import { patchListUi, showCollection } from "./state";
 
 interface TabProps {
   label: string;
-  sub?: string;
+  sub: string;
   pressed: boolean;
-  onClick: () => void;
-  className?: string;
+  onPick: () => void;
 }
 
-function Tab({ label, sub, pressed, onClick, className = "" }: TabProps) {
+/** One collection to show. Pressing the one already shown keeps it shown. */
+function Tab({ label, sub, pressed, onPick }: TabProps) {
   return (
-    <button className={"colltab " + className} type="button" aria-pressed={pressed} onClick={onClick}>
+    <Toggle pressed={pressed} onPressedChange={onPick}>
       <b>{label}</b>
-      {sub ? <span>{sub}</span> : null}
-    </button>
+      <span>{sub}</span>
+    </Toggle>
+  );
+}
+
+/** The quieter pills after the collections, which open something instead of picking a collection. */
+function ActionTab({ children, onClick }: { children: ReactNode; onClick: () => void }) {
+  return (
+    <Button variant="outline" size="sm" className="rounded-full" onClick={onClick}>
+      {children}
+    </Button>
   );
 }
 
@@ -38,7 +50,7 @@ export function CollectionTabs({ colls, current, cardCount, canWrite }: Props) {
         label="All cards"
         sub={`${cardCount} cards`}
         pressed={!current}
-        onClick={() => showCollection(null)}
+        onPick={() => showCollection(null)}
       />
       {ordered.map((c) => (
         <Tab
@@ -46,26 +58,23 @@ export function CollectionTabs({ colls, current, cardCount, canWrite }: Props) {
           label={c.name}
           sub={`${c.got}/${c.total}`}
           pressed={current === c.name}
-          onClick={() => showCollection(c.name)}
+          onPick={() => showCollection(c.name)}
         />
       ))}
       {canWrite ? (
-        <Tab
-          label="+ New collection"
-          pressed={false}
-          className="new"
+        <ActionTab
           onClick={() => {
             showCollection(null);
             patchListUi({ collForm: "new" });
           }}
-        />
+        >
+          <PlusIcon />
+          New collection
+        </ActionTab>
       ) : null}
-      <Tab
-        label={canWrite ? "Edit collections" : "All collections"}
-        pressed={false}
-        className="new"
-        onClick={() => open({ panel: "collections" })}
-      />
+      <ActionTab onClick={() => open({ panel: "collections" })}>
+        {canWrite ? "Edit collections" : "All collections"}
+      </ActionTab>
     </div>
   );
 }

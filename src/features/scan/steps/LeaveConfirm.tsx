@@ -1,3 +1,5 @@
+import { Button } from "~/components/ui/button";
+
 interface LeaveConfirmProps {
   onLeave: () => void;
   onStay: () => void;
@@ -9,12 +11,10 @@ export function LeaveConfirm({ onLeave, onStay }: LeaveConfirmProps) {
     <div className="scan-confirm" role="alert">
       <p>Leave without saving? The photos and matches from this scan will be lost.</p>
       <div className="row-btns">
-        <button className="btn danger" type="button" onClick={onLeave}>
+        <Button variant="destructive" onClick={onLeave}>
           Leave
-        </button>
-        <button className="btn" type="button" onClick={onStay}>
-          Keep going
-        </button>
+        </Button>
+        <Button onClick={onStay}>Keep going</Button>
       </div>
     </div>
   );

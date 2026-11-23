@@ -1,8 +1,10 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
+import { Button } from "~/components/ui/button";
 import { Sheet, SheetHead } from "~/ui/Sheet";
 import { LoadError } from "~/ui/LoadError";
 import { useTdSets } from "./live";
+import { SearchInput } from "~/ui/SearchInput";
 
 const fold = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
@@ -21,8 +23,7 @@ export function SetsSheet({ onClose }: { onClose: () => void }) {
     <Sheet label="All sets" onClose={onClose}>
       <SheetHead title="All sets" />
       <div className="sheet-form">
-        <input
-          type="search"
+        <SearchInput
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Find a set, like Evolving Skies"
@@ -40,13 +41,14 @@ export function SetsSheet({ onClose }: { onClose: () => void }) {
           <ul className="set-list">
             {shown.map((s) => (
               <li key={s.id}>
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  className="min-h-0 w-full items-baseline justify-between gap-3 rounded-none px-0 py-3 text-left font-normal whitespace-normal hover:bg-transparent active:scale-100"
                   onClick={() => void navigate({ to: "/explore", search: { set: s.id }, replace: true })}
                 >
                   <b>{s.name}</b>
                   <small>{s.count.toLocaleString()} cards</small>
-                </button>
+                </Button>
               </li>
             ))}
           </ul>

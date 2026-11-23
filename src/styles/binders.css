@@ -105,24 +105,6 @@ button.pocket {
   z-index: 2;
   pointer-events: none;
 }
-.mv button {
-  pointer-events: auto;
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  border: 0;
-  background: rgba(0, 0, 0, 0.66);
-  color: #fff;
-  font-size: 11px;
-  cursor: pointer;
-  line-height: 1;
-}
-.mv button:disabled {
-  opacity: 0.3;
-  cursor: default;
-  /* Taps there open the card instead. */
-  pointer-events: none;
-}
 @media (max-width: 700px) {
   .spread {
     grid-template-columns: 1fr;
@@ -180,8 +162,8 @@ button.pocket {
   border-radius: 50%;
   background: #fff;
   color: #111;
-  font: 700 12px/20px var(--f);
-  text-align: center;
+  display: grid;
+  place-items: center;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 .bpocket.moving {
@@ -206,10 +188,6 @@ button.pocket {
   font-weight: 600;
   font-size: 14px;
 }
-.movebar .btn {
-  background: var(--bg);
-  color: var(--ink);
-}
 .binder-tools {
   display: flex;
   flex-direction: column;
@@ -217,14 +195,6 @@ button.pocket {
   align-items: flex-start;
 }
 
-.sheet-tabs {
-  display: flex;
-  width: 100%;
-  margin-bottom: 10px;
-}
-.sheet-tabs button {
-  flex: 1;
-}
 .pick-q {
   margin-bottom: 8px;
 }
@@ -234,25 +204,6 @@ button.pocket {
   align-items: center;
   flex-wrap: wrap;
   margin-bottom: 12px;
-}
-.pick-ctrls select {
-  width: auto;
-  flex: 1 1 160px;
-  min-height: 38px;
-}
-.chk {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--ink-2);
-  min-height: 40px;
-}
-.chk input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--ink);
 }
 .pocket-detail {
   display: grid;
@@ -278,12 +229,4 @@ button.pocket {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-}
-.sheet-acts .btn {
-  min-height: 48px;
-  text-align: center;
-  white-space: normal;
-}
-.sheet-acts .btn.primary {
-  grid-column: 1/-1;
 }

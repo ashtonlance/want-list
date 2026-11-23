@@ -1,4 +1,8 @@
+import { MinusIcon, PlusIcon } from "lucide-react";
 import { useId, useState, type SubmitEvent } from "react";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { formatMoney } from "~/lib/format";
 import { Seg } from "~/ui/Seg";
 import { Select } from "~/ui/Select";
@@ -18,6 +22,8 @@ const CONDITIONS: { value: RawCondition | ""; label: string }[] = [
   ...RAW_CONDITIONS.map((c) => ({ value: c, label: `${c} · ${CONDITION_NAMES[c]}` })),
 ];
 
+/** The form sits on a sunken panel, so its fields are drawn on the surface color instead. */
+const onPanel = "bg-card";
 /** A typed money field: blank is "not recorded", anything else rounds to cents. */
 function moneyOrNull(v: FormDataEntryValue | null): number | null {
   if (typeof v !== "string" || v.trim() === "") return null;
@@ -67,9 +73,9 @@ export function OwnedSection({ card: c, canWrite }: { card: Card; canWrite: bool
           ) : null}
         </div>
         {canWrite && !editing ? (
-          <button className="btn small" type="button" onClick={() => setEditing(true)}>
+          <Button size="sm" onClick={() => setEditing(true)}>
             Edit
-          </button>
+          </Button>
         ) : null}
       </div>
       {editing ? <OwnedForm card={c} owned={o} onDone={() => setEditing(false)} /> : null}
@@ -114,34 +120,41 @@ function OwnedForm({ card: c, owned: o, onDone }: { card: Card; owned: Owned; on
       <div className="wide owned-row">
         <span className="owned-label">Copies</span>
         <div className="stepper" role="group" aria-label="Copies">
-          <button
-            type="button"
+          <Button
+            variant="secondary"
+            size="icon"
             aria-label="One fewer"
             disabled={qty <= 1}
             onClick={() => setQty((n) => n - 1)}
           >
-            −
-          </button>
+            <MinusIcon />
+          </Button>
           <output className="num" aria-live="polite">
             {qty}
           </output>
-          <button type="button" aria-label="One more" onClick={() => setQty((n) => n + 1)}>
-            +
-          </button>
+          <Button variant="secondary" size="icon" aria-label="One more" onClick={() => setQty((n) => n + 1)}>
+            <PlusIcon />
+          </Button>
         </div>
       </div>
-      <Seg className="wide" label="Raw or graded" value={kind} options={KINDS} onChange={setKind} />
+      <Seg
+        className="wide flex bg-border"
+        label="Raw or graded"
+        value={kind}
+        options={KINDS}
+        onChange={setKind}
+      />
       {kind === "raw" ? (
-        <label className="wide">
+        <Label className="wide">
           Condition
-          <Select value={condition} options={CONDITIONS} onChange={setCondition} />
-        </label>
+          <Select selectClassName={onPanel} value={condition} options={CONDITIONS} onChange={setCondition} />
+        </Label>
       ) : (
         <>
-          <label>
+          <Label>
             Company
-            <input
-              type="text"
+            <Input
+              className={onPanel}
               name="grader"
               list={graderList}
               defaultValue={o.grader || "PSA"}
@@ -154,11 +167,11 @@ function OwnedForm({ card: c, owned: o, onDone }: { card: Card; owned: Owned; on
                 <option key={g} value={g} />
               ))}
             </datalist>
-          </label>
-          <label>
+          </Label>
+          <Label>
             Grade
-            <input
-              type="text"
+            <Input
+              className={onPanel}
               name="grade"
               defaultValue={o.grade}
               inputMode="decimal"
@@ -166,12 +179,13 @@ function OwnedForm({ card: c, owned: o, onDone }: { card: Card; owned: Owned; on
               autoComplete="off"
               required
             />
-          </label>
+          </Label>
         </>
       )}
-      <label>
+      <Label>
         Paid{qty > 1 ? " each" : ""}
-        <input
+        <Input
+          className={onPanel}
           type="number"
           name="paid"
           defaultValue={o.paid ?? ""}
@@ -180,10 +194,11 @@ function OwnedForm({ card: c, owned: o, onDone }: { card: Card; owned: Owned; on
           inputMode="decimal"
           placeholder="$"
         />
-      </label>
-      <label>
+      </Label>
+      <Label>
         Your value{qty > 1 ? " each" : ""}
-        <input
+        <Input
+          className={onPanel}
           type="number"
           name="value"
           defaultValue={o.value ?? ""}
@@ -192,15 +207,15 @@ function OwnedForm({ card: c, owned: o, onDone }: { card: Card; owned: Owned; on
           inputMode="decimal"
           placeholder={market != null ? formatMoney(market) : "Market price"}
         />
-      </label>
+      </Label>
       <p className="wide hint">Leave your value blank to use the market price.</p>
       <div className="actions">
-        <button className="btn primary small" type="submit" disabled={saving}>
+        <Button size="sm" variant="default" className="flex-1" type="submit" disabled={saving}>
           {saving ? "Saving…" : "Save"}
-        </button>
-        <button className="btn small" type="button" onClick={onDone}>
+        </Button>
+        <Button size="sm" className="flex-1" onClick={onDone}>
           Cancel
-        </button>
+        </Button>
       </div>
     </form>
   );

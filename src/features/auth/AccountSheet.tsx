@@ -1,3 +1,6 @@
+import { Alert } from "~/components/ui/alert";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import { useRef, useState } from "react";
 import { Sheet, SheetHead } from "~/ui/Sheet";
 import { useToast } from "~/ui/Toast";
@@ -13,6 +16,14 @@ import {
   signInWithCode,
   signInWithPastedLink,
 } from "./signIn";
+
+/** The code field while it holds digits: big, spaced and centred, like the code in the email. */
+const CODE_INPUT =
+  "pl-[0.4em] text-center text-[28px] font-semibold tracking-[0.4em] tabular-nums placeholder:text-muted-foreground placeholder:opacity-35";
+/** A note above the field: smaller corners and padding than a banner, to sit inside the sheet. */
+const MSG = "rounded-[10px] p-3";
+/** A link set under the form, dimmed while it works. */
+const CODE_LINK = "disabled:opacity-50";
 
 const onlyCodeChars = (v: string) => /^[\d\s-]*$/.test(v);
 
@@ -72,15 +83,14 @@ function CodeForm({ email, onResend, onBack }: CodeFormProps) {
         else setError("Enter the code from the email, or paste its link.");
       }}
     >
-      <div className="msg">
+      <Alert variant="muted" className={MSG}>
         Enter the code sent to <b>{email}</b>.
         {isStandalone()
           ? " Or press and hold the email's link, tap Copy Link, and paste it here."
           : " Or open the email's link on this device."}
-      </div>
-      <input
-        className={link ? undefined : "code-input"}
-        type="text"
+      </Alert>
+      <Input
+        className={link ? undefined : CODE_INPUT}
         value={value}
         onChange={(e) => {
           const raw = e.target.value;
@@ -119,16 +129,16 @@ function CodeForm({ email, onResend, onBack }: CodeFormProps) {
           {error}
         </p>
       ) : null}
-      <button className="btn primary" type="submit" disabled={busy || !ready}>
+      <Button variant="default" type="submit" disabled={busy || !ready}>
         {busy ? "Signing in…" : "Sign in"}
-      </button>
+      </Button>
       <div className="code-links">
-        <button className="linkbtn" type="button" onClick={() => void resend()} disabled={resending}>
+        <Button variant="link" className={CODE_LINK} onClick={() => void resend()} disabled={resending}>
           {resending ? "Sending…" : "Send a new code"}
-        </button>
-        <button className="linkbtn" type="button" onClick={onBack}>
+        </Button>
+        <Button variant="link" className={CODE_LINK} onClick={onBack}>
           Use a different email
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -176,9 +186,11 @@ function SignInForm() {
         Anyone can view the list. Editors sign in with a code from their email, no password.
       </p>
       {typeof state === "object" ? (
-        <div className="msg">Couldn&apos;t send the code: {state.error}</div>
+        <Alert variant="muted" className={MSG}>
+          Couldn&apos;t send the code: {state.error}
+        </Alert>
       ) : null}
-      <input
+      <Input
         ref={emailInput}
         type="email"
         required
@@ -190,13 +202,13 @@ function SignInForm() {
         inputMode="email"
         enterKeyHint="send"
       />
-      <button className="btn primary" type="submit" disabled={state === "sending"}>
+      <Button variant="default" type="submit" disabled={state === "sending"}>
         {state === "sending" ? "Sending…" : "Email me a sign-in code"}
-      </button>
+      </Button>
       <div className="code-links">
-        <button
-          className="linkbtn"
-          type="button"
+        <Button
+          variant="link"
+          className={CODE_LINK}
           onClick={() => {
             if (!emailInput.current?.reportValidity()) return;
             pendingSignIn.set(email.trim());
@@ -204,7 +216,7 @@ function SignInForm() {
           }}
         >
           Already have a code or link?
-        </button>
+        </Button>
       </div>
     </form>
   );
@@ -214,9 +226,7 @@ function SignOutButton({ signOut }: { signOut: () => Promise<boolean> }) {
   const { toast } = useToast();
   const [busy, setBusy] = useState(false);
   return (
-    <button
-      className="btn"
-      type="button"
+    <Button
       disabled={busy}
       onClick={() => {
         setBusy(true);
@@ -232,7 +242,7 @@ function SignOutButton({ signOut }: { signOut: () => Promise<boolean> }) {
       }}
     >
       {busy ? "Signing out…" : "Sign out"}
-    </button>
+    </Button>
   );
 }
 

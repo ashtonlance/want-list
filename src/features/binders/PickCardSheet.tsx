@@ -13,6 +13,9 @@ import { isGot, priceOf } from "~/features/cards/pricing";
 import type { Card } from "~/features/cards/types";
 import { formatMoney } from "~/lib/format";
 import { tcgImage } from "~/lib/images";
+import { Checkbox } from "~/components/ui/checkbox";
+import { SearchInput } from "~/ui/SearchInput";
+import { Label } from "~/components/ui/label";
 import { PickTile } from "~/ui/PickTile";
 import { Seg } from "~/ui/Seg";
 import { Select } from "~/ui/Select";
@@ -64,24 +67,17 @@ export function PickCardSheet({ cards, inBinder, onPlace }: PickCardSheetProps) 
 
   return (
     <>
-      <div className="seg sheet-tabs" role="tablist">
-        {SOURCES.map((s) => (
-          <button
-            key={s.value}
-            type="button"
-            role="tab"
-            aria-pressed={source === s.value}
-            onClick={() => {
-              setSource(s.value);
-              setQ("");
-            }}
-          >
-            {s.label}
-          </button>
-        ))}
-      </div>
-      <input
-        type="search"
+      <Seg
+        label="Cards to pick from"
+        className="mb-2.5 flex w-full *:data-[slot=toggle-group-item]:flex-1"
+        value={source}
+        options={SOURCES}
+        onChange={(v) => {
+          setSource(v);
+          setQ("");
+        }}
+      />
+      <SearchInput
         value={q}
         placeholder={source === "ours" ? "Search your list" : "Search any card: name, set or number"}
         aria-label="Search cards"
@@ -93,17 +89,20 @@ export function PickCardSheet({ cards, inBinder, onPlace }: PickCardSheetProps) 
         {source === "ours" ? (
           <>
             <Seg label="Show" value={show} options={SHOWS} onChange={setShow} />
-            <Select aria-label="Collection" value={coll} options={collOptions} onChange={setColl} />
+            <Select
+              aria-label="Collection"
+              className="w-auto flex-[1_1_160px]"
+              selectClassName="min-h-9.5"
+              value={coll}
+              options={collOptions}
+              onChange={setColl}
+            />
           </>
         ) : (
-          <label className="chk">
-            <input
-              type="checkbox"
-              checked={withJapanese}
-              onChange={(e) => setWithJapanese(e.target.checked)}
-            />{" "}
+          <Label className="min-h-10 flex-row items-center gap-2 text-sm text-ink-2">
+            <Checkbox checked={withJapanese} onCheckedChange={(v) => setWithJapanese(v === true)} />
             Include Japanese
-          </label>
+          </Label>
         )}
       </div>
       <div className="pick-grid">
@@ -233,7 +232,7 @@ function WebMatches({ cat, query, withJapanese, onPlace }: WebResultsProps & { c
         );
       })}
       {found.length > WEB_LIMIT ? (
-        <p className="hint" style={{ gridColumn: "1/-1" }}>
+        <p className="hint col-span-full">
           Showing {WEB_LIMIT} of {found.length}. Add a set name or number to narrow it.
         </p>
       ) : null}

@@ -1,5 +1,8 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import { Label } from "~/components/ui/label";
+import { NativeSelect, NativeSelectOption } from "~/components/ui/native-select";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { SignInHint } from "~/features/auth/SignInHint";
 import { useCards } from "~/features/cards/api";
@@ -73,14 +76,14 @@ function PickDetail({ pick }: { pick: PickCard }) {
             {p.illustrator ? (
               <span>
                 art by{" "}
-                <button
-                  className="artist"
-                  type="button"
+                <Button
+                  variant="link"
+                  className="p-0 text-[1em] font-normal whitespace-normal active:opacity-100"
                   title={`More picks by ${p.illustrator}`}
                   onClick={() => showArtist(p.illustrator)}
                 >
                   {p.illustrator}
-                </button>
+                </Button>
               </span>
             ) : null}
           </div>
@@ -136,35 +139,31 @@ function PickActions({ pick: p }: { pick: PickCard }) {
 
   return (
     <div className="sec">
-      <label className="ex-to">
+      <Label className="mb-2.5">
         <span>Add to</span>
-        <select
+        <NativeSelect
           aria-label={`Collection for ${p.name}`}
           value={coll}
           onChange={(e) => setColl(e.target.value)}
         >
           {choices.map((n) => (
-            <option key={n} value={n}>
+            <NativeSelectOption key={n} value={n}>
               {n || "No collection"}
-            </option>
+            </NativeSelectOption>
           ))}
-        </select>
-      </label>
+        </NativeSelect>
+      </Label>
       <div className="detail-acts" style={{ marginTop: 4 }}>
-        <button className="btn primary wide" type="button" disabled={busy} onClick={() => void add("want")}>
+        <Button variant="default" className="col-span-full" disabled={busy} onClick={() => void add("want")}>
           Want it
-        </button>
-        <button className="btn" type="button" disabled={busy} onClick={() => void add("got")}>
+        </Button>
+        <Button disabled={busy} onClick={() => void add("got")}>
           Got it
-        </button>
+        </Button>
         {p.status === "passed" ? (
-          <button className="btn" type="button" onClick={() => void setStatus("new")}>
-            Bring back
-          </button>
+          <Button onClick={() => void setStatus("new")}>Bring back</Button>
         ) : (
-          <button className="btn" type="button" onClick={() => void setStatus("passed")}>
-            Not for me
-          </button>
+          <Button onClick={() => void setStatus("passed")}>Not for me</Button>
         )}
       </div>
     </div>

@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Toggle } from "~/components/ui/toggle";
 import { useCardWrites } from "./api";
 import { addToCollection, collectionCards, removeFromCollection } from "./collections";
 import { useCollections } from "./useCollections";
@@ -15,16 +18,15 @@ export function TagPicker({ card: c, cards }: { card: Card; cards: readonly Card
   return (
     <div className="picker">
       {colls.map((n) => (
-        <label key={n} className="opt">
-          <input
-            type="checkbox"
-            checked={c.collections.includes(n)}
-            onChange={(e) =>
-              e.target.checked ? add(n) : void save(c, removeFromCollection(c, n), `Removed from ${n}`)
-            }
-          />
+        <Toggle
+          key={n}
+          pressed={c.collections.includes(n)}
+          onPressedChange={(on) =>
+            on ? add(n) : void save(c, removeFromCollection(c, n), `Removed from ${n}`)
+          }
+        >
           {n}
-        </label>
+        </Toggle>
       ))}
       <form
         className="inline-form"
@@ -37,16 +39,16 @@ export function TagPicker({ card: c, cards }: { card: Card; cards: readonly Card
           add(n);
         }}
       >
-        <input
-          type="text"
+        <Input
+          className="w-auto flex-[1_1_180px] bg-card"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder={colls.length ? "Or start a new collection" : "Name a collection, e.g. Gengar binder"}
           aria-label="New collection"
         />
-        <button className="btn small" type="submit">
+        <Button size="sm" type="submit">
           Add
-        </button>
+        </Button>
       </form>
     </div>
   );

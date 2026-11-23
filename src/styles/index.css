@@ -1,18 +1,27 @@
-/* The app's whole look, in cascade order. Partials are split by area of the app. */
-@import "./tokens.css";
-@import "./base.css";
-@import "./chrome.css";
-@import "./cards.css";
-@import "./binders.css";
-@import "./explore.css";
-@import "./sheets.css";
-@import "./scan.css";
-@import "./trend.css";
-@import "./pick.css";
-@import "./account.css";
-@import "./overlays.css";
-@import "./filters.css";
-@import "./share.css";
-@import "./status.css";
-@import "./images.css";
-@import "./motion.css";
+/*
+ * The app's whole look, in cascade order. Tailwind supplies the theme and utilities used by the shadcn/ui
+ * components in src/components/ui (no preflight: base.css is the reset). The app's own partials sit in the
+ * `app` layer, under the utilities, so a component's classes always win over a broader app rule.
+ */
+@layer theme, base, app, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities) source(none);
+@source "../";
+@import "./shadcn.css";
+
+@import "./tokens.css" layer(app);
+@import "./base.css" layer(app);
+@import "./chrome.css" layer(app);
+@import "./cards.css" layer(app);
+@import "./binders.css" layer(app);
+@import "./explore.css" layer(app);
+@import "./sheets.css" layer(app);
+@import "./scan.css" layer(app);
+@import "./trend.css" layer(app);
+@import "./pick.css" layer(app);
+@import "./account.css" layer(app);
+@import "./overlays.css" layer(app);
+@import "./filters.css" layer(app);
+@import "./share.css" layer(app);
+@import "./images.css" layer(app);
+@import "./motion.css" layer(app);

@@ -42,4 +42,6 @@ export default tseslint.config(
       "@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: { attributes: false } }],
     },
   },
+  // shadcn/ui components export their variant helpers (buttonVariants and the like) beside the component.
+  { files: ["src/components/ui/**/*.tsx"], rules: { "react-refresh/only-export-components": "off" } },
 );

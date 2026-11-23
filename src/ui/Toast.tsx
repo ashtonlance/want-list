@@ -1,4 +1,6 @@
-import { createContext, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { createContext, use, type ReactNode } from "react";
+import { toast as sonner } from "sonner";
+import { Toaster } from "~/components/ui/sonner";
 
 interface ToastApi {
   /** A short message at the bottom of the screen. */
@@ -9,75 +11,44 @@ interface ToastApi {
   toastBusy: (message: string) => void;
 }
 
-interface ToastState {
-  message: string;
-  undo?: () => void;
-  id: number;
-  /** Playing its exit before it goes. */
-  leaving?: boolean;
-}
+/** One toast at a time: each new message takes the place of the last. */
+const ID = "app";
 
-/** How long the exit plays (styles/motion.css, .toast.leaving). */
-const EXIT_MS = 160;
+const api: ToastApi = {
+  // `action: undefined`: a new message keeps the old one's options unless told otherwise, Undo included.
+  toast: (message) => sonner(message, { id: ID, duration: 2600, action: undefined }),
+  toastUndo: (message, undo) =>
+    sonner(message, {
+      id: ID,
+      duration: 5000,
+      action: {
+        label: "Undo",
+        onClick: () => {
+          sonner.dismiss(ID);
+          undo();
+        },
+      },
+    }),
+  toastBusy: (message) => sonner(message, { id: ID, duration: 60_000, action: undefined }),
+};
 
 const ToastContext = createContext<ToastApi | null>(null);
 
+/** Toasts (shadcn/ui Sonner), shown above the tab bar. */
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<ToastState | null>(null);
-  const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const seq = useRef(0);
-
-  const show = useCallback((message: string, undo?: () => void, sticky = false) => {
-    clearTimeout(timer.current);
-    setState({ message, undo, id: ++seq.current });
-    timer.current = setTimeout(
-      () => {
-        setState((s) => (s ? { ...s, leaving: true } : s));
-        timer.current = setTimeout(() => setState(null), EXIT_MS);
-      },
-      sticky ? 60_000 : undo ? 5000 : 2600,
-    );
-  }, []);
-  useEffect(() => () => clearTimeout(timer.current), []);
-
-  const api = useMemo<ToastApi>(
-    () => ({
-      toast: (m) => show(m),
-      toastUndo: (m, u) => show(m, u),
-      toastBusy: (m) => show(m, undefined, true),
-    }),
-    [show],
-  );
-
   return (
     <ToastContext value={api}>
       {children}
-      {state ? (
-        <div className={"toast" + (state.leaving ? " leaving" : "")} role="status" key={state.id}>
-          {state.message}
-          {state.undo ? (
-            <>
-              {" "}
-              <button
-                className="toast-undo"
-                type="button"
-                onClick={() => {
-                  setState(null);
-                  state.undo?.();
-                }}
-              >
-                Undo
-              </button>
-            </>
-          ) : null}
-        </div>
-      ) : null}
+      <Toaster
+        offset={{ bottom: "var(--toast-bottom)" }}
+        mobileOffset={{ bottom: "var(--toast-bottom)", left: 0, right: 0 }}
+      />
     </ToastContext>
   );
 }
 
 export function useToast(): ToastApi {
-  const api = use(ToastContext);
-  if (!api) throw new Error("useToast needs a ToastProvider");
-  return api;
+  const value = use(ToastContext);
+  if (!value) throw new Error("useToast needs a ToastProvider");
+  return value;
 }

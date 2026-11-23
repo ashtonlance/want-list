@@ -1,3 +1,4 @@
+import { Button } from "~/components/ui/button";
 import type { Progress } from "../session";
 
 interface ReadStepProps {
@@ -21,9 +22,7 @@ export function ReadStep({ prog, onStop }: ReadStepProps) {
       <p className="hint">
         This runs on your phone, about a second or two per pocket. Keep this screen open.
       </p>
-      <button className="btn" type="button" onClick={onStop}>
-        Stop
-      </button>
+      <Button onClick={onStop}>Stop</Button>
     </div>
   );
 }

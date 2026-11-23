@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { formatDate, formatMoney, parseMoney, today } from "~/lib/format";
 import { useCardWrites } from "./api";
@@ -102,8 +104,8 @@ function ManualPrice({ card, initial = "", onDone }: { card: Card; initial?: str
         );
       }}
     >
-      <input
-        type="text"
+      <Input
+        className="max-w-[140px] flex-1"
         inputMode="decimal"
         value={value}
         onChange={(e) => setValue(e.target.value)}
@@ -111,9 +113,9 @@ function ManualPrice({ card, initial = "", onDone }: { card: Card; initial?: str
         aria-label={`Price for ${card.name}`}
         enterKeyHint="done"
       />
-      <button className="btn" type="submit" disabled={amount == null}>
+      <Button type="submit" disabled={amount == null}>
         Set price
-      </button>
+      </Button>
     </form>
   );
 }
@@ -131,12 +133,11 @@ function ManualPriceEdit({ card }: { card: Card }) {
     );
   return (
     <div className="manual-price-acts">
-      <button className="linkbtn" type="button" onClick={() => setEditing(true)}>
+      <Button variant="link" onClick={() => setEditing(true)}>
         Change your price
-      </button>
-      <button
-        className="linkbtn"
-        type="button"
+      </Button>
+      <Button
+        variant="link"
         onClick={() =>
           void save(card, { ask: NO_ASK }, "Price removed").then((ok) => {
             if (ok) void checkPrice({ ...card, ask: NO_ASK }).catch(() => undefined);
@@ -144,7 +145,7 @@ function ManualPriceEdit({ card }: { card: Card }) {
         }
       >
         Remove it
-      </button>
+      </Button>
     </div>
   );
 }

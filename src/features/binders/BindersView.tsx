@@ -1,3 +1,4 @@
+import { PlusIcon } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useMemo, useState } from "react";
@@ -8,6 +9,11 @@ import { collectionCards } from "~/features/cards/collections";
 import { formatMoney, plural } from "~/lib/format";
 import { useScrollRestoration } from "~/lib/scroll";
 import { useStore } from "~/lib/store";
+import { Alert } from "~/components/ui/alert";
+import { Button } from "~/components/ui/button";
+import { Toggle } from "~/components/ui/toggle";
+import { Empty, EmptyDescription } from "~/components/ui/empty";
+import { SignInLink } from "~/features/auth/SignInHint";
 import { LoadError } from "~/ui/LoadError";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { BinderPages } from "./BinderPages";
@@ -139,53 +145,51 @@ export function BindersView() {
   return (
     <section className="view">
       {local ? (
-        <div className="banner">
+        <Alert>
           {email
             ? `You're signed in as ${email}, which can't edit the shared binders, so binder changes save on this device. To send one to Ashton, open Binder options and tap Text it.`
             : "You're not signed in, so binder changes save on this device. To send one to Ashton, open Binder options and tap Text it."}{" "}
-          <button className="link-btn" type="button" onClick={() => open({ panel: "account" })}>
-            {email ? "Account" : "Sign in"}
-          </button>
-        </div>
+          <SignInLink signedIn={!!email} onClick={() => open({ panel: "account" })} />
+        </Alert>
       ) : null}
       {deviceOnly.length ? (
-        <div className="banner">
+        <Alert>
           {deviceOnly.length === 1
             ? `${deviceOnly[0]?.name ?? "A binder"} is saved only on this device.`
             : `${deviceOnly.length} binders are saved only on this device.`}{" "}
           Move {deviceOnly.length === 1 ? "it" : "them"} to the shared binders?
-          <div className="row-btns" style={{ marginTop: 10 }}>
-            <button className="btn small primary" type="button" onClick={() => void moveDeviceBinders()}>
+          <div className="row-btns mt-2.5">
+            <Button variant="default" size="sm" onClick={() => void moveDeviceBinders()}>
               Move to shared
-            </button>
-            <button className="btn small" type="button" onClick={discardDeviceBinders}>
+            </Button>
+            <Button size="sm" onClick={discardDeviceBinders}>
               Remove from this device
-            </button>
+            </Button>
           </div>
-        </div>
+        </Alert>
       ) : null}
-      <div className="colltabs" role="tablist" aria-label="Binders">
+      <div className="colltabs" role="group" aria-label="Binders">
         {binders.map((b) => (
-          <button
-            key={b.id}
-            className="colltab"
-            type="button"
-            aria-pressed={b.id === binder?.id}
-            onClick={() => choose(b.id)}
-          >
+          <Toggle key={b.id} pressed={b.id === binder?.id} onPressedChange={() => choose(b.id)}>
             <b>{b.name}</b>
             <span>
               {b.slots.filter(Boolean).length} of {b.slots.length} pockets
             </span>
-          </button>
+          </Toggle>
         ))}
-        <button className="colltab new" type="button" onClick={() => openSheet({ kind: "new" })}>
-          + New binder
-        </button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="rounded-full"
+          onClick={() => openSheet({ kind: "new" })}
+        >
+          <PlusIcon />
+          New binder
+        </Button>
         {canScan ? (
-          <button className="colltab new" type="button" onClick={scan}>
+          <Button variant="outline" size="sm" className="rounded-full" onClick={scan}>
             Scan pages
-          </button>
+          </Button>
         ) : null}
       </div>
       {binder ? (
@@ -194,9 +198,9 @@ export function BindersView() {
           {moving !== null ? (
             <div className="movebar" role="status">
               <span>Tap the pocket where it should go.</span>
-              <button className="btn small" type="button" onClick={() => setMoving(null)}>
+              <Button size="sm" className="bg-background text-foreground" onClick={() => setMoving(null)}>
                 Cancel
-              </button>
+              </Button>
             </div>
           ) : null}
           <BinderPages
@@ -209,39 +213,35 @@ export function BindersView() {
             onPocket={onPocket}
           />
           <div className="binder-tools">
-            <button
-              className="btn small"
-              type="button"
+            <Button
+              size="sm"
               onClick={() => {
                 const next = { ...binder, slots: [...binder.slots, ...emptySlots(binder.pockets)] };
                 setPage(pageCount(next) - 1);
                 void save(next, `Added page ${pageCount(next)}`);
               }}
             >
-              + Add a page
-            </button>
-            <span className="hint" style={{ margin: 0 }}>
+              <PlusIcon />
+              Add a page
+            </Button>
+            <span className="hint m-0">
               Tap an empty pocket to add a card. Tap a card to move, swap or remove it.
             </span>
           </div>
         </>
       ) : loaded ? (
-        <div className="empty-state">
-          <p style={{ margin: "0 0 12px" }}>
+        <Empty>
+          <EmptyDescription>
             Lay out binder pages before you buy. Tap a pocket, pick a card from your list or any card that
             exists, and move things around until the page looks right.
-          </p>
-          <div className="row-btns" style={{ justifyContent: "center" }}>
-            <button className="btn primary" type="button" onClick={() => openSheet({ kind: "new" })}>
+          </EmptyDescription>
+          <div className="row-btns mt-3 justify-center">
+            <Button variant="default" onClick={() => openSheet({ kind: "new" })}>
               Make your first binder
-            </button>
-            {canScan ? (
-              <button className="btn" type="button" onClick={scan}>
-                Scan binder pages
-              </button>
-            ) : null}
+            </Button>
+            {canScan ? <Button onClick={scan}>Scan binder pages</Button> : null}
           </div>
-        </div>
+        </Empty>
       ) : failed ? (
         <LoadError text="Couldn't load the binders. Check your connection and try again." onRetry={retry} />
       ) : (
@@ -279,9 +279,9 @@ function BinderHead({ binder, infos, onOptions }: BinderHeadProps) {
         {filled.length} of {binder.slots.length} pockets filled · {owned} owned · {formatMoney(cost)} to
         finish
       </p>
-      <button className="btn small" type="button" onClick={onOptions}>
+      <Button size="sm" onClick={onOptions}>
         Binder options
-      </button>
+      </Button>
     </div>
   );
 }

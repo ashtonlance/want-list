@@ -1,3 +1,5 @@
+import { Button } from "~/components/ui/button";
+import { cn } from "~/lib/utils";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useCards } from "~/features/cards/api";
 import type { WantOrGot } from "~/features/cards/create";
@@ -143,17 +145,23 @@ export function CardScanner({ cat, failed, coll, addAs, onSearch }: CardScannerP
               ? "Camera access is off for this site. Turn it on in Settings, or take a photo instead."
               : "The camera isn't available here. Take a photo of the card instead."}
           </p>
-          <label className={"btn primary" + (busy || !cat ? " disabled" : "")}>
-            {busy ? "Reading…" : "Take a photo"}
-            <input
-              type="file"
-              accept="image/*"
-              capture="environment"
-              hidden
-              disabled={busy || !cat}
-              onChange={(e) => void fromPhoto(e)}
-            />
-          </label>
+          <Button
+            asChild
+            variant="default"
+            className={cn((busy || !cat) && "pointer-events-none opacity-50")}
+          >
+            <label>
+              {busy ? "Reading…" : "Take a photo"}
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                hidden
+                disabled={busy || !cat}
+                onChange={(e) => void fromPhoto(e)}
+              />
+            </label>
+          </Button>
         </div>
       ) : (
         <>
@@ -187,9 +195,9 @@ export function CardScanner({ cat, failed, coll, addAs, onSearch }: CardScannerP
           ) : null}
         </div>
       ) : null}
-      <button className="linkbtn add-manual" type="button" onClick={() => onSearch(hint)}>
+      <Button variant="link" className="add-manual" onClick={() => onSearch(hint)}>
         Search by name instead
-      </button>
+      </Button>
     </div>
   );
 }

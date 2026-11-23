@@ -1,3 +1,6 @@
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 import { useId, type ChangeEvent } from "react";
 import { POCKETS, asPockets, type Pockets } from "~/app/prefs";
 import type { Binder } from "~/features/binders/types";
@@ -63,27 +66,26 @@ export function SetupStep({
           }}
         />
       </div>
-      <label>
+      <Label>
         Where the pages go
         <Select aria-label="Where the pages go" value={dest} options={destOptions} onChange={onDest} />
-      </label>
+      </Label>
       {dest === "new" ? (
-        <label>
+        <Label>
           Binder name
-          <input
-            type="text"
+          <Input
             value={name}
             placeholder="Binder name"
             aria-label="Binder name"
             autoComplete="off"
             onChange={(e) => onName(e.target.value)}
           />
-        </label>
+        </Label>
       ) : null}
       <input type="file" accept="image/*" multiple className="vh" id={fileId} onChange={choose} />
-      <label className="btn primary" htmlFor={fileId}>
-        Choose page photos
-      </label>
+      <Button asChild variant="default">
+        <label htmlFor={fileId}>Choose page photos</label>
+      </Button>
       <p className="hint">
         You can pick several photos at once, one per page. On iPhone you can also take them now.
       </p>

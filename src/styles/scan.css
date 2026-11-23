@@ -40,10 +40,6 @@
   width: 32px;
   flex: 0 0 auto;
 }
-.scanview .sheet-form > label.btn {
-  color: var(--accent-ink);
-  font-size: 15px;
-}
 .vh {
   position: absolute;
   width: 1px;
@@ -97,9 +93,6 @@
   gap: 8px;
   align-items: stretch;
   text-align: center;
-}
-.scan-foot .btn.wide {
-  width: 100%;
 }
 .scan-read {
   display: flex;
@@ -205,17 +198,8 @@
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
-.scanview input[type="search"] {
-  width: 100%;
-}
 
 /* ---------- scan one card (in Add) ---------- */
-.add-row .icon-btn {
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--r-sm);
-}
 .cardscan {
   display: flex;
   flex-direction: column;
@@ -330,10 +314,6 @@
 .cam-off p {
   margin: 0;
   color: var(--ink-2);
-}
-.cam-off .btn.disabled {
-  opacity: 0.5;
-  pointer-events: none;
 }
 .cam-result .hint {
   margin: 0 0 12px;

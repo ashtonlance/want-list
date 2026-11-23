@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from "react";
+import { Button } from "~/components/ui/button";
 import { formatMoney } from "~/lib/format";
+import { cn } from "~/lib/utils";
 import { CardImage } from "~/ui/CardImage";
 import { CrossIcon, PlusIcon, TickIcon } from "~/ui/icons";
 import { quickWantLabels } from "./display";
@@ -69,6 +71,9 @@ export const AddedMark = ({ have }: { have: boolean }) => (
   <span className="ex-added">{have ? "✓ Got it" : "✓ On list"}</span>
 );
 
+/** The round quick actions on a tile's bottom line: 32px, sunken, a 16px icon. */
+const quick = "text-foreground [&_svg:not([class*='size-'])]:size-4";
+
 /** The + on a tile: adds the card as wanted, showing a tick straight away and going back if it fails. */
 export function QuickWant({
   name,
@@ -82,9 +87,10 @@ export function QuickWant({
   const [done, setDone] = useState(false);
   const { label, title } = quickWantLabels(name, coll);
   return (
-    <button
-      className={"ex-quick" + (done ? " done" : "")}
-      type="button"
+    <Button
+      size="icon-sm"
+      // Solid ink once added; it stays that way rather than greying out while disabled.
+      className={cn(quick, done && "bg-foreground text-background disabled:opacity-100")}
       aria-label={label}
       title={title}
       disabled={done}
@@ -96,21 +102,21 @@ export function QuickWant({
       }}
     >
       {done ? <TickIcon /> : <PlusIcon />}
-    </button>
+    </Button>
   );
 }
 
 /** The × on a pick's tile: passes on it without opening it. */
 export const PassButton = ({ name, onPass }: { name: string; onPass: () => void }) => (
-  <button
-    className="ex-quick ex-pass"
-    type="button"
+  <Button
+    size="icon-sm"
+    className={cn(quick, "text-muted-foreground")}
     aria-label={`Pass on ${name}`}
     title="Not for me"
     onClick={() => onPass()}
   >
     <CrossIcon />
-  </button>
+  </Button>
 );
 
 /** A price on a tile, or "No price yet". */

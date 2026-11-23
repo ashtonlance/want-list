@@ -1,5 +1,7 @@
 import { useRef, type SubmitEvent } from "react";
 import { prefs } from "~/app/prefs";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import { useCardWrites } from "~/features/cards/api";
 import { addToCollection, collectionCards, removeFromCollection } from "~/features/cards/collections";
 import type { Card } from "~/features/cards/types";
@@ -64,36 +66,35 @@ export function BulkBar({ cards, visible, coll }: Props) {
         <div className="bulk-top">
           <b>{selected.size} selected</b>
           <div className="bulk-btns">
-            <button
-              className="btn small"
-              type="button"
+            <Button
+              size="sm"
               onClick={() => patchListUi({ selected: new Set([...selected, ...visible.map((c) => c.id)]) })}
             >
               Select all
-            </button>
-            <button className="btn small primary" type="button" onClick={stopSelecting}>
+            </Button>
+            <Button size="sm" variant="default" onClick={stopSelecting}>
               Done
-            </button>
+            </Button>
           </div>
         </div>
         <form className="inline-form" autoComplete="off" onSubmit={add}>
-          <input
+          <Input
             ref={input}
-            type="text"
+            className="w-auto flex-auto"
             list={COLL_LIST}
             value={bulkColl}
             onChange={(e) => patchListUi({ bulkColl: e.target.value })}
             placeholder="Collection name"
             aria-label="Collection name"
           />
-          <button className="btn primary" type="submit">
+          <Button variant="default" type="submit">
             Add
-          </button>
+          </Button>
         </form>
         {coll && bulkColl.trim() === coll ? (
-          <button className="btn small danger" type="button" onClick={removeHere}>
+          <Button size="sm" variant="destructive" onClick={removeHere}>
             Remove from this collection
-          </button>
+          </Button>
         ) : null}
       </div>
     </div>

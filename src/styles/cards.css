@@ -4,44 +4,6 @@
   flex-direction: column;
   gap: 12px;
 }
-.colltab {
-  border: 0;
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--line-2);
-  border-radius: 999px;
-  padding: 5px 12px;
-  min-height: 32px;
-  cursor: pointer;
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 13.5px;
-  color: var(--ink);
-}
-.colltab b {
-  font-weight: 600;
-  white-space: nowrap;
-}
-.colltab span {
-  font-size: 12px;
-  color: var(--muted);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
-.colltab[aria-pressed="true"] {
-  background: var(--ink);
-  color: var(--bg);
-  box-shadow: none;
-}
-.colltab[aria-pressed="true"] span {
-  color: inherit;
-  opacity: 0.65;
-}
-.colltab.new {
-  color: var(--muted);
-  box-shadow: inset 0 0 0 1px var(--line-2);
-  background: transparent;
-}
 .colltabs {
   display: flex;
   gap: 8px;
@@ -91,23 +53,12 @@
   gap: 8px;
   align-items: center;
 }
-.collops select {
-  width: auto;
-  min-height: 36px;
-  line-height: 1.2;
-  padding-top: 6px;
-  padding-bottom: 6px;
-}
 .inline-form {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
   width: 100%;
-}
-.inline-form input {
-  width: auto;
-  flex: 1 1 180px;
 }
 
 /* ---------- filters ---------- */
@@ -120,13 +71,6 @@
   display: flex;
   gap: 8px;
   align-items: center;
-}
-.filter-row input[type="search"] {
-  flex: 1;
-}
-.filter-row .seg {
-  flex: 1;
-  max-width: 340px;
 }
 .filter-row .count {
   margin-left: auto;
@@ -287,17 +231,6 @@
   background: var(--sunk);
   color: var(--ink-2);
 }
-.collchip {
-  font-size: 11.5px;
-  font-weight: 600;
-  border-radius: 999px;
-  padding: 2px 8px;
-  border: 0;
-  box-shadow: inset 0 0 0 1px var(--line-2);
-  color: var(--muted);
-  background: none;
-  cursor: pointer;
-}
 .note {
   font-size: 13px;
   color: var(--muted);
@@ -323,28 +256,6 @@
 .rprice small {
   font-size: 11.5px;
   color: var(--muted);
-}
-.star {
-  border: 0;
-  background: none;
-  cursor: pointer;
-  padding: 6px;
-  margin: -6px;
-  color: var(--muted);
-  line-height: 0;
-}
-.star svg {
-  width: 18px;
-  height: 18px;
-}
-.star[aria-pressed="true"] {
-  color: var(--ink);
-}
-.star[aria-pressed="true"] svg {
-  fill: currentColor;
-}
-.star:disabled {
-  cursor: default;
 }
 .prio-mark {
   color: var(--ink);
@@ -547,7 +458,7 @@ body.selecting {
   --bulk: calc(153px + env(safe-area-inset-bottom, 0px));
   padding-bottom: calc(var(--bulk) + 24px);
 }
-body.selecting:not(:has(.bulk .inner > .btn)) {
+body.selecting:not(:has(.bulk .inner > [data-slot="button"])) {
   --bulk: calc(109px + env(safe-area-inset-bottom, 0px));
 }
 .bulk {
@@ -584,10 +495,6 @@ body.selecting:not(:has(.bulk .inner > .btn)) {
 }
 .bulk .inline-form {
   flex-wrap: nowrap;
-}
-.bulk input {
-  flex: 1 1 auto;
-  min-width: 0;
 }
 
 /* card / pick detail sheet */
@@ -700,12 +607,6 @@ body.selecting:not(:has(.bulk .inner > .btn)) {
   gap: 8px;
   margin-bottom: 16px;
 }
-.detail-acts .btn {
-  min-height: 48px;
-}
-.detail-acts .btn.wide {
-  grid-column: 1/-1;
-}
 .shop {
   display: flex;
   flex-direction: column;
@@ -742,50 +643,6 @@ body.selecting:not(:has(.bulk .inner > .btn)) {
   font-size: 13px;
   margin-left: 8px;
   margin-right: auto;
-}
-.menu {
-  display: flex;
-  flex-direction: column;
-  background: var(--sunk);
-  border-radius: 12px;
-  overflow: hidden;
-}
-.menu > button {
-  border: 0;
-  background: none;
-  text-align: left;
-  padding: 13px 14px;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  min-height: 48px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: var(--ink);
-}
-.menu > button + button,
-.menu > .sub + button,
-.menu > button + .sub {
-  border-top: 0.5px solid var(--line-2);
-}
-.menu > button::after {
-  content: "›";
-  color: var(--faint);
-  font-size: 20px;
-  line-height: 1;
-}
-.menu > button[aria-expanded="true"]::after {
-  transform: rotate(90deg);
-}
-.menu > button.danger {
-  color: var(--danger);
-}
-.menu > button.danger::after {
-  content: "";
-}
-.menu .sub {
-  padding: 4px 14px 14px;
 }
 .sec {
   display: flex;
@@ -840,43 +697,11 @@ body.selecting:not(:has(.bulk .inner > .btn)) {
   flex-wrap: wrap;
   margin-top: 4px;
 }
-.edit .actions .btn,
-.confirm .actions .btn {
-  flex: 1;
-}
-.edit input:not(:focus),
-.edit select:not(:focus),
-.picker input:not(:focus) {
-  background-color: var(--surface);
-}
 .picker {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   align-items: center;
-}
-.picker label.opt {
-  display: inline-flex;
-  gap: 8px;
-  align-items: center;
-  border-radius: 999px;
-  padding: 8px 14px 8px 11px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--line-2);
-}
-.picker label.opt input {
-  accent-color: var(--ink);
-  width: 16px;
-  height: 16px;
-  margin: 0;
-}
-.picker label.opt:has(input:checked) {
-  background: var(--ink);
-  color: var(--bg);
-  box-shadow: none;
 }
 .picker .inline-form {
   flex: 1 1 100%;
@@ -884,10 +709,6 @@ body.selecting:not(:has(.bulk .inner > .btn)) {
 .add-row {
   display: flex;
   gap: 8px;
-}
-.add-row input {
-  flex: 1;
-  min-width: 0;
 }
 .confirm {
   display: grid;
@@ -997,10 +818,6 @@ body.selecting:not(:has(.bulk .inner > .btn)) {
   border-radius: 12px;
   padding: 14px;
 }
-.owned-form .seg {
-  display: flex;
-  background: var(--line);
-}
 .owned-row {
   display: flex;
   align-items: center;
@@ -1017,21 +834,6 @@ body.selecting:not(:has(.bulk .inner > .btn)) {
   border-radius: 999px;
   padding: 3px;
 }
-.stepper button {
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: 999px;
-  background: none;
-  font-size: 20px;
-  line-height: 1;
-  color: var(--ink);
-  cursor: pointer;
-}
-.stepper button:disabled {
-  color: var(--faint);
-  cursor: default;
-}
 .stepper output {
   min-width: 32px;
   text-align: center;
@@ -1042,11 +844,6 @@ body.selecting:not(:has(.bulk .inner > .btn)) {
   display: flex;
   gap: 8px;
   margin-top: 8px;
-}
-.manual-price input {
-  flex: 1;
-  min-width: 0;
-  max-width: 140px;
 }
 .manual-price-acts {
   display: flex;

@@ -1,3 +1,4 @@
+import { Button } from "~/components/ui/button";
 import { useEffect, useLayoutEffect, useRef, useState, type PointerEvent } from "react";
 import { findPage, project, squareToQuad, turned, type Point, type Quad } from "../engine/image";
 import { MARGIN_CORNERS, type Photo } from "../session";
@@ -72,23 +73,17 @@ export function CropStep(props: CropStepProps) {
       <div className="row-btns">
         {view ? (
           <>
-            <button className="btn" type="button" onClick={props.onRotate}>
-              Rotate
-            </button>
-            <button className="btn" type="button" onClick={() => props.onCorners(guess(view))}>
-              Reset dots
-            </button>
+            <Button onClick={props.onRotate}>Rotate</Button>
+            <Button onClick={() => props.onCorners(guess(view))}>Reset dots</Button>
           </>
         ) : null}
-        <button className="btn" type="button" onClick={props.onSkip}>
-          Skip photo
-        </button>
+        <Button onClick={props.onSkip}>Skip photo</Button>
       </div>
       <div className="scan-foot">
         {view ? (
-          <button className="btn primary wide" type="button" onClick={props.onNext}>
+          <Button variant="default" className="w-full" onClick={props.onNext}>
             {props.nextLabel}
-          </button>
+          </Button>
         ) : null}
         <span className="hint">
           Photo {props.index + 1} of {props.total}

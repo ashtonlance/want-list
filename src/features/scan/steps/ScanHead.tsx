@@ -1,3 +1,6 @@
+import { ChevronLeftIcon, XIcon } from "lucide-react";
+import { Button } from "~/components/ui/button";
+
 interface ScanHeadProps {
   title: string;
   /** Shown as a back arrow when there's a step to go back to. */
@@ -9,16 +12,16 @@ export function ScanHead({ title, onBack, onClose }: ScanHeadProps) {
   return (
     <div className="scan-head">
       {onBack ? (
-        <button className="sheet-x" type="button" aria-label="Back" onClick={onBack}>
-          ‹
-        </button>
+        <Button size="icon-sm" aria-label="Back" onClick={onBack}>
+          <ChevronLeftIcon />
+        </Button>
       ) : (
         <span className="scan-sp" />
       )}
       <h3>{title}</h3>
-      <button className="sheet-x" type="button" aria-label="Close" onClick={onClose}>
-        ×
-      </button>
+      <Button size="icon-sm" aria-label="Close" onClick={onClose}>
+        <XIcon />
+      </Button>
     </div>
   );
 }

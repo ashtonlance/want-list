@@ -22,9 +22,14 @@ import {
   prefersReducedMotion,
   sheetPicture,
 } from "~/lib/motion";
+import { ChevronLeftIcon, ChevronRightIcon, XIcon } from "lucide-react";
+import { Dialog as DialogPrimitive } from "radix-ui";
+import { Button } from "~/components/ui/button";
+import { isInToaster } from "~/components/ui/sonner";
+import { cn } from "~/lib/utils";
+import { handOffFocus, returnFocus, takeOpener } from "./focusReturn";
 import { usePhotoZoom } from "./usePhotoZoom";
 import { markReady, onArrive } from "./fadeIn";
-import { useOverlay } from "./overlay";
 
 export interface LightboxItem {
   /** Tells apart two cards that share a picture, like two printings. */
@@ -135,9 +140,6 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
       return index >= 0 && index < o.items.length ? { ...o, index, dir: dir > 0 ? "next" : "prev" } : o;
     });
   }, []);
-  // Holds focus while open, like a sheet, and gives it back to whatever opened the photo.
-  useOverlay(item !== undefined, close, { el: box, returnTo: () => lastFocus.current });
-
   useEffect(() => {
     if (item) closeBtn.current?.focus();
   }, [item]);
@@ -159,7 +161,7 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
 
   const open = useCallback(
     (next: LightboxItem) => {
-      lastFocus.current = document.activeElement;
+      lastFocus.current = takeOpener();
       setDone(new Set());
       const items = sequenceRef.current;
       const index = items.findIndex((i) => sameCard(i, next));
@@ -281,112 +283,148 @@ export function LightboxProvider({ children }: { children: ReactNode }) {
     <LightboxContext value={{ open, sequenceRef }}>
       {children}
       {item && shown ? (
-        <div
-          ref={box}
-          className={"lightbox" + (shown.enter ? "" : " no-enter")}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Card photo"
-          onClick={(e) => {
-            if (dragged.current) {
-              dragged.current = false;
-              return;
-            }
-            if (e.target !== e.currentTarget && e.target !== back.current) return;
-            // Outside a zoomed photo, a tap zooms back out first.
-            if (zoom.zoomed()) zoom.reset();
-            else close();
-          }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-          onPointerCancel={(e) => {
-            if (zoom.cancel(e)) return;
-            drag.current = null;
-            settle();
+        // shadcn/ui's Dialog primitive (Radix): holds focus while open, closes on Escape, gives focus back.
+        <DialogPrimitive.Root
+          open
+          onOpenChange={(open) => {
+            if (!open) close();
           }}
         >
-          <div className="lb-back" ref={back} aria-hidden="true" />
-          <button className="close" type="button" aria-label="Close" ref={closeBtn} onClick={close}>
-            ×
-          </button>
-          <Photo
-            key={item.src}
-            ref={photo}
-            item={item}
-            className={shown.dir ? `from-${shown.dir}` : undefined}
-          />
-          <div className="cap">
-            <b>{item.name}</b>
-            {item.caption}
-            {item.mark ? <span className="lb-mark">✓ {item.mark}</span> : null}
-          </div>
-          {item.onDetails || item.action ? (
-            <div className="lb-acts">
-              {item.action ? (
-                <ActionButton
-                  action={item.action}
-                  done={done.has(item.action.key)}
-                  busy={busy.has(item.action.key)}
-                  onRun={async ({ key, run }) => {
-                    setBusy((b) => new Set(b).add(key));
-                    // A run that throws counts as one that didn't work.
-                    const ok = await run()
-                      .catch((e: unknown) => {
-                        console.error(e);
-                        return false;
-                      })
-                      .finally(() => setBusy((b) => new Set([...b].filter((k) => k !== key))));
-                    if (ok) setDone((d) => new Set(d).add(key));
-                  }}
-                />
-              ) : null}
-              {item.onDetails ? (
-                <button
-                  className="btn lb-details"
-                  type="button"
-                  onClick={() => {
-                    const details = item.onDetails;
-                    // The picture flies into the card's sheet as it opens.
-                    morph({
-                      from: photo.current,
-                      update: () => {
-                        setOpened(null);
-                        details?.();
-                      },
-                      to: sheetPicture,
-                    });
-                  }}
-                >
-                  Details
-                </button>
-              ) : null}
-            </div>
-          ) : null}
-          {count > 1 ? (
-            <div className="lb-nav">
-              <button
-                type="button"
-                aria-label="Previous card"
-                disabled={shown.index === 0}
-                onClick={() => step(-1)}
+          <DialogPrimitive.Portal>
+            {/* Clear, under the full-screen view: Radix locks the page's scrolling through its overlay. */}
+            <DialogPrimitive.Overlay className="fixed inset-0" />
+            <DialogPrimitive.Content
+              ref={box}
+              className={cn("lightbox", !shown.enter && "no-enter")}
+              aria-describedby={undefined}
+              onOpenAutoFocus={(e) => {
+                e.preventDefault();
+                closeBtn.current?.focus();
+              }}
+              onCloseAutoFocus={(e) => {
+                e.preventDefault();
+                returnFocus(lastFocus.current);
+              }}
+              onInteractOutside={(e) => {
+                if (isInToaster(e.target)) e.preventDefault();
+              }}
+              onClick={(e) => {
+                if (dragged.current) {
+                  dragged.current = false;
+                  return;
+                }
+                if (e.target !== e.currentTarget && e.target !== back.current) return;
+                // Outside a zoomed photo, a tap zooms back out first.
+                if (zoom.zoomed()) zoom.reset();
+                else close();
+              }}
+              onPointerDown={onPointerDown}
+              onPointerMove={onPointerMove}
+              onPointerUp={onPointerUp}
+              onPointerCancel={(e) => {
+                if (zoom.cancel(e)) return;
+                drag.current = null;
+                settle();
+              }}
+            >
+              <DialogPrimitive.Title className="sr-only">Card photo</DialogPrimitive.Title>
+              <div className="lb-back" ref={back} aria-hidden="true" />
+              <Button
+                variant="glass"
+                size="icon-lg"
+                className="lb-close absolute top-[calc(12px+env(safe-area-inset-top,0px))] right-[max(12px,env(safe-area-inset-right,0px))] z-1"
+                aria-label="Close"
+                ref={closeBtn}
+                onClick={close}
               >
-                ‹
-              </button>
-              <span aria-live="polite">
-                {shown.index + 1} of {count}
-              </span>
-              <button
-                type="button"
-                aria-label="Next card"
-                disabled={shown.index === count - 1}
-                onClick={() => step(1)}
-              >
-                ›
-              </button>
-            </div>
-          ) : null}
-        </div>
+                <XIcon />
+              </Button>
+              <Photo
+                key={item.src}
+                ref={photo}
+                item={item}
+                className={shown.dir ? `from-${shown.dir}` : undefined}
+              />
+              <div className="cap">
+                <b>{item.name}</b>
+                {item.caption}
+                {item.mark ? <span className="lb-mark">✓ {item.mark}</span> : null}
+              </div>
+              {item.onDetails || item.action ? (
+                <div className="lb-acts">
+                  {item.action ? (
+                    <ActionButton
+                      action={item.action}
+                      done={done.has(item.action.key)}
+                      busy={busy.has(item.action.key)}
+                      onRun={async ({ key, run }) => {
+                        setBusy((b) => new Set(b).add(key));
+                        // A run that throws counts as one that didn't work.
+                        const ok = await run()
+                          .catch((e: unknown) => {
+                            console.error(e);
+                            return false;
+                          })
+                          .finally(() => setBusy((b) => new Set([...b].filter((k) => k !== key))));
+                        if (ok) setDone((d) => new Set(d).add(key));
+                      }}
+                    />
+                  ) : null}
+                  {item.onDetails ? (
+                    <Button
+                      // Beside the action, Details steps back so the action reads first.
+                      variant={item.action ? "glass" : "contrast"}
+                      className="rounded-full"
+                      onClick={() => {
+                        const details = item.onDetails;
+                        // The card's sheet gives focus back to what opened the photo.
+                        handOffFocus(lastFocus.current);
+                        // The picture flies into the card's sheet as it opens.
+                        morph({
+                          from: photo.current,
+                          update: () => {
+                            setOpened(null);
+                            details?.();
+                          },
+                          to: sheetPicture,
+                        });
+                      }}
+                    >
+                      Details
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
+              {count > 1 ? (
+                <div className="lb-nav">
+                  <Button
+                    variant="glass"
+                    size="icon-lg"
+                    className="disabled:opacity-30"
+                    aria-label="Previous card"
+                    disabled={shown.index === 0}
+                    onClick={() => step(-1)}
+                  >
+                    <ChevronLeftIcon />
+                  </Button>
+                  <span aria-live="polite">
+                    {shown.index + 1} of {count}
+                  </span>
+                  <Button
+                    variant="glass"
+                    size="icon-lg"
+                    className="disabled:opacity-30"
+                    aria-label="Next card"
+                    disabled={shown.index === count - 1}
+                    onClick={() => step(1)}
+                  >
+                    <ChevronRightIcon />
+                  </Button>
+                </div>
+              ) : null}
+            </DialogPrimitive.Content>
+          </DialogPrimitive.Portal>
+        </DialogPrimitive.Root>
       ) : null}
     </LightboxContext>
   );
@@ -401,14 +439,14 @@ interface ActionButtonProps {
 
 function ActionButton({ action, done, busy, onRun }: ActionButtonProps) {
   return (
-    <button
-      className={"btn lb-action" + (done ? " done" : "")}
-      type="button"
+    <Button
+      variant={done ? "glass" : "contrast"}
+      className={cn("rounded-full", done && "disabled:opacity-100")}
       disabled={done || busy}
       onClick={() => void onRun(action)}
     >
       {done ? action.doneLabel : action.label}
-    </button>
+    </Button>
   );
 }
 

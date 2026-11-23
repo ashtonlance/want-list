@@ -1,3 +1,4 @@
+import { Button } from "~/components/ui/button";
 import { CardImage } from "~/ui/CardImage";
 import { tcgProductUrl } from "~/features/cards/links";
 import { formatMoney } from "~/lib/format";
@@ -13,6 +14,9 @@ interface PocketSheetProps {
   onRemove: () => void;
   onAddToList: (s: WebSlot) => void;
 }
+
+/** The pocket's actions sit two to a row and may wrap onto a second line. */
+const ACT = "min-h-12 text-center whitespace-normal";
 
 function status(info: SlotInfo): string {
   if (info.got) return "In your collection";
@@ -41,31 +45,31 @@ export function PocketSheet({
         ) : null}
         <div>
           <b>{info.name}</b>
-          <div className="hint" style={{ margin: "2px 0 0" }}>
-            {info.sub}
-          </div>
+          <div className="hint mt-0.5 mb-0">{info.sub}</div>
           <div className="pd-status">{status(info)}</div>
         </div>
       </div>
       <div className="sheet-acts">
-        <button className="btn primary" type="button" onClick={onMove}>
+        <Button variant="default" className={`col-span-full ${ACT}`} onClick={onMove}>
           Move or swap
-        </button>
-        <button className="btn" type="button" onClick={onReplace}>
+        </Button>
+        <Button className={ACT} onClick={onReplace}>
           Replace card
-        </button>
-        <button className="btn danger" type="button" onClick={onRemove}>
+        </Button>
+        <Button variant="destructive" className={ACT} onClick={onRemove}>
           Take out of pocket
-        </button>
+        </Button>
         {web && canAddToList ? (
-          <button className="btn" type="button" onClick={() => onAddToList(web)}>
+          <Button className={ACT} onClick={() => onAddToList(web)}>
             Add to my want list
-          </button>
+          </Button>
         ) : null}
         {web ? (
-          <a className="btn" href={tcgProductUrl(web.pid)} target="_blank" rel="noopener">
-            See it on TCGplayer
-          </a>
+          <Button asChild className={ACT}>
+            <a href={tcgProductUrl(web.pid)} target="_blank" rel="noopener">
+              See it on TCGplayer
+            </a>
+          </Button>
         ) : null}
       </div>
     </>

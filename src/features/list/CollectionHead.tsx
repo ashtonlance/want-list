@@ -6,6 +6,8 @@ import { isGot, priceOf } from "~/features/cards/pricing";
 import type { Card } from "~/features/cards/types";
 import { cleanName, formatMoney } from "~/lib/format";
 import { useStore } from "~/lib/store";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import { Seg } from "~/ui/Seg";
 import { Select } from "~/ui/Select";
 import { useToast } from "~/ui/Toast";
@@ -15,6 +17,8 @@ const VIEWS = [
   { value: "list", label: "List" },
   { value: "binder", label: "Binder" },
 ] as const;
+/** A name field in an inline form: it takes the room left on the line, and wraps under below 180px. */
+const inlineInput = "w-auto flex-[1_1_180px]";
 const POCKET_OPTIONS = POCKETS.map((n) => ({ value: n, label: `${n}-pocket pages` }));
 
 /** Names a new collection, then starts picking its cards. */
@@ -35,20 +39,20 @@ function NewCollectionForm() {
         it, tap the cards that belong, then Add to collection.
       </p>
       <form className="inline-form" autoComplete="off" onSubmit={submit}>
-        <input
-          type="text"
+        <Input
+          className={inlineInput}
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name it, e.g. Gengar binder or Kanto starters"
           aria-label="New collection name"
           autoFocus
         />
-        <button className="btn primary small" type="submit">
+        <Button size="sm" variant="default" type="submit">
           Create and pick cards
-        </button>
-        <button className="btn small" type="button" onClick={() => patchListUi({ collForm: null })}>
+        </Button>
+        <Button size="sm" onClick={() => patchListUi({ collForm: null })}>
           Cancel
-        </button>
+        </Button>
       </form>
     </div>
   );
@@ -64,19 +68,19 @@ function RenameForm({ name, onRename }: { name: string; onRename: (to: string) =
         onRename(cleanName(value));
       }}
     >
-      <input
-        type="text"
+      <Input
+        className={inlineInput}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         aria-label="New name"
         autoFocus
       />
-      <button className="btn primary small" type="submit">
+      <Button size="sm" variant="default" type="submit">
         Rename
-      </button>
-      <button className="btn small" type="button" onClick={() => patchListUi({ collForm: null })}>
+      </Button>
+      <Button size="sm" onClick={() => patchListUi({ collForm: null })}>
         Cancel
-      </button>
+      </Button>
     </form>
   );
 }
@@ -128,7 +132,8 @@ export function CollectionHead({ cards, coll, canWrite }: Props) {
         {view === "binder" ? (
           <Select
             aria-label="Pockets per page"
-            style={{ width: "auto" }}
+            className="w-auto"
+            selectClassName="min-h-9 py-1.5 leading-[1.2]"
             value={pockets}
             options={POCKET_OPTIONS}
             onChange={(n) => prefs.pockets.set(n)}
@@ -139,35 +144,31 @@ export function CollectionHead({ cards, coll, canWrite }: Props) {
         ) : null}
         {canWrite && ui.collForm !== "rename" ? (
           <>
-            <button className="btn small" type="button" onClick={() => startSelecting(coll, coll)}>
+            <Button size="sm" onClick={() => startSelecting(coll, coll)}>
               Add cards
-            </button>
-            <button className="btn small" type="button" onClick={() => patchListUi({ collForm: "rename" })}>
+            </Button>
+            <Button size="sm" onClick={() => patchListUi({ collForm: "rename" })}>
               Rename
-            </button>
+            </Button>
             {ui.confirmDelete ? (
               <>
                 {/* The safe choice comes first, as in every confirm. */}
-                <button
-                  className="btn small"
-                  type="button"
-                  onClick={() => patchListUi({ confirmDelete: false })}
-                >
+                <Button size="sm" onClick={() => patchListUi({ confirmDelete: false })}>
                   Keep
-                </button>
-                <button className="btn small danger" type="button" onClick={remove}>
+                </Button>
+                <Button size="sm" variant="destructive" onClick={remove}>
                   Yes, delete
-                </button>
+                </Button>
               </>
             ) : (
-              <button
-                className="btn small danger"
-                type="button"
+              <Button
+                size="sm"
+                variant="destructive"
                 title="Removes the tag. Your cards stay on the list."
                 onClick={() => patchListUi({ confirmDelete: true })}
               >
                 Delete collection
-              </button>
+              </Button>
             )}
           </>
         ) : null}

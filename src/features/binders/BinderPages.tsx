@@ -1,4 +1,6 @@
+import { CheckIcon, ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "lucide-react";
 import { useRef, type CSSProperties } from "react";
+import { Button } from "~/components/ui/button";
 import { CardImage } from "~/ui/CardImage";
 import { pageCount, type SlotInfo } from "./slots";
 import type { Binder } from "./types";
@@ -34,13 +36,15 @@ export function BinderPages({ binder, infos, page, per, moving, onPage, onPocket
   return (
     <>
       <div className="bnav">
-        <button className="btn small" type="button" disabled={page === 0} onClick={prev}>
-          ‹ Prev
-        </button>
+        <Button size="sm" disabled={page === 0} onClick={prev}>
+          <ChevronLeftIcon />
+          Prev
+        </Button>
         <span>{label}</span>
-        <button className="btn small" type="button" disabled={!canNext} onClick={next}>
-          Next ›
-        </button>
+        <Button size="sm" disabled={!canNext} onClick={next}>
+          Next
+          <ChevronRightIcon />
+        </Button>
       </div>
       <div
         className={"spread bspread" + (per === 1 ? " one" : "")}
@@ -105,12 +109,12 @@ function Pocket({ index, pockets, info, moving, onClick }: PocketProps) {
           <CardImage src={info.img} name={info.name} />
           {info.got ? (
             <span className="own-mark" aria-hidden="true">
-              ✓
+              <CheckIcon className="size-3.5" strokeWidth={3} />
             </span>
           ) : null}
         </>
       ) : (
-        <span className="plus">+</span>
+        <PlusIcon className="plus size-6" aria-hidden="true" />
       )}
     </button>
   );

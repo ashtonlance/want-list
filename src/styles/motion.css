@@ -132,8 +132,6 @@
 }
 
 /* Something that mounted inside a transition skips its own entrance: the transition already drew it. */
-.sheet.no-enter,
-.sheet.no-enter .sheet-card,
 .lightbox.no-enter {
   animation: none;
 }
@@ -167,85 +165,12 @@
   }
 }
 
-/* Toasts rise in and drop away. */
-.toast {
-  animation: toast-in var(--t) var(--ease) backwards;
-}
-.toast.leaving {
-  animation: toast-out var(--t-fast) var(--ease-in) both;
-  pointer-events: none;
-}
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 10px) scale(0.98);
-  }
-}
-@keyframes toast-out {
-  to {
-    opacity: 0;
-    transform: translate(-50%, 6px) scale(0.98);
-  }
-}
-
-/* Segmented controls: the white pill slides to the chosen option. */
-.seg.has-thumb {
-  position: relative;
-  isolation: isolate;
-}
-.seg-thumb {
-  position: absolute;
-  top: 3px;
-  bottom: 3px;
-  left: 0;
-  width: var(--w, 0);
-  transform: translateX(var(--x, 0));
-  border-radius: 8px;
-  background: var(--surface);
-  box-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.12),
-    0 0 0 0.5px rgba(0, 0, 0, 0.04);
-  z-index: -1;
-  transition:
-    transform var(--t) var(--ease),
-    width var(--t) var(--ease);
-}
-.seg:not(.ready) .seg-thumb {
-  transition: none;
-}
-.seg.has-thumb button[aria-pressed="true"] {
-  background: none;
-  box-shadow: none;
-}
-.seg button {
-  transition: color var(--t) var(--ease);
-}
-
-/* Taps answer with a small press; state changes ease rather than snap. */
-.btn,
-.icon-btn,
-.acct-btn,
-.sheet-x,
-.chip-toggle,
-.colltab,
-.seg button,
+/* Tab bar links answer with a small press. Kit controls carry their own (active:scale-96). */
 .tabbar a {
   transition:
     transform var(--t-fast) var(--ease),
-    background-color var(--t) var(--ease),
-    color var(--t) var(--ease),
-    border-color var(--t) var(--ease),
-    opacity var(--t-fast) var(--ease);
+    color var(--t) var(--ease);
 }
-.btn:active,
-.icon-btn:active,
-.acct-btn:active,
-.sheet-x:active,
-.chip-toggle:active,
-.colltab:active {
-  transform: scale(0.96);
-}
-.seg button:active,
 .tabbar a:active {
   transform: scale(0.94);
 }

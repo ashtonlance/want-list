@@ -1,10 +1,12 @@
 import { useLocation } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { Button } from "~/components/ui/button";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { ExploreTabs } from "~/features/explore/ExploreTabs";
 import { useActiveCollection } from "~/features/list/useActiveCollection";
 import { useCollections } from "~/features/cards/useCollections";
 import { useShareLink } from "~/features/share/useShareLink";
+import { cn } from "~/lib/utils";
 import { PlusIcon, ShareIcon } from "~/ui/icons";
 import { useOverlayNav } from "./overlayNav";
 import { sectionOf } from "./sections";
@@ -48,34 +50,36 @@ export function Topbar() {
         )}
         <div className="tb-acts">
           {section === "list" ? (
-            <button
-              type="button"
-              className="icon-btn"
+            <Button
+              size="icon"
               aria-label={coll ? `Share ${coll}` : "Share the want list"}
               disabled={coll !== null && !collsLoaded}
               onClick={() => void share(coll)}
             >
               <ShareIcon />
-            </button>
+            </Button>
           ) : null}
           {canWrite && section === "list" ? (
-            <button
-              type="button"
-              className="icon-btn primary"
+            <Button
+              variant="default"
+              size="icon"
               aria-label="Add a card"
               onClick={() => open({ panel: "add" })}
             >
               <PlusIcon />
-            </button>
+            </Button>
           ) : null}
-          <button
-            type="button"
-            className={"acct-btn" + (email ? " avatar" : "")}
+          <Button
+            size="sm"
+            className={cn(
+              "h-9 min-w-9 rounded-full px-3.5 py-0",
+              email && "w-9 bg-foreground px-0 text-[15px] text-background",
+            )}
             aria-label="Account and sign in"
             onClick={() => open({ panel: "account" })}
           >
             {email ? email.charAt(0).toUpperCase() : "Sign in"}
-          </button>
+          </Button>
         </div>
       </div>
     </header>

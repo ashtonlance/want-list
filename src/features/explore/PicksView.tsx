@@ -1,6 +1,8 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOverlayNav } from "~/app/overlayNav";
+import { Empty } from "~/components/ui/empty";
+import { Toggle } from "~/components/ui/toggle";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
 import { useAddCards } from "~/features/cards/create";
@@ -21,6 +23,7 @@ import { Select } from "~/ui/Select";
 import { useFilterSheet } from "~/ui/useFilterSheet";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { AddedMark, ExCard, PassButton, PriceTag, QuickWant } from "./ExCard";
+import { SearchInput } from "~/ui/SearchInput";
 import { useLiveCards } from "./live";
 import { useCatalog } from "~/features/catalog/catalog";
 import { sanitizedDates } from "~/features/catalog/feed";
@@ -294,12 +297,7 @@ export function PicksView() {
   useScrollRestoration(`picks:${tab ?? ""}:${artist}`, loaded, reach);
 
   if (!loaded) return <SkeletonGrid className="ex-grid" count={6} />;
-  if (!tab)
-    return (
-      <div className="empty-state">
-        No suggestions yet. Ask Claude in chat to find cards for your collections.
-      </div>
-    );
+  if (!tab) return <Empty>No suggestions yet. Ask Claude in chat to find cards for your collections.</Empty>;
 
   const showTab = (next: string) => {
     if (next !== ALL_PICKS) noteCollectionUse(next);
@@ -354,27 +352,21 @@ export function PicksView() {
   return (
     <>
       <div className="colltabs">
-        <button className="colltab" type="button" aria-pressed={isAll} onClick={() => showTab(ALL_PICKS)}>
+        <Toggle pressed={isAll} onPressedChange={() => showTab(ALL_PICKS)}>
           <b>All picks</b>
           <span>{openAll} open</span>
-        </button>
+        </Toggle>
         {tabs.map((t) => (
-          <button
-            key={t.name}
-            className="colltab"
-            type="button"
-            aria-pressed={tab === t.name}
-            onClick={() => showTab(t.name)}
-          >
+          <Toggle key={t.name} pressed={tab === t.name} onPressedChange={() => showTab(t.name)}>
             <b>{t.name}</b>
             <span>{t.open === 1 ? "1 new pick" : `${t.open} new picks`}</span>
-          </button>
+          </Toggle>
         ))}
       </div>
       <div className="ex-tools">
         <div className="ex-bar">
-          <input
-            type="search"
+          <SearchInput
+            wrapClassName="flex-1"
             placeholder="Search picks, sets or artists"
             aria-label="Search picks"
             value={ui.q}
@@ -425,24 +417,17 @@ export function PicksView() {
             <FilterSection label="Also show">
               <div className="choice-wrap">
                 {added ? (
-                  <button
-                    className="chip-toggle"
-                    type="button"
-                    aria-pressed={!ui.hideAdded}
-                    onClick={() => patchPicksUi({ hideAdded: !ui.hideAdded })}
-                  >
-                    Already added <span className="choice-n">{added}</span>
-                  </button>
+                  <Toggle pressed={!ui.hideAdded} onPressedChange={(on) => patchPicksUi({ hideAdded: !on })}>
+                    Already added <span>{added}</span>
+                  </Toggle>
                 ) : null}
                 {passed ? (
-                  <button
-                    className="chip-toggle"
-                    type="button"
-                    aria-pressed={ui.showPassed}
-                    onClick={() => patchPicksUi({ showPassed: !ui.showPassed })}
+                  <Toggle
+                    pressed={ui.showPassed}
+                    onPressedChange={(showPassed) => patchPicksUi({ showPassed })}
                   >
-                    Passed <span className="choice-n">{passed}</span>
-                  </button>
+                    Passed <span>{passed}</span>
+                  </Toggle>
                 ) : null}
               </div>
             </FilterSection>
@@ -489,9 +474,7 @@ export function PicksView() {
           );
         })}
         {shown.length ? null : (
-          <div className="empty-state">
-            {filtered ? "No picks match these filters." : "No more cards like these right now."}
-          </div>
+          <Empty>{filtered ? "No picks match these filters." : "No more cards like these right now."}</Empty>
         )}
       </div>
       {more ? (

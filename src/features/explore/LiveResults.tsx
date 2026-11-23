@@ -1,3 +1,5 @@
+import { Button } from "~/components/ui/button";
+import { Empty } from "~/components/ui/empty";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
@@ -128,14 +130,12 @@ export function LiveResults({ set }: { set: string }) {
             />
           );
         })}
-        {rows.length ? null : (
-          <div className="empty-state">{progress ? "Getting prices…" : "No cards match these filters."}</div>
-        )}
+        {rows.length ? null : <Empty>{progress ? "Getting prices…" : "No cards match these filters."}</Empty>}
       </div>
       {rows.length > shown ? (
-        <button className="btn wide lv-more" type="button" onClick={() => setShown((n) => n + PAGE)}>
+        <Button className="mt-1 w-full" onClick={() => setShown((n) => n + PAGE)}>
           Show more ({rows.length - shown} left)
-        </button>
+        </Button>
       ) : null}
       <p className="hint">
         Live card data from TCGdex, refreshed daily. Prices are TCGplayer market before shipping.

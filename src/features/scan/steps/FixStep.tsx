@@ -1,3 +1,7 @@
+import { Button } from "~/components/ui/button";
+import { Checkbox } from "~/components/ui/checkbox";
+import { SearchInput } from "~/ui/SearchInput";
+import { Label } from "~/components/ui/label";
 import { useEffect, useMemo, useState } from "react";
 import { useCatalog } from "~/features/catalog/catalog";
 import { searchCatalog } from "~/features/catalog/search";
@@ -52,13 +56,11 @@ export function FixStep({ cell, page, pocket, index, onChoose }: FixStepProps) {
       </div>
       <div className="row-btns">
         {cur ? (
-          <button className="btn primary" type="button" onClick={() => onChoose(cur)}>
+          <Button variant="default" onClick={() => onChoose(cur)}>
             Looks right
-          </button>
+          </Button>
         ) : null}
-        <button className="btn" type="button" onClick={() => onChoose(null)}>
-          Empty pocket
-        </button>
+        <Button onClick={() => onChoose(null)}>Empty pocket</Button>
       </div>
       {alts.length ? (
         <>
@@ -114,18 +116,17 @@ function CardSearch({ initial, index, onChoose }: CardSearchProps) {
 
   return (
     <>
-      <input
-        type="search"
+      <SearchInput
         value={text}
         placeholder="Name, set or number"
         aria-label="Search cards"
         enterKeyHint="search"
         onChange={(e) => setText(e.target.value)}
       />
-      <label className="chk">
-        <input type="checkbox" checked={withJapanese} onChange={(e) => setWithJapanese(e.target.checked)} />{" "}
+      <Label className="min-h-10 flex-row items-center gap-2 text-sm text-ink-2">
+        <Checkbox checked={withJapanese} onCheckedChange={(v) => setWithJapanese(v === true)} />
         Include Japanese
-      </label>
+      </Label>
       <div className="pick-grid">
         {q.length < 2 ? (
           <p className="hint">Type the card's name. Add the set or number to narrow it.</p>

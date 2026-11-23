@@ -35,14 +35,6 @@
   flex-direction: column;
   gap: 10px;
 }
-.acct .msg {
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--ink-2);
-  background: var(--sunk);
-  border-radius: 10px;
-  padding: 12px;
-}
 .about {
   font-size: 13px;
   color: var(--muted);
@@ -54,18 +46,6 @@
 .about p {
   margin: 0;
 }
-.code-input {
-  font-size: 28px;
-  font-weight: 600;
-  letter-spacing: 0.4em;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  padding-left: 0.4em;
-}
-.code-input::placeholder {
-  color: var(--muted);
-  opacity: 0.35;
-}
 .code-error {
   margin: -2px 0 0;
   font-size: 14px;
@@ -75,8 +55,4 @@
   display: flex;
   justify-content: space-between;
   gap: 12px;
-}
-.code-links .linkbtn:disabled {
-  opacity: 0.5;
-  cursor: default;
 }

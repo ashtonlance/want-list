@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { ToggleGroup, ToggleGroupItem } from "~/components/ui/toggle-group";
 
 interface SegProps<T extends string> {
   label: string;
@@ -8,51 +8,25 @@ interface SegProps<T extends string> {
   className?: string;
 }
 
-/** A row of mutually exclusive buttons. The highlight slides to the chosen one. */
+/** A segmented control (shadcn/ui Toggle Group): one option always chosen, the highlight slides to it. */
 export function Seg<T extends string>({ label, value, options, onChange, className }: SegProps<T>) {
-  const box = useRef<HTMLDivElement>(null);
-  // Set once the highlight has its first place, so it appears there instead of sliding in from the left.
-  const [ready, setReady] = useState(false);
-
-  useLayoutEffect(() => {
-    const el = box.current;
-    if (!el) return;
-    const place = () => {
-      const on = el.querySelector<HTMLElement>('button[aria-pressed="true"]');
-      el.style.setProperty("--x", `${String(on?.offsetLeft ?? 0)}px`);
-      el.style.setProperty("--w", `${String(on?.offsetWidth ?? 0)}px`);
-    };
-    place();
-    if (typeof ResizeObserver === "undefined") return;
-    // Widths change with the text size and the screen; keep the highlight on its button.
-    const ro = new ResizeObserver(place);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [value, options]);
-
-  useLayoutEffect(() => {
-    const id = requestAnimationFrame(() => setReady(true));
-    return () => cancelAnimationFrame(id);
-  }, []);
-
   return (
-    <div
-      ref={box}
-      className={"seg has-thumb" + (ready ? " ready" : "") + (className ? " " + className : "")}
-      role="group"
+    <ToggleGroup
+      type="single"
       aria-label={label}
+      value={value}
+      // Tapping the chosen option again would clear it; a segmented control always keeps one.
+      onValueChange={(v) => {
+        const hit = options.find((o) => o.value === v);
+        if (hit) onChange(hit.value);
+      }}
+      className={className}
     >
-      <span className="seg-thumb" aria-hidden="true" />
       {options.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          aria-pressed={value === o.value}
-          onClick={() => onChange(o.value)}
-        >
+        <ToggleGroupItem key={o.value} value={o.value}>
           {o.label}
-        </button>
+        </ToggleGroupItem>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }

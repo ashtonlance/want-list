@@ -1,0 +1,109 @@
+/*
+ * shadcn/ui theme. Its semantic colors map straight onto the app's own tokens (tokens.css), so light and
+ * dark follow the same palette as everything else. (No shadcn :root aliases: the app already uses
+ * --muted and --accent with other meanings.) Radii and motion come from the tokens too.
+ */
+@theme inline {
+  --color-background: var(--bg);
+  --color-foreground: var(--ink);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--surface);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--accent-ink);
+  --color-secondary: var(--sunk);
+  --color-secondary-foreground: var(--ink);
+  --color-muted: var(--sunk);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--sunk);
+  --color-accent-foreground: var(--ink);
+  --color-destructive: var(--danger);
+  --color-border: var(--line);
+  --color-input: var(--line-2);
+  --color-ring: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-faint: var(--faint);
+  --color-scrim: var(--scrim);
+  --radius-sm: 8px;
+  --radius-md: var(--r-sm);
+  --radius-lg: 12px;
+  --radius-xl: var(--r);
+  --font-sans: var(--f);
+  --font-num: var(--f-num);
+  --ease-app: var(--ease);
+  --ease-app-in: var(--ease-in);
+}
+
+@layer base {
+  /*
+   * Tap areas: controls drawn smaller than 44px keep their look but take a 44px target, an invisible layer
+   * centred on the control. In the base layer, so a control placed with `absolute` keeps its position.
+   */
+  :where(
+    [data-slot="button"],
+    [data-slot="toggle"],
+    [data-slot="toggle-group-item"],
+    [data-slot="tabs-trigger"],
+    [data-slot="checkbox"],
+    button[data-slot="badge"]
+  ) {
+    position: relative;
+  }
+  :where(
+    [data-slot="button"],
+    [data-slot="toggle"],
+    [data-slot="toggle-group-item"],
+    [data-slot="tabs-trigger"],
+    [data-slot="checkbox"],
+    button[data-slot="badge"]
+  )::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* The app's loading shimmer, used by the Skeleton component (components/ui/skeleton.tsx). */
+@utility skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--sunk) 0,
+    color-mix(in srgb, var(--sunk) 55%, var(--surface)) 50%,
+    var(--sunk) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite linear;
+}
+
+/* Accordion panels ease open and shut (components/ui/accordion.tsx). */
+@layer components {
+  .accordion-content[data-state="open"] {
+    animation: accordion-open var(--t) var(--ease);
+  }
+  .accordion-content[data-state="closed"] {
+    animation: accordion-shut var(--t-fast) var(--ease-in);
+  }
+}
+@keyframes accordion-open {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+@keyframes accordion-shut {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}

@@ -1,5 +1,7 @@
 import { useCallback, useMemo, type CSSProperties } from "react";
 import { useOverlayNav } from "~/app/overlayNav";
+import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { Button } from "~/components/ui/button";
 import type { Pockets } from "~/app/prefs";
 import { useCardWrites } from "~/features/cards/api";
 import { collectionCards, moveInCollection } from "~/features/cards/collections";
@@ -10,6 +12,10 @@ import type { Card } from "~/features/cards/types";
 import { formatMoney } from "~/lib/format";
 import { CardImage } from "~/ui/CardImage";
 import { usePhotoGrid } from "~/ui/Lightbox";
+
+/** A pocket's move arrows: small dark squares over the card art. A disabled one lets taps through to the card. */
+const moveClass =
+  "pointer-events-auto size-7 rounded-[7px] bg-black/66 text-[11px] leading-none font-normal disabled:pointer-events-none disabled:opacity-30";
 
 interface Props {
   cards: readonly Card[];
@@ -60,22 +66,26 @@ export function CollectionBinder({ cards, coll, pockets, canWrite }: Props) {
         </button>
         {canWrite ? (
           <div className="mv">
-            <button
-              type="button"
+            <Button
+              variant="glass"
+              size="icon"
+              className={moveClass}
               aria-label={`Move ${c.name} earlier`}
               disabled={i === 0}
               onClick={() => move(i, -1)}
             >
-              ◀
-            </button>
-            <button
-              type="button"
+              <ChevronLeftIcon className="size-3.5" />
+            </Button>
+            <Button
+              variant="glass"
+              size="icon"
+              className={moveClass}
               aria-label={`Move ${c.name} later`}
               disabled={i === ordered.length - 1}
               onClick={() => move(i, 1)}
             >
-              ▶
-            </button>
+              <ChevronRightIcon className="size-3.5" />
+            </Button>
           </div>
         ) : null}
       </div>
