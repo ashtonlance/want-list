@@ -32,7 +32,11 @@ export function NewBinderSheet({ canScan, onMake, onImport, onScan }: NewBinderS
   );
   const pickFrom = (coll: string) => {
     // Name it after the collection unless a name of their own is already typed.
-    if (coll && (!cleanName(name) || autoName)) {
+    if (!coll && autoName) {
+      // A name filled in from a collection goes with it.
+      setName("");
+      setAutoName(false);
+    } else if (coll && (!cleanName(name) || autoName)) {
       setName(coll);
       setAutoName(true);
     }

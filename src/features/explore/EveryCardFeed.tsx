@@ -116,7 +116,7 @@ export function EveryCardFeed({ cat, rows, lang, scrollKey, q = "", filtered = f
         {total ? null : (
           <div className="empty-state">
             {q
-              ? `No ${lang === "en" ? "English " : lang === "jp" ? "Japanese " : ""}cards match “${q}”.${filtered ? " Try clearing filters under Filter and sort." : lang === "both" ? "" : " Try another language under Filter and sort."}`
+              ? `No ${lang === "en" ? "English " : lang === "jp" ? "Japanese " : ""}cards match “${q}”.${filtered ? ` Try clearing filters${lang === "both" ? "" : " or another language"} under Filter and sort.` : lang === "both" ? "" : " Try another language under Filter and sort."}`
               : "No cards match these filters."}
           </div>
         )}
