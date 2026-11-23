@@ -15,8 +15,16 @@ restoreLastSection(import.meta.env.BASE_URL);
 
 const queryClient = new QueryClient({
   defaultOptions: {
-    // Kept as long as the saved copy, so what was loaded can be written back for the next visit.
-    queries: { staleTime: 60_000, gcTime: PERSIST_MAX_AGE, retry: 2, refetchOnWindowFocus: true },
+    queries: {
+      staleTime: 60_000,
+      // Kept as long as the saved copy, so what was loaded can be written back for the next visit.
+      gcTime: PERSIST_MAX_AGE,
+      retry: 2,
+      refetchOnWindowFocus: true,
+      // Offline, still ask once: the service worker answers from its cache (the catalog, prices, card data).
+      // Only a request that then fails waits for the connection to come back.
+      networkMode: "offlineFirst",
+    },
   },
 });
 

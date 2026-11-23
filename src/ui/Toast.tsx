@@ -5,6 +5,8 @@ interface ToastApi {
   toast: (message: string) => void;
   /** A message with an Undo button, shown a little longer. */
   toastUndo: (message: string, undo: () => void) => void;
+  /** A message that stays up while something slow runs, until the next message replaces it. */
+  toastBusy: (message: string) => void;
 }
 
 interface ToastState {
@@ -25,9 +27,10 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const seq = useRef(0);
 
-  const show = useCallback((message: string, undo?: () => void) => {
+  const show = useCallback((message: string, undo?: () => void, sticky = false) => {
     clearTimeout(timer.current);
     setState({ message, undo, id: ++seq.current });
+    if (sticky) return;
     timer.current = setTimeout(
       () => {
         setState((s) => (s ? { ...s, leaving: true } : s));
@@ -38,7 +41,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const api = useMemo<ToastApi>(() => ({ toast: (m) => show(m), toastUndo: (m, u) => show(m, u) }), [show]);
+  const api = useMemo<ToastApi>(
+    () => ({
+      toast: (m) => show(m),
+      toastUndo: (m, u) => show(m, u),
+      toastBusy: (m) => show(m, undefined, true),
+    }),
+    [show],
+  );
 
   return (
     <ToastContext value={api}>

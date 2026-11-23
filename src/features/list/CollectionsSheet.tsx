@@ -80,6 +80,9 @@ export function CollectionsSheet({ onClose }: { onClose: () => void }) {
                     <span className="cm-ask">
                       Delete {c.name}? {c.total ? "Its cards stay on your list." : ""}
                     </span>
+                    <button className="btn small" type="button" onClick={() => setDeleting(null)}>
+                      Keep
+                    </button>
                     <button
                       className="btn small danger"
                       type="button"
@@ -88,10 +91,7 @@ export function CollectionsSheet({ onClose }: { onClose: () => void }) {
                         void writes.remove(c.name);
                       }}
                     >
-                      Delete
-                    </button>
-                    <button className="btn small" type="button" onClick={() => setDeleting(null)}>
-                      Keep
+                      Yes, delete
                     </button>
                   </div>
                 ) : (

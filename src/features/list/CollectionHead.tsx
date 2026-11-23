@@ -148,15 +148,16 @@ export function CollectionHead({ cards, coll, canWrite }: Props) {
             </button>
             {ui.confirmDelete ? (
               <>
-                <button className="btn small danger" type="button" onClick={remove}>
-                  Yes, delete collection
-                </button>
+                {/* The safe choice comes first, as in every confirm. */}
                 <button
                   className="btn small"
                   type="button"
                   onClick={() => patchListUi({ confirmDelete: false })}
                 >
-                  Keep it
+                  Keep
+                </button>
+                <button className="btn small danger" type="button" onClick={remove}>
+                  Yes, delete
                 </button>
               </>
             ) : (

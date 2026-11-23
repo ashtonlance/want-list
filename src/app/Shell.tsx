@@ -5,6 +5,7 @@ import { useSetNameCleanup } from "~/features/cards/useSetNameCleanup";
 import { Datalists } from "~/features/list/Datalists";
 import { LightboxProvider } from "~/ui/Lightbox";
 import { ToastProvider } from "~/ui/Toast";
+import { OfflineBanner } from "./OfflineBanner";
 import { OverlayHost } from "./OverlayHost";
 import { TabBar } from "./TabBar";
 import { UpdatePrompt } from "./UpdatePrompt";
@@ -45,6 +46,7 @@ function AppFrame() {
     <>
       <Topbar />
       <main className="wrap">
+        <OfflineBanner />
         <Outlet />
       </main>
       <TabBar />

@@ -210,6 +210,32 @@ function SignInForm() {
   );
 }
 
+function SignOutButton({ signOut }: { signOut: () => Promise<boolean> }) {
+  const { toast } = useToast();
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      className="btn"
+      type="button"
+      disabled={busy}
+      onClick={() => {
+        setBusy(true);
+        void signOut().then((ok) => {
+          setBusy(false);
+          if (!ok)
+            toast(
+              navigator.onLine
+                ? "Couldn't sign out. Try again."
+                : "You're offline, so you're still signed in. Try again once you're back.",
+            );
+        });
+      }}
+    >
+      {busy ? "Signing out…" : "Sign out"}
+    </button>
+  );
+}
+
 export function AccountSheet({ onClose }: { onClose: () => void }) {
   const { email, canWrite, signOut } = useAuth();
   return (
@@ -229,9 +255,7 @@ export function AccountSheet({ onClose }: { onClose: () => void }) {
                 </span>
               </div>
             </div>
-            <button className="btn" type="button" onClick={() => void signOut()}>
-              Sign out
-            </button>
+            <SignOutButton signOut={signOut} />
           </div>
         ) : (
           <SignInForm />

@@ -138,11 +138,11 @@ export function OptionsSheet({ binder: b, cards, local, onSave, onFill, onDelete
       <h4>Delete</h4>
       {confirming ? (
         <div className="row-btns">
-          <button className="btn danger" type="button" onClick={onDelete}>
-            Yes, delete {b.name}
-          </button>
           <button className="btn" type="button" onClick={() => setConfirming(false)}>
-            Keep it
+            Keep
+          </button>
+          <button className="btn danger" type="button" onClick={onDelete}>
+            Yes, delete
           </button>
         </div>
       ) : (

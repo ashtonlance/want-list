@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useAuth } from "~/features/auth/AuthProvider";
+import { SignInHint } from "~/features/auth/SignInHint";
 import { showCollection } from "~/features/list/state";
 import { formatDate, formatMoney } from "~/lib/format";
 import { HeroImage } from "~/ui/CardImage";
@@ -57,7 +58,17 @@ function CardDetail({
 
   return (
     <>
-      <SheetHead title={got ? "In your collection" : "On your want list"} />
+      <SheetHead
+        title={
+          canWrite
+            ? got
+              ? "In your collection"
+              : "On your want list"
+            : got
+              ? "In Ashton's collection"
+              : "On Ashton's want list"
+        }
+      />
       {/* The actions come first, so they're in reach without scrolling past the big picture. */}
       {canWrite ? (
         <div className="detail-acts">
@@ -95,7 +106,9 @@ function CardDetail({
             </button>
           )}
         </div>
-      ) : null}
+      ) : (
+        <SignInHint line />
+      )}
       <div className="detail-hero">
         {src ? (
           <button
@@ -207,7 +220,7 @@ function CardDetail({
             {panel === "remove" ? (
               <div className="sub" style={{ paddingTop: 14 }}>
                 <p className="hint" style={{ marginBottom: 10 }}>
-                  Remove {c.name} from the list? This can&apos;t be undone.
+                  Remove {c.name} from the list?
                 </p>
                 <div className="row-btns">
                   <button className="btn" type="button" onClick={() => setPanel(null)}>

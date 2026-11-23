@@ -1,4 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
+import { useOverlayNav } from "~/app/overlayNav";
 import { useMemo, useState } from "react";
 import { prefs } from "~/app/prefs";
 import { useAuth } from "~/features/auth/AuthProvider";
@@ -7,6 +8,7 @@ import { collectionCards } from "~/features/cards/collections";
 import { formatMoney, plural } from "~/lib/format";
 import { useScrollRestoration } from "~/lib/scroll";
 import { useStore } from "~/lib/store";
+import { LoadError } from "~/ui/LoadError";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { BinderPages } from "./BinderPages";
 import { BinderSheet, type BinderSheetActions } from "./BinderSheet";
@@ -22,10 +24,22 @@ import { useSlotChange } from "./useSlotChange";
 
 /** Binders: lay out pages from cards on the list or any card in the catalog. */
 export function BindersView() {
-  const { binders, loaded, local, save, remove } = useBinders();
+  const {
+    binders,
+    loaded,
+    failed,
+    retry,
+    local,
+    save,
+    remove,
+    deviceOnly,
+    moveDeviceBinders,
+    discardDeviceBinders,
+  } = useBinders();
   const { cards } = useCards();
   const { canWrite, email } = useAuth();
   const navigate = useNavigate();
+  const { open } = useOverlayNav();
   const addToList = useAddToList();
   const changeSlots = useSlotChange(save);
   const curId = useStore(prefs.binder);
@@ -127,8 +141,27 @@ export function BindersView() {
       {local ? (
         <div className="banner">
           {email
-            ? "You're not signed in as an editor, so binder changes save on this device. Sign in at the top to edit the shared binders, or open Binder options and tap Text it to send one."
-            : "You're not signed in, so binders you make here save on this device. To send one to Ashton, open Binder options and tap Text it."}
+            ? `You're signed in as ${email}, which can't edit the shared binders, so binder changes save on this device. To send one to Ashton, open Binder options and tap Text it.`
+            : "You're not signed in, so binder changes save on this device. To send one to Ashton, open Binder options and tap Text it."}{" "}
+          <button className="link-btn" type="button" onClick={() => open({ panel: "account" })}>
+            {email ? "Account" : "Sign in"}
+          </button>
+        </div>
+      ) : null}
+      {deviceOnly.length ? (
+        <div className="banner">
+          {deviceOnly.length === 1
+            ? `${deviceOnly[0]?.name ?? "A binder"} is saved only on this device.`
+            : `${deviceOnly.length} binders are saved only on this device.`}{" "}
+          Move {deviceOnly.length === 1 ? "it" : "them"} to the shared binders?
+          <div className="row-btns" style={{ marginTop: 10 }}>
+            <button className="btn small primary" type="button" onClick={() => void moveDeviceBinders()}>
+              Move to shared
+            </button>
+            <button className="btn small" type="button" onClick={discardDeviceBinders}>
+              Remove from this device
+            </button>
+          </div>
         </div>
       ) : null}
       <div className="colltabs" role="tablist" aria-label="Binders">
@@ -209,6 +242,8 @@ export function BindersView() {
             ) : null}
           </div>
         </div>
+      ) : failed ? (
+        <LoadError text="Couldn't load the binders. Check your connection and try again." onRetry={retry} />
       ) : (
         <SkeletonGrid className="ex-grid" count={4} />
       )}

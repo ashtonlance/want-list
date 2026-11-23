@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import {
   realPrice,
   setOf,
@@ -16,7 +16,7 @@ import { tcgImage } from "~/lib/images";
 import { PickTile } from "~/ui/PickTile";
 import { Seg } from "~/ui/Seg";
 import { Select } from "~/ui/Select";
-import { useToast } from "~/ui/Toast";
+import { LoadError } from "~/ui/LoadError";
 import type { Slot } from "./types";
 import { useMediaQuery } from "./useMediaQuery";
 import { useCollections } from "~/features/cards/useCollections";
@@ -172,11 +172,13 @@ interface WebResultsProps {
 
 function WebResults({ query, withJapanese, onPlace }: WebResultsProps) {
   const catalog = useCatalog();
-  const { toast } = useToast();
-  useEffect(() => {
-    if (catalog.isError) toast("Couldn't load the card catalog. Try again.");
-  }, [catalog.isError, toast]);
-
+  if (catalog.isError && !catalog.data)
+    return (
+      <LoadError
+        text="Couldn't load every Pokémon card. Check your connection and try again."
+        onRetry={() => void catalog.refetch()}
+      />
+    );
   if (!catalog.data) return <p className="hint">Loading every Pokémon card…</p>;
   return <WebMatches cat={catalog.data} query={query} withJapanese={withJapanese} onPlace={onPlace} />;
 }

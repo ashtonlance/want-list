@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { prefs } from "~/app/prefs";
-import { WriteError, type Doc } from "~/data/docs";
+import { WriteError, writeFailure, type Doc } from "~/data/docs";
 import { useDocsQuery, useDocWrite } from "~/data/useDocs";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { isRecord } from "~/lib/json";
@@ -66,7 +66,7 @@ export function useCollectionWrites(): CollectionWrites {
         if (e instanceof WriteError && e.code === "denied") {
           markReadOnly();
           toast("You can view this list but not change it");
-        } else toast("Couldn't save. Check your connection and try again.");
+        } else toast(writeFailure(e, "Couldn't save. Check your connection and try again."));
         return false;
       }
     },
@@ -109,6 +109,7 @@ export function useCollectionWrites(): CollectionWrites {
 
   const remove = useCallback<CollectionWrites["remove"]>(
     async (name) => {
+      const before = names;
       if (!(await saveNames(names.filter((n) => n !== name)))) return;
       if (prefs.coll.get() === name) prefs.coll.set(null);
       await saveMany(
@@ -116,6 +117,8 @@ export function useCollectionWrites(): CollectionWrites {
           .filter((c) => c.collections.includes(name))
           .map((c) => [c, removeFromCollection(c, name)] as const),
         `Deleted ${name}. The cards are still on your list.`,
+        // Undo puts the cards back in it, then the collection back in its place.
+        { after: () => saveNames(before) },
       );
     },
     [names, saveNames, saveMany, cards],

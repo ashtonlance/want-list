@@ -13,7 +13,8 @@ interface Auth {
   canWrite: boolean;
   /** Called when the database refuses a write: the app stops offering changes. */
   markReadOnly: () => void;
-  signOut: () => Promise<void>;
+  /** Resolves false if signing out didn't go through (the session is kept, so nothing changes). */
+  signOut: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<Auth | null>(null);
@@ -62,7 +63,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const markReadOnly = useCallback(() => setRefused(true), []);
   const signOut = useCallback(async () => {
-    await supabase.auth.signOut();
+    const { error } = await supabase.auth.signOut();
+    return !error;
   }, []);
 
   const value = useMemo<Auth>(

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { prefs } from "~/app/prefs";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
+import { SignInHint } from "~/features/auth/SignInHint";
 import { useCards, useCardWrites } from "~/features/cards/api";
 import { visibleCards } from "~/features/cards/filters";
 import type { Card } from "~/features/cards/types";
@@ -12,6 +13,7 @@ import { cardImageSrc } from "~/features/cards/image";
 import { lightboxItem } from "~/features/cards/lightboxItem";
 import { isGot } from "~/features/cards/pricing";
 import { usePhotoGrid } from "~/ui/Lightbox";
+import { LoadError } from "~/ui/LoadError";
 import { SkeletonGrid } from "~/ui/Skeleton";
 import { BulkBar } from "./BulkBar";
 import { CardRow, CardTile } from "./CardItem";
@@ -41,8 +43,8 @@ function useSelectingClass(selecting: boolean): void {
 }
 
 export function ListView() {
-  const { cards, loaded, failed } = useCards();
-  const { canWrite, ready } = useAuth();
+  const { cards, loaded, failed, retry } = useCards();
+  const { canWrite } = useAuth();
   const ui = useListUi();
   const coll = useActiveCollection();
   const view = useStore(prefs.view);
@@ -94,7 +96,9 @@ export function ListView() {
   const Item = layout === "rows" ? CardRow : CardTile;
   let body;
   if (binder) body = <CollectionBinder cards={cards} coll={coll} pockets={pockets} canWrite={canWrite} />;
-  else if (!loaded && !failed) body = <SkeletonGrid className="list grid" count={9} />;
+  else if (failed)
+    body = <LoadError text="Couldn't load the list. Check your connection and try again." onRetry={retry} />;
+  else if (!loaded) body = <SkeletonGrid className="list grid" count={9} />;
   else if (!rows.length)
     body = <div className="empty-state">{emptyText(cards.length > 0, coll, canWrite)}</div>;
   else
@@ -117,22 +121,7 @@ export function ListView() {
   return (
     <div className="view">
       <Stats cards={cards} loaded={loaded} status={ui.status} coll={coll} />
-      {failed ? (
-        <div className="banner">Couldn&apos;t load the list. Check your connection and try again.</div>
-      ) : null}
-      {ready && !canWrite ? (
-        <div
-          className="banner tap"
-          role="button"
-          tabIndex={0}
-          onClick={() => open({ panel: "account" })}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") open({ panel: "account" });
-          }}
-        >
-          You&apos;re viewing Ashton&apos;s list. Tap Sign in to make changes.
-        </div>
-      ) : null}
+      <SignInHint />
       <section className="collbar" aria-label="Collections">
         <CollectionTabs colls={colls} current={coll} cardCount={cards.length} canWrite={canWrite} />
         <CollectionHead cards={cards} coll={coll} canWrite={canWrite} />

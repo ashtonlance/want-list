@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import { WriteError, type Doc } from "~/data/docs";
+import { WriteError, writeFailure, type Doc } from "~/data/docs";
 import { docKeys } from "~/data/keys";
 import { useDocsQuery, useDocWrite } from "~/data/useDocs";
 import { useAuth } from "~/features/auth/AuthProvider";
@@ -19,6 +19,8 @@ export interface CardsState {
   cards: Card[];
   loaded: boolean;
   failed: boolean;
+  /** Asks for the list again after a failed load. */
+  retry: () => void;
 }
 
 /** Every card on the list, with today's prices applied. */
@@ -29,14 +31,23 @@ export function useCards(): CardsState {
     () => (docs.data ?? []).map((d) => withPrices(parseCard(d.id, d.data), prices.data)),
     [docs.data, prices.data],
   );
-  return { cards, loaded: docs.data !== undefined, failed: docs.isError && docs.data === undefined };
+  const { refetch } = docs;
+  const retry = useCallback(() => void refetch(), [refetch]);
+  return { cards, loaded: docs.data !== undefined, failed: docs.isError && docs.data === undefined, retry };
 }
 
 export interface CardWrites {
   /** Changes some of a card's fields. Resolves false if the write didn't go through. */
   save: (card: Card, patch: CardPatch, message?: string, quiet?: boolean) => Promise<boolean>;
-  /** Changes several cards, then reports how many went through. */
-  saveMany: (pairs: readonly (readonly [Card, CardPatch])[], message?: string) => Promise<void>;
+  /**
+   * Changes several cards, then reports how many went through (always, if some didn't). With `undo`, the
+   * message comes with an Undo button that puts the cards back as they were, then runs `undo.after`.
+   */
+  saveMany: (
+    pairs: readonly (readonly [Card, CardPatch])[],
+    message?: string,
+    undo?: { after?: () => Promise<unknown> },
+  ) => Promise<void>;
   create: (id: string, data: CardData) => Promise<boolean>;
   remove: (card: Card) => Promise<boolean>;
 }
@@ -45,14 +56,14 @@ export function useCardWrites(): CardWrites {
   const qc = useQueryClient();
   const write = useDocWrite("cards");
   const { markReadOnly } = useAuth();
-  const { toast } = useToast();
+  const { toast, toastUndo } = useToast();
 
   const failed = useCallback(
     (e: unknown, quiet: boolean, fallback: string) => {
       if (e instanceof WriteError && e.code === "denied") {
         markReadOnly();
         toast("You can view this list but not change it");
-      } else if (!quiet) toast(fallback);
+      } else if (!quiet) toast(writeFailure(e, fallback));
     },
     [markReadOnly, toast],
   );
@@ -73,13 +84,29 @@ export function useCardWrites(): CardWrites {
   );
 
   const saveMany = useCallback<CardWrites["saveMany"]>(
-    async (pairs, message) => {
+    async (pairs, message, undo) => {
+      const docs = qc.getQueryData<Doc[]>(docKeys.cards) ?? [];
+      const before = pairs.flatMap(([c]) => docs.filter((d) => d.id === c.id));
       let ok = 0;
       for (const [c, patch] of pairs) if (await save(c, patch, undefined, true)) ok++;
-      if (message)
-        toast(ok === pairs.length ? message : `Saved ${ok} of ${pairs.length}. Try again for the rest.`);
+      // A partial failure is always reported, even for changes that would have saved quietly.
+      if (ok < pairs.length)
+        toast(writeFailure(undefined, `Saved ${ok} of ${pairs.length}. Try again for the rest.`));
+      else if (message && undo)
+        toastUndo(message, () => {
+          void (async () => {
+            try {
+              for (const d of before) await write.mutateAsync({ kind: "set", id: d.id, data: d.data });
+              await undo.after?.();
+              toast("Undone");
+            } catch (e) {
+              failed(e, false, "Couldn't undo all of it. Try again.");
+            }
+          })();
+        });
+      else if (message) toast(message);
     },
-    [save, toast],
+    [qc, save, write, toast, toastUndo, failed],
   );
 
   const create = useCallback<CardWrites["create"]>(
@@ -97,16 +124,25 @@ export function useCardWrites(): CardWrites {
 
   const remove = useCallback<CardWrites["remove"]>(
     async (card) => {
+      const stored = qc.getQueryData<Doc[]>(docKeys.cards)?.find((d) => d.id === card.id)?.data;
       try {
         await write.mutateAsync({ kind: "delete", id: card.id });
-        toast(`Removed ${card.name}`);
-        return true;
-      } catch {
-        toast("Couldn't remove it. Try again.");
+      } catch (e) {
+        failed(e, false, "Couldn't remove it. Try again.");
         return false;
       }
+      // Putting the same document back brings the card, its photo and its binder pockets back as they were.
+      if (stored)
+        toastUndo(`Removed ${card.name}`, () => {
+          write.mutateAsync({ kind: "set", id: card.id, data: stored }).then(
+            () => toast(`Put ${card.name} back`),
+            (e: unknown) => failed(e, false, "Couldn't put it back. Try again."),
+          );
+        });
+      else toast(`Removed ${card.name}`);
+      return true;
     },
-    [write, toast],
+    [qc, write, toast, toastUndo, failed],
   );
 
   return { save, saveMany, create, remove };

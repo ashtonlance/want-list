@@ -1,4 +1,4 @@
-import type { SubmitEvent } from "react";
+import { useState, type SubmitEvent } from "react";
 import { SET_LIST } from "~/features/list/Datalists";
 import { today } from "~/lib/format";
 import { useCardWrites } from "./api";
@@ -19,6 +19,7 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 /** Every editable field of a card, plus the best shipped deal found for it. */
 export function EditForm({ card: c, knownSets, onPhoto, onSaved }: Props) {
   const { save } = useCardWrites();
+  const [saving, setSaving] = useState(false);
   const d = c.deal;
 
   const submit = (e: SubmitEvent<HTMLFormElement>) => {
@@ -57,8 +58,12 @@ export function EditForm({ card: c, knownSets, onPhoto, onSaved }: Props) {
         checkedAt: today(),
       };
     }
-    onSaved();
-    void save(c, patch, "Saved");
+    // The form stays open until the change is saved, so nothing typed is lost if it isn't.
+    setSaving(true);
+    void save(c, patch, "Saved").then((ok) => {
+      setSaving(false);
+      if (ok) onSaved();
+    });
   };
 
   return (
@@ -144,8 +149,8 @@ export function EditForm({ card: c, knownSets, onPhoto, onSaved }: Props) {
       </label>
       <span />
       <div className="actions">
-        <button className="btn primary small" type="submit">
-          Save changes
+        <button className="btn primary small" type="submit" disabled={saving}>
+          {saving ? "Saving…" : "Save changes"}
         </button>
         <button className="btn small" type="button" onClick={onPhoto}>
           {c.img ? "Replace photo" : "Add photo"}

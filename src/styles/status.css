@@ -1,0 +1,20 @@
+/* ---------- status lines: offline, sign-in hints, load errors ---------- */
+.link-btn {
+  border: 0;
+  background: none;
+  padding: 10px 2px;
+  margin: -10px 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.banner.offline {
+  background: var(--sunk);
+  box-shadow: none;
+}
+.signin-hint {
+  margin-top: 4px;
+}

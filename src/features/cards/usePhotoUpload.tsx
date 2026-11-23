@@ -14,7 +14,7 @@ const UPLOAD_ERRORS: Record<UploadError["code"], string> = {
 export function usePhotoUpload(card: Card) {
   const input = useRef<HTMLInputElement>(null);
   const { save } = useCardWrites();
-  const { toast } = useToast();
+  const { toast, toastBusy } = useToast();
 
   const pick = useCallback(() => {
     if (!input.current) return;
@@ -24,9 +24,11 @@ export function usePhotoUpload(card: Card) {
 
   const onChange = async (file: File | undefined) => {
     if (!file) return;
-    toast("Uploading photo…");
+    // Stays up until the upload finishes, however long a big photo takes.
+    toastBusy("Uploading photo…");
     try {
       const url = await uploadPhoto(file);
+      // save() always replaces the busy message: "Photo added" or why it didn't save.
       await save(card, { img: url, imgSource: "upload" }, "Photo added");
     } catch (e) {
       toast(UPLOAD_ERRORS[e instanceof UploadError ? e.code : "failed"]);

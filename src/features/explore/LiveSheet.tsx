@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useAuth } from "~/features/auth/AuthProvider";
+import { SignInHint } from "~/features/auth/SignInHint";
 import { useCards } from "~/features/cards/api";
 import { findOnList, useAddCards, type WantOrGot } from "~/features/cards/create";
 import { isGot } from "~/features/cards/pricing";
 import { formatDate, formatMoney } from "~/lib/format";
 import { HeroImage } from "~/ui/CardImage";
 import { useLightbox } from "~/ui/Lightbox";
+import { LoadError } from "~/ui/LoadError";
 import { Sheet, SheetHead } from "~/ui/Sheet";
 import { useCloseWhen } from "~/ui/useCloseWhen";
 import { exploreLightbox } from "./display";
@@ -17,7 +19,7 @@ import { useCollections } from "~/features/cards/useCollections";
 
 /** A card from Explore's live data or the daily catalog: picture, today's price, and adding it. */
 export function LiveSheet({ id, onClose }: { id: string; onClose: () => void }) {
-  const { card, failed, missing } = useLiveCard(id);
+  const { card, failed, missing, retry } = useLiveCard(id);
   useCloseWhen(missing, onClose);
   return (
     <Sheet label="Card details" onClose={onClose} contentKey={id}>
@@ -33,7 +35,7 @@ export function LiveSheet({ id, onClose }: { id: string; onClose: () => void }) 
               <div className="skel skel-line" style={{ width: "40%" }} />
             </div>
           </div>
-          {failed ? <p className="hint">Couldn&apos;t load this card. Try again in a moment.</p> : null}
+          {failed ? <LoadError text="Couldn't load this card." onRetry={retry} /> : null}
         </>
       )}
     </Sheet>
@@ -92,7 +94,9 @@ function LiveDetail({ card: d }: { card: LiveCard }) {
         </div>
       ) : canWrite ? (
         <LiveActions card={d} />
-      ) : null}
+      ) : (
+        <SignInHint line action="add cards" />
+      )}
       <ShopLinks name={d.name} set={d.set} number={d.number} pid={d.pid} />
     </>
   );

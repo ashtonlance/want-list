@@ -14,12 +14,14 @@ type DocWrite =
 
 /**
  * Writes one document. The cached table updates straight away and rolls back if the write fails,
- * so the screen never waits on the network.
+ * so the screen never waits on the network. Offline, the write is tried anyway and fails at once,
+ * rather than waiting silently for a connection and getting lost if the app closes first.
  */
 export function useDocWrite(table: DocTableName) {
   const qc = useQueryClient();
   const key = docKeys[table];
   return useMutation({
+    networkMode: "always",
     mutationFn: (w: DocWrite) =>
       w.kind === "set"
         ? setDoc(table, w.id, w.data)

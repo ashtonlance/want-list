@@ -53,13 +53,15 @@ export function useLiveCard(id: string | null) {
   const isCat = id?.startsWith("cat:") ?? false;
   const catalog = useCatalog(isCat);
   const td = useQuery({ ...liveCardQuery(id ?? ""), enabled: id !== null && !isCat });
-  if (!isCat) return { card: td.data ?? null, failed: td.isError, missing: false };
+  if (!isCat)
+    return { card: td.data ?? null, failed: td.isError, missing: false, retry: () => void td.refetch() };
   const pid = Number(id?.slice(4));
   const row = catalog.data?.byPid.get(pid);
   return {
     card: row && catalog.data ? catalogLiveCard(catalog.data, row) : null,
     failed: catalog.isError,
     missing: catalog.data !== undefined && !row,
+    retry: () => void catalog.refetch(),
   };
 }
 

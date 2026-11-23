@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useAuth } from "~/features/auth/AuthProvider";
+import { SignInHint } from "~/features/auth/SignInHint";
 import { useCards } from "~/features/cards/api";
 import { useAddCards, type WantOrGot } from "~/features/cards/create";
 import { formatDate, formatMoney } from "~/lib/format";
@@ -106,7 +107,9 @@ function PickDetail({ pick }: { pick: PickCard }) {
         </div>
       ) : canWrite ? (
         <PickActions pick={p} />
-      ) : null}
+      ) : (
+        <SignInHint line action="add cards" />
+      )}
       <ShopLinks name={p.name} set={p.set} number={p.number} pid={p.tcgProduct} />
     </>
   );

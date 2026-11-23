@@ -53,7 +53,8 @@ export function BulkBar({ cards, visible, coll }: Props) {
     stopSelecting();
     void saveMany(
       picked.map((c) => [c, removeFromCollection(c, coll)] as const),
-      `Removed ${picked.length} from ${coll}`,
+      `Removed ${plural(picked.length, "card")} from ${coll}`,
+      {},
     );
   };
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
-import { WriteError } from "~/data/docs";
+import { WriteError, writeFailure } from "~/data/docs";
 import { useDocsQuery, useDocWrite } from "~/data/useDocs";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { isMetaDoc } from "~/features/cards/useCollections";
@@ -10,8 +10,8 @@ import { binderData, byCreated, parseBinder } from "./parse";
 import type { Binder } from "./types";
 
 /**
- * People who can view but not edit the shared binders still get to lay pages out: their first refused
- * change switches binders to this device, starting from copies of the shared ones.
+ * People who can view but not edit the shared binders still get to lay pages out, on this device, starting from
+ * copies of the shared ones. Set by an editor's write the database refused (the account lost access).
  */
 const viewOnly = createPersistedStore<boolean>(
   "wl-viewonly",
@@ -43,21 +43,29 @@ const merged = (shared: readonly Binder[], local: readonly Binder[]): Binder[] =
 export interface BindersApi {
   binders: Binder[];
   loaded: boolean;
+  /** The shared binders couldn't be loaded; `retry` asks again. */
+  failed: boolean;
+  retry: () => void;
   /** True when changes save on this device only. */
   local: boolean;
-  /** Saves a binder (new or changed). Always resolves true: a refused write saves on this device instead. */
+  /** Saves a binder (new or changed). Resolves false if it didn't save anywhere. */
   save: (b: Binder, message?: string) => Promise<boolean>;
   remove: (b: Binder) => Promise<void>;
+  /** Binders made or changed on this device that the shared binders don't have, for an editor to move over. */
+  deviceOnly: Binder[];
+  moveDeviceBinders: () => Promise<void>;
+  discardDeviceBinders: () => void;
 }
 
 export function useBinders(): BindersApi {
   const docs = useDocsQuery("layouts");
   const write = useDocWrite("layouts");
-  const { canWrite } = useAuth();
+  const { canWrite, ready } = useAuth();
   const flagged = useStore(viewOnly);
   const mine = useStore(localBinders);
-  const { toast } = useToast();
-  const local = flagged && !canWrite;
+  const { toast, toastUndo } = useToast();
+  // Anyone who can't edit works on this device from the start, so they know before their first change.
+  const local = !canWrite && (ready || flagged);
 
   // A confirmed editor edits the shared binders again.
   useEffect(() => {
@@ -96,8 +104,8 @@ export function useBinders(): BindersApi {
         await write.mutateAsync({ kind: "set", id: next.id, data: binderData(next) });
         if (message) toast(message);
       } catch (e) {
-        if (!(e instanceof WriteError && e.code === "denied") && canWrite) {
-          toast("Couldn't save. Check your connection and try again.");
+        if (!(e instanceof WriteError && e.code === "denied")) {
+          toast(writeFailure(e, "Couldn't save. Check your connection and try again."));
           return false;
         }
         viewOnly.set(true);
@@ -106,28 +114,72 @@ export function useBinders(): BindersApi {
       }
       return true;
     },
-    [local, saveLocally, write, toast, canWrite],
+    [local, saveLocally, write, toast],
   );
 
   const remove = useCallback<BindersApi["remove"]>(
     async (b) => {
-      const done = () => toast("Deleted. Your cards are untouched.");
-      if (local) {
-        localBinders.set(merged(shared, localBinders.get()).filter((x) => x.id !== b.id));
-        done();
-        return;
-      }
-      try {
-        await write.mutateAsync({ kind: "delete", id: b.id });
-        done();
-      } catch {
-        viewOnly.set(true);
-        localBinders.set(merged(shared, localBinders.get()).filter((x) => x.id !== b.id));
-        done();
-      }
+      if (local) localBinders.set(merged(shared, localBinders.get()).filter((x) => x.id !== b.id));
+      else
+        try {
+          await write.mutateAsync({ kind: "delete", id: b.id });
+        } catch (e) {
+          if (e instanceof WriteError && e.code === "denied")
+            toast("You can view the shared binders but not delete them");
+          else toast(writeFailure(e, "Couldn't delete it. Check your connection and try again."));
+          return;
+        }
+      // Saving the same binder again brings it back as it was.
+      toastUndo(`Deleted ${b.name}. Your cards are untouched.`, () => {
+        void save(b, `Put ${b.name} back`);
+      });
     },
-    [local, shared, write, toast],
+    [local, shared, write, toast, toastUndo, save],
   );
 
-  return { binders, loaded: docs.data !== undefined || local, local, save, remove };
+  const deviceOnly = useMemo(() => {
+    if (!canWrite) return [];
+    const byId = new Map(shared.map((b) => [b.id, b]));
+    return mine.filter((b) => {
+      const s = byId.get(b.id);
+      return !s || b.updatedAt > s.updatedAt;
+    });
+  }, [canWrite, shared, mine]);
+
+  const moveDeviceBinders = useCallback(async () => {
+    let moved = 0;
+    for (const b of deviceOnly)
+      try {
+        await write.mutateAsync({ kind: "set", id: b.id, data: binderData(b) });
+        moved++;
+      } catch {
+        // Counted below; the rest stay on this device to try again.
+      }
+    if (moved === deviceOnly.length) {
+      localBinders.set([]);
+      toast(`Moved ${moved === 1 ? "1 binder" : `${moved} binders`} to the shared binders`);
+    } else toast(writeFailure(undefined, `Moved ${moved} of ${deviceOnly.length}. Try again for the rest.`));
+  }, [deviceOnly, write, toast]);
+
+  const discardDeviceBinders = useCallback(() => {
+    const kept = localBinders.get();
+    localBinders.set([]);
+    toastUndo("Removed the binders saved on this device", () => localBinders.set(kept));
+  }, [toastUndo]);
+
+  const { refetch } = docs;
+  const retry = useCallback(() => void refetch(), [refetch]);
+
+  return {
+    binders,
+    loaded: docs.data !== undefined || local,
+    failed: docs.isError && docs.data === undefined && !local,
+    retry,
+    local,
+    save,
+    remove,
+    deviceOnly,
+    moveDeviceBinders,
+    discardDeviceBinders,
+  };
 }
