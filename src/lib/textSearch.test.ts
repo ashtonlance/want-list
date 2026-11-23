@@ -22,6 +22,9 @@ describe("textMatcher", () => {
     expect(matches("charizard 9", "charizard hidden fates sv9")).toBe(true);
     expect(matches("gardevoir 5", "gardevoir generations rc5")).toBe(true);
     expect(matches("pikachu 4", "pikachu jungle 4a")).toBe(true);
+    expect(matches("gengar 2", "gengar pt2: bonds to the end of time 40")).toBe(false);
+    expect(matches("mew 4", "mew sp4: eevee heroes 10")).toBe(false);
+    expect(matches("pikachu 8", "pikachu s8a-g: 25th anniversary golden box 5")).toBe(false);
   });
   it("matches words inside other words", () => {
     expect(matches("chu", "pikachu 151 173")).toBe(true);
