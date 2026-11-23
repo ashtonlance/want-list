@@ -1,0 +1,1 @@
+import{et as e}from"./index-DRIGi5y7.js";var t=e;export{t as component};
