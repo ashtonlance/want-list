@@ -1,0 +1,1 @@
+import{et as e}from"./index-DnWZkcFi.js";var t=e;export{t as component};
