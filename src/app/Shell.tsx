@@ -1,6 +1,7 @@
 import { Outlet } from "@tanstack/react-router";
 import { useRealtimeSync } from "~/data/realtime";
 import { AuthProvider } from "~/features/auth/AuthProvider";
+import { useSetNameCleanup } from "~/features/cards/useSetNameCleanup";
 import { Datalists } from "~/features/list/Datalists";
 import { LightboxProvider } from "~/ui/Lightbox";
 import { ToastProvider } from "~/ui/Toast";
@@ -26,6 +27,7 @@ export function Shell() {
 function Frame() {
   useRealtimeSync();
   useSectionMemory();
+  useSetNameCleanup();
   return (
     <>
       <Topbar />
