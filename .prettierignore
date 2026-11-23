@@ -10,3 +10,5 @@ setup.sql
 tools
 .github
 families.json
+types.json
+scenes.json

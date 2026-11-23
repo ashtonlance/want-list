@@ -1,6 +1,7 @@
 import type { Catalog } from "~/features/catalog/catalog";
 import { matchSeeds, percentiles, rowOf, type ArtIndex, type ArtMatch } from "./art";
 import { eraLabel, poolsOf, type CardFeatures } from "./features";
+import { lookFit, typesOf, type LookTheme } from "./look";
 import {
   buildTaste,
   distributionAffinity,
@@ -17,6 +18,8 @@ import {
  * he collects. Each affinity runs from -1 to 1, so these are also each signal's most points.
  */
 export const WEIGHTS = {
+  /** Fitting a collection's look (see look.ts): its scenes and types. Only for a collection with one. */
+  look: 4,
   species: 3,
   artist: 2.5,
   art: 2.5,
@@ -51,8 +54,22 @@ const SPECIFIC_REASON = 0.75;
 const MOSTLY = 0.3;
 /** At most this many cards' fingerprints stand for a collection, newest first. */
 const MAX_SEEDS = 16;
+/**
+ * A collection with a look (Ocean) only gets cards that show its scenes at least this much (a z-score, see
+ * look.ts), and a card fitting it LOOK_FULL counts fully. Without fingerprints a look is only types, and a
+ * card must be one.
+ */
+const LOOK_MIN = 1;
+/**
+ * A card that isn't one of the look's types must show its scenes this strongly (about the top 0.3%): a
+ * blue-tinted garden reads a little like the sea, a reef scene a lot.
+ */
+const LOOK_STRONG = 2.75;
+const LOOK_FULL = 4.5;
+/** Likeness to single cards counts this much less where a look decides, so a pick follows the theme, not one card's style. */
+const LOOK_ART = 0.5;
 
-export type ReasonKind = "artist" | "species" | "art" | "tier" | "era" | "plain";
+export type ReasonKind = "look" | "artist" | "species" | "art" | "tier" | "era" | "plain";
 
 export interface Scored {
   f: CardFeatures;
@@ -171,6 +188,8 @@ export interface CollectionInput {
   examples: readonly Example[];
   /** The Pokémon the collection is about, or null (see pokemonTheme). Picks are only ever those Pokémon. */
   theme: ReadonlySet<string> | null;
+  /** What a collection that isn't about particular Pokémon looks like, or null (see lookTheme). Picks follow it first. */
+  look: LookTheme | null;
   /** Every catalog card's features, in catalog order. */
   features: readonly CardFeatures[];
   art: ArtTaste | null;
@@ -184,6 +203,7 @@ export function rankForCollection({
   coll,
   examples,
   theme,
+  look,
   features,
   art,
   rows,
@@ -198,7 +218,10 @@ export function rankForCollection({
   for (const i of commonsOk ? pools.priced : pools.rare) {
     const f = features[i];
     if (!f || (f.jp && !jpOk)) continue;
-    const s = scoreCard(f, taste, artSignal(art, rows ? (rows[i] ?? -1) : -1), coll);
+    const row = rows ? (rows[i] ?? -1) : -1;
+    const fit = look ? lookSignal(look, f, row) : null;
+    if (fit && !fit.fits) continue;
+    const s = scoreCard(f, taste, artSignal(art, row), fit, coll);
     if (!s) continue;
     s.score += 0.3 * dayHash(f.c.pid, day);
     out.push(s);
@@ -206,10 +229,28 @@ export function rankForCollection({
   return out.sort((a, b) => b.score - a.score || b.f.date.localeCompare(a.f.date));
 }
 
+/**
+ * How a card fits a collection's look: whether it fits enough to suggest, how much it counts, and the scene
+ * or type it shares. A card without a fingerprint yet (a set synced today) can only be judged by its type.
+ */
+function lookSignal(look: LookTheme, f: CardFeatures, row: number) {
+  const fit = lookFit(look, f, row);
+  const seen = look.sceneFit !== null && row >= 0;
+  const scene = seen ? (look.sceneFit?.[row] ?? 0) : 0;
+  const shares = typesOf(f).find((t) => look.types.has(t));
+  const fits = !seen ? shares !== undefined : scene >= (shares || !look.types.size ? LOOK_MIN : LOOK_STRONG);
+  const shared =
+    scene >= LOOK_MIN || !shares
+      ? { kind: "scene" as const, label: look.scenes[look.sceneOf?.[row] ?? 0]?.label ?? "" }
+      : { kind: "type" as const, label: shares };
+  return { fits, value: Math.min(1, fit / LOOK_FULL), shared };
+}
+
 function scoreCard(
   f: CardFeatures,
   t: Taste,
   art: ReturnType<typeof artSignal>,
+  look: ReturnType<typeof lookSignal> | null,
   coll: string,
 ): Scored | null {
   // In a collection about its Pokémon (Mew & Mewtwo), only those Pokémon are picks, and they always count.
@@ -230,7 +271,7 @@ function scoreCard(
   const artist = identityAffinity(t, "artist", f.artist);
   // A card needs a real reason: its Pokémon, its artist, its look, or the collection's kind of full art.
   // Checked before anything else, since most of the catalog has none.
-  const named = species > 0 || artist > 0 || (art !== null && art.like >= ART_ALONE);
+  const named = look !== null || species > 0 || artist > 0 || (art !== null && art.like >= ART_ALONE);
   if (!named && f.tier < 3) return null;
   const tier = distributionAffinity(t, "tier", f.tier);
   const era = distributionAffinity(t, "era", f.era);
@@ -238,13 +279,15 @@ function scoreCard(
   const band = distributionAffinity(t, "band", f.band);
 
   const parts: Record<Exclude<ReasonKind, "plain">, number> = {
+    look: look ? WEIGHTS.look * look.value : 0,
     species: WEIGHTS.species * species,
     artist: WEIGHTS.artist * artist,
-    art: art ? WEIGHTS.art * (2 * art.like - 1) : 0,
+    art: art ? WEIGHTS.art * (look ? LOOK_ART : 1) * (2 * art.like - 1) : 0,
     tier: WEIGHTS.tier * tier,
     era: WEIGHTS.era * era,
   };
-  let score = parts.species + parts.artist + parts.art + parts.tier + parts.era + WEIGHTS.band * band;
+  let score =
+    parts.look + parts.species + parts.artist + parts.art + parts.tier + parts.era + WEIGHTS.band * band;
   if (art) score -= WEIGHTS.artPassed * art.passedMore;
   const pricey = t.maxPrice > 0 && f.price > Math.max(t.maxPrice * PRICE_STRETCH, PRICE_FLOOR);
   if (pricey) score -= PRICE_PENALTY;
@@ -261,7 +304,7 @@ function scoreCard(
         : true;
   const best = (ks: (keyof typeof parts)[]) =>
     ks.filter((k) => parts[k] > 0 && counted(k)).sort((a, b) => parts[b] - parts[a])[0];
-  const specific = best(["artist", "species", "art"]);
+  const specific = best(["look", "artist", "species", "art"]);
   const kind: ReasonKind =
     (specific && parts[specific] >= SPECIFIC_REASON ? specific : best(["tier", "era"])) ??
     specific ??
@@ -274,7 +317,13 @@ function scoreCard(
     // One card by an artist isn't a theme yet.
     artist: t.kept >= 2 && mostly(t.artistCount.get(f.artist)),
   };
-  return { f, score, kind, uncapped, explain: () => reasonFor(kind, f, t, coll, speciesName, seed) };
+  return {
+    f,
+    score,
+    kind,
+    uncapped,
+    explain: () => reasonFor(kind, f, t, coll, speciesName, seed, look?.shared),
+  };
 }
 
 function reasonFor(
@@ -284,8 +333,13 @@ function reasonFor(
   coll: string,
   species: string,
   seed: CardFeatures | undefined,
+  shared: ReturnType<typeof lookSignal>["shared"] | undefined,
 ): string {
   switch (kind) {
+    case "look":
+      return shared?.kind === "type"
+        ? `${titleCase(shared.label)} type, like most of ${coll}`
+        : `${shared?.label ?? "Its scene"}, like the cards in ${coll}`;
     case "artist":
       return `Art by ${f.artist}, like ${cardsWord(t.artistCount.get(f.artist) ?? 0)} in ${coll}`;
     case "species":

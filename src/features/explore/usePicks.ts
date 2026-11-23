@@ -10,14 +10,17 @@ import { useCollections } from "~/features/cards/useCollections";
 import { useCatalog } from "~/features/catalog/catalog";
 import { today } from "~/lib/format";
 import { useStore } from "~/lib/store";
-import { parsePick, withSyncedPrice, type PickCard } from "./picks";
+import { parsePick, WILDCARDS, withSyncedPrice, type PickCard } from "./picks";
+import { depthOf, depthStore, depthToday } from "./recs/depth";
 import { keptToday, shownStore } from "./recs/shown";
 import { useArtIndex, useWarmedArt } from "./recs/useArtIndex";
 import { artWarmup, offThemePicks, refillPicks, type RefillInput } from "./refill";
 
 /**
  * Every saved pick with today's synced prices, but for waiting ones that no longer fit their collection
- * (those are deleted once an editor is signed in), plus refill picks so no collection runs dry.
+ * and any of a collection no longer on the list (see offThemePicks; those of another Pokémon than a
+ * collection is about are deleted once an editor is signed in), plus refill picks so no collection runs
+ * dry, as many as he has scrolled down to in For You.
  * Refill picks show from the catalog alone; art fingerprints sharpen the ones that fill later gaps.
  */
 export function usePicks(): { picks: PickCard[]; loaded: boolean; refilled: boolean; day: string } {
@@ -29,6 +32,7 @@ export function usePicks(): { picks: PickCard[]; loaded: boolean; refilled: bool
   const day = today();
   const shown = useStore(shownStore);
   const keep = keptToday(shown, day);
+  const tabDepth = depthToday(useStore(depthStore), day);
   const saved = useMemo(
     () => (docs.data ?? []).map((d) => withSyncedPrice(parsePick(d.id, d.data), prices.data)),
     [docs.data, prices.data],
@@ -48,12 +52,16 @@ export function usePicks(): { picks: PickCard[]; loaded: boolean; refilled: bool
     [catalog.data, docs.data, listLoaded, cards, saved, collections, day, keep],
   );
   const art = useWarmedArt(useArtIndex(), input, artWarmup);
-  const refill = useMemo(() => (input ? refillPicks({ ...input, art }) : []), [input, art]);
-  const hidden = useMemo(() => (input ? offThemePicks(input) : null), [input]);
-  useDropPicks(hidden);
+  const depth = useMemo(
+    () => new Map([WILDCARDS, ...collections.map((c) => c.name)].map((c) => [c, depthOf(tabDepth, c)])),
+    [collections, tabDepth],
+  );
+  const refill = useMemo(() => (input ? refillPicks({ ...input, art, depth }) : []), [input, art, depth]);
+  const out = useMemo(() => (input ? offThemePicks({ ...input, art }) : null), [input, art]);
+  useDropPicks(out?.drop ?? null);
   const picks = useMemo(
-    () => [...(hidden?.size ? saved.filter((p) => !hidden.has(p.id)) : saved), ...refill],
-    [saved, hidden, refill],
+    () => [...saved, ...refill].filter((p) => !out?.hidden.has(p.id)),
+    [saved, out, refill],
   );
   return {
     picks,

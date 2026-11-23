@@ -6,6 +6,8 @@ import type { PickCard } from "../picks";
 import { artWarmup, offThemePicks, refillPicks } from "../refill";
 import { matchSeeds, parseArt, percentiles, rowOf, type ArtIndex } from "./art";
 import { catalogFeatures, eraOf, priceBand, type CardFeatures } from "./features";
+import { lookTheme } from "./look";
+import scenes from "./scenes.json";
 import {
   buildTaste,
   distributionAffinity,
@@ -205,6 +207,20 @@ describe("refill ranking", () => {
     expect(mew).toHaveLength(8);
     expect(mew.every((p) => p.name === "Mew")).toBe(true);
 
+    // Scrolled further down, it shows more, as far as its ten Mews go.
+    const deeper = (n: number) =>
+      refillPicks({
+        ...base,
+        catalog: mixed,
+        collections: [MM],
+        cards: mine,
+        picks: [],
+        depth: new Map([[MM, n]]),
+      });
+    expect(deeper(10).filter((p) => p.coll === MM)).toHaveLength(10);
+    expect(deeper(20).filter((p) => p.coll === MM)).toHaveLength(10);
+    expect(deeper(10).slice(0, 8)).toEqual(out.filter((p) => p.coll === MM));
+
     // A pick of another Pokémon kept from before the collection was about Mew goes.
     const keep = [{ coll: MM, pid: 300, reason: "Shown earlier" }];
     const again = refillPicks({
@@ -237,7 +253,22 @@ describe("refill ranking", () => {
     const named = refillPicks(input).filter((p) => p.coll === MM);
     expect(named).toHaveLength(8);
     expect(named.every((p) => p.name === "Mew")).toBe(true);
-    expect([...offThemePicks(input)]).toEqual(["zekrom"]);
+    expect(offThemePicks(input)).toEqual({ hidden: new Set(["zekrom"]), drop: new Set(["zekrom"]) });
+
+    // Once the collection is deleted its picks are out of sight but kept, and their cards free for others.
+    const gone = { ...input, collections: ["Psychic"] };
+    expect(offThemePicks(gone)).toEqual({ hidden: new Set(["zekrom"]), drop: new Set() });
+    const waiting = { ...stale, id: "w", name: "Mew", number: "1", tcgProduct: 200 };
+    const renamed = mine.map((c) => ({ ...c, collections: ["Mew"] }));
+    const placed = refillPicks({
+      ...base,
+      catalog: mixed,
+      collections: ["Mew"],
+      cards: renamed,
+      picks: [waiting],
+      depth: new Map([["Mew", 20]]),
+    });
+    expect(placed.some((p) => p.coll === "Mew" && p.tcgProduct === 200)).toBe(true);
   });
 
   it("counts a pick he added once, as the card it put on the list", () => {
@@ -265,7 +296,7 @@ describe("refill ranking", () => {
     ]);
     const direct = refillPicks({ ...base, day: "2026-11-21", cards: listed, picks: [], art: index });
     const steps = artWarmup({ ...base, day: "2026-11-21", cards: listed, picks: [] }, index);
-    expect(steps).toHaveLength(4); // two per collection, Spooky and Wildcards
+    expect(steps).toHaveLength(5); // the scenes, then two per collection, Spooky and Wildcards
     for (const step of steps) step();
     expect(refillPicks({ ...base, day: "2026-11-21", cards: listed, picks: [], art: index })).toEqual(direct);
   });
@@ -494,5 +525,113 @@ describe("art fingerprints", () => {
     expect(rank(0)).toBe(0);
     expect(rank(2)).toBe(0.5);
     expect(rank(10)).toBe(1);
+  });
+});
+
+describe("looks", () => {
+  // Fingerprints pointing along one scene's direction, or part of the way along it.
+  const dirs = scenes.scenes.map((s) => {
+    const n = Math.hypot(...s.v);
+    return s.v.map((x) => x / n);
+  });
+  const along = (scene: number, share = 1, noise = 0): number[] =>
+    (dirs[scene] ?? []).map((x, k) => {
+      const other = dirs[(scene + 30) % dirs.length]?.[k] ?? 0;
+      return Math.round(127 * (share * x + (1 - share) * other) * 0.9 + ((k * 7 + noise) % 5) - 2);
+    });
+  const UNDERWATER = 0;
+  const others = [32, 12, 42, 22, 43, 46];
+  const fillers = ["Diglett", "Vulpix", "Pikachu", "Geodude", "Sandshrew", "Growlithe"];
+  const sea = parseCatalog({
+    asOf: cat.asOf,
+    sets: [["Mask Set", 0, SV]],
+    rarities: ["Illustration Rare"],
+    artists: ["Aya"],
+    cards: [
+      // On the list: Water types under the sea.
+      ...["Squirtle", "Horsea", "Goldeen", "Lapras"].map((n, i) => [
+        100 + i,
+        n,
+        0,
+        String(100 + i),
+        0,
+        20,
+        0,
+      ]),
+      // Candidates: more of them, a Water type half under the sea, a Grass type fully under it, one half under it.
+      ...["Psyduck", "Poliwag", "Staryu", "Magikarp"].map((n, i) => [
+        200 + i,
+        n,
+        0,
+        String(200 + i),
+        0,
+        20,
+        0,
+      ]),
+      [210, "Krabby", 0, "210", 0, 20, 0],
+      [211, "Tangela", 0, "211", 0, 20, 0],
+      [212, "Oddish", 0, "212", 0, 20, 0],
+      // Everything else shows deserts, forests, flames, space, streets and rooms (a Pikachu in flames at 302).
+      ...Array.from({ length: 120 }, (_, i) => [300 + i, fillers[i % 6], 0, String(300 + i), 0, 20, 0]),
+    ],
+  });
+  const index = artIndex(48, [
+    ...[100, 101, 102, 103, 200, 201, 202, 203].map((pid): [number, number[]] => [
+      pid,
+      along(UNDERWATER, 1, pid),
+    ]),
+    [210, along(UNDERWATER, 0.5)],
+    [211, along(UNDERWATER)],
+    [212, along(UNDERWATER, 0.5)],
+    ...Array.from({ length: 120 }, (_, i): [number, number[]] => [300 + i, along(others[i % 6] ?? 32, 1, i)]),
+  ]);
+  const ocean = ["Squirtle", "Horsea", "Goldeen", "Lapras"].map((name, i) =>
+    card({ id: name, name, number: String(100 + i), collections: ["Ocean"] }),
+  );
+  const input = { ...base, catalog: sea, collections: ["Ocean"], cards: ocean, picks: [], art: index };
+
+  it("works out what a collection's cards show and which type they are", () => {
+    const features = catalogFeatures(sea);
+    const kept = features.slice(0, 4);
+    const look = lookTheme({
+      coll: "Ocean",
+      kept,
+      features,
+      index,
+      rowOf: (f) => rowOf(index, f.c.pid),
+    });
+    expect(look?.types).toEqual(new Set(["water"]));
+    expect(look?.scenes.map((x) => x.label)).toContain("Underwater scene");
+    // Without fingerprints it's only the type; with too few cards, nothing.
+    expect(lookTheme({ coll: "Ocean", kept, features, index: null, rowOf: () => -1 })?.sceneFit).toBeNull();
+    expect(lookTheme({ coll: "Ocean", kept: kept.slice(0, 2), features, index, rowOf: () => -1 })).toBeNull();
+  });
+
+  it("suggests cards of its type in its scenes, and others only when they show them strongly", () => {
+    const names = refillPicks(input)
+      .filter((p) => p.coll === "Ocean")
+      .map((p) => p.name);
+    expect(names).toEqual(
+      expect.arrayContaining(["Psyduck", "Poliwag", "Staryu", "Magikarp", "Krabby", "Tangela"]),
+    );
+    expect(names).not.toContain("Oddish");
+    expect(names.some((n) => fillers.includes(n))).toBe(false);
+  });
+
+  it("puts waiting picks far off the look out of sight", () => {
+    const stale = pick({
+      id: "fire",
+      coll: "Ocean",
+      status: "new",
+      name: "Pikachu",
+      number: "302",
+      tcgProduct: 302,
+    });
+    // Out of sight, but not deleted: a look shifts with the cards and fingerprints.
+    expect(offThemePicks({ ...input, picks: [stale] })).toEqual({
+      hidden: new Set(["fire"]),
+      drop: new Set(),
+    });
+    expect(offThemePicks({ ...input, art: null, picks: [stale] }).hidden.size).toBe(0);
   });
 });

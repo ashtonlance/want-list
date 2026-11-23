@@ -4,6 +4,7 @@ import type { Card } from "~/features/cards/types";
 import { WILDCARDS, type PickCard } from "./picks";
 import type { ArtIndex } from "./recs/art";
 import { catalogFeatures, type CardFeatures } from "./recs/features";
+import { lookTheme, offLook, sceneStats, type LookTheme } from "./recs/look";
 import { artRows, artTaste, rankForCollection, rankWildcards, type Scored } from "./recs/rank";
 import { fitsTheme, knownSpecies, pokemonTheme, type Example } from "./recs/taste";
 
@@ -44,6 +45,11 @@ export interface RefillInput {
   art?: ArtIndex | null;
   /** Refill picks already shown today. They stay, in order, while they're still open. */
   keep?: readonly KeptPick[];
+}
+
+/** For refilling: collections scrolled further than MIN_OPEN, with how many open picks each shows now. */
+export interface RefillDepth {
+  depth?: ReadonlyMap<string, number>;
 }
 
 const stripZeros = (s: string) => s.replace(/^0+/, "").toLowerCase();
@@ -119,6 +125,8 @@ function remembered(
   return out;
 }
 
+const lookCache = new WeakMap<readonly CardFeatures[], WeakMap<object, Map<string, LookTheme | null>>>();
+
 interface CollectionExamples {
   /** Every example for and against, for the taste model. */
   examples: Example[];
@@ -132,8 +140,10 @@ interface CollectionExamples {
 }
 
 /** What refilling and art warm-up both need: catalog lookups, the list, and each collection's examples. */
-function contextOf({ catalog: cat, cards, picks, day }: RefillInput) {
+function contextOf({ catalog: cat, cards, picks, collections, day, art: shownArt = null }: RefillInput) {
   const features = catalogFeatures(cat);
+  // Picks of a collection no longer on the list (deleted or renamed away) stay saved, out of sight.
+  const current = new Set([...collections, WILDCARDS]);
   const { byKey, byPid } = lookups(cat);
   const featuresOf = (
     pid: number | null,
@@ -211,6 +221,38 @@ function contextOf({ catalog: cat, cards, picks, day }: RefillInput) {
     return hit;
   };
 
+  /** A card's row in the art index, or -1. */
+  const rowIn = (art: ArtIndex | null, f: CardFeatures) => {
+    const at = art ? byPid.get(f.c.pid) : undefined;
+    return art && at !== undefined ? (artRows(art, cat, features)[at] ?? -1) : -1;
+  };
+
+  /**
+   * The look of a collection that isn't about particular Pokémon (see lookTheme), remembered for the same
+   * cards and fingerprints.
+   */
+  const lookFor = (coll: string, art: ArtIndex | null): LookTheme | null => {
+    const { examples, theme } = examplesFor(coll);
+    if (coll === WILDCARDS || theme) return null;
+    const kept = examples.filter((e) => e.weight >= LISTED).map((e) => e.f);
+    let byArt = lookCache.get(features);
+    if (!byArt) lookCache.set(features, (byArt = new WeakMap<object, Map<string, LookTheme | null>>()));
+    let byKey = byArt.get(art ?? NO_ART);
+    if (!byKey) byArt.set(art ?? NO_ART, (byKey = new Map<string, LookTheme | null>()));
+    const key = `${coll}|${kept.map((f) => f.c.pid).join(",")}`;
+    let hit = byKey.get(key);
+    if (hit === undefined) {
+      hit = lookTheme({ coll, kept, features, index: art, rowOf: (f) => rowIn(art, f) });
+      if (byKey.size > 64) byKey.clear();
+      byKey.set(key, hit);
+    }
+    return hit;
+  };
+
+  /** True when a card is clearly not what its collection is about: another Pokémon, or far off its look. */
+  const offThemeFor = (coll: string, f: CardFeatures) =>
+    !fitsTheme(examplesFor(coll).theme, f) || offLook(lookFor(coll, shownArt), f, rowIn(shownArt, f));
+
   /** How a collection's cards look, from the fingerprints; the costly part, remembered for the same cards. */
   const artFor = (coll: string, art: ArtIndex | null) => {
     if (!art) return null;
@@ -236,25 +278,67 @@ function contextOf({ catalog: cat, cards, picks, day }: RefillInput) {
           }),
         )
       : remembered(features, art, `${day}|${coll}`, examples, () =>
-          rankForCollection({ coll, examples, theme, features, art: artOf(), rows, day }),
+          rankForCollection({
+            coll,
+            examples,
+            theme,
+            look: lookFor(coll, art),
+            features,
+            art: artOf(),
+            rows,
+            day,
+          }),
         );
   };
-  /** A waiting pick saved for a collection that's about other Pokémon, as one saved before it was. */
+  /** A waiting pick of a collection on the list that's clearly off its theme (see offThemeFor), as one saved before it had one. */
   const offTheme = (p: PickCard) => {
-    if (p.status !== "new") return false;
+    if (p.status !== "new" || !current.has(p.coll)) return false;
+    const f = ofPick(p);
+    return f !== undefined && offThemeFor(p.coll, f);
+  };
+  /** A pick out of sight: one of a collection no longer on the list, or a waiting one off its theme. */
+  const outOfSight = (p: PickCard) => !current.has(p.coll) || offTheme(p);
+  /**
+   * A waiting pick of another Pokémon than its collection is about. Unlike a look, which shifts with the
+   * cards and fingerprints, that holds, so such a pick can go for good.
+   */
+  const offPokemon = (p: PickCard) => {
+    if (p.status !== "new" || !current.has(p.coll)) return false;
     const f = ofPick(p);
     return f !== undefined && !fitsTheme(examplesFor(p.coll).theme, f);
   };
-  return { features, byPid, ofPick, onList, examplesFor, artFor, rankedFor, offTheme };
+  return {
+    features,
+    byPid,
+    ofPick,
+    onList,
+    examplesFor,
+    artFor,
+    rankedFor,
+    outOfSight,
+    offPokemon,
+    offThemeFor,
+  };
+}
+
+export interface HiddenPicks {
+  /** Saved picks not to show: those of a collection no longer on the list, and waiting ones off its theme. */
+  hidden: ReadonlySet<string>;
+  /** Of those, waiting picks of another Pokémon than their collection is about, which can be deleted. */
+  drop: ReadonlySet<string>;
 }
 
 /**
- * Saved picks waiting for an answer that no longer fit their collection: one about Mew and Mewtwo
- * shows no N's Zekrom, even one picked for it before. They stay saved, just out of sight.
+ * Saved picks out of sight. A collection about Mew and Mewtwo shows no N's Zekrom, and Ocean no desert
+ * Dugtrio, even one picked for it before; a deleted collection shows none, so undoing the delete brings
+ * them back. Looks need the art fingerprints, so picks off a look are only found once input.art is in.
  */
-export function offThemePicks(input: RefillInput): ReadonlySet<string> {
-  const { offTheme } = contextOf(input);
-  return new Set(input.picks.filter(offTheme).map((p) => p.id));
+export function offThemePicks(input: RefillInput): HiddenPicks {
+  const { outOfSight, offPokemon } = contextOf(input);
+  return {
+    hidden: new Set(input.picks.filter(outOfSight).map((p) => p.id)),
+    drop: new Set(input.picks.filter(offPokemon).map((p) => p.id)),
+  };
 }
 
 /**
@@ -263,45 +347,52 @@ export function offThemePicks(input: RefillInput): ReadonlySet<string> {
  */
 export function artWarmup(input: RefillInput, art: ArtIndex): (() => void)[] {
   const { artFor, rankedFor } = contextOf(input);
-  // Two steps per collection: matching its look, then ranking with it.
-  return [...input.collections, WILDCARDS].flatMap((coll) => [
-    () => void artFor(coll, art),
-    () => void rankedFor(coll, art),
-  ]);
+  // How every card sits on each scene first, then two steps per collection: matching its look, then ranking with it.
+  return [
+    () => void sceneStats(art),
+    ...[...input.collections, WILDCARDS].flatMap((coll) => [
+      () => void artFor(coll, art),
+      () => void rankedFor(coll, art),
+    ]),
+  ];
 }
 
 /**
- * Picks that top every collection back up to MIN_OPEN open picks, drawn from the full catalog and ranked
- * by what the collection's cards, added picks and passed picks say about its taste (see recs/rank.ts).
- * Picks already shown today stay put; only the gaps are filled. Nothing is saved until a card is added
- * or passed on.
+ * Picks that top every collection back up to MIN_OPEN open picks (more for one he has scrolled further
+ * down), drawn from the full catalog and ranked by what the collection's cards, added picks and passed
+ * picks say about its taste (see recs/rank.ts). Picks already shown today stay put; only the gaps are
+ * filled. Nothing is saved until a card is added or passed on.
  */
-export function refillPicks(input: RefillInput): PickCard[] {
-  const { catalog: cat, picks, collections, art = null, keep = [] } = input;
-  const { features, byPid, ofPick, onList, examplesFor, rankedFor, offTheme } = contextOf(input);
+export function refillPicks(input: RefillInput & RefillDepth): PickCard[] {
+  const { catalog: cat, picks, collections, art = null, keep = [], depth } = input;
+  const { features, byPid, ofPick, onList, examplesFor, rankedFor, outOfSight, offThemeFor } =
+    contextOf(input);
 
-  // Never suggest a card that's already a pick anywhere, or twice across collections. A pick out of sight
+  // Never suggest a card that's already a pick anywhere, or twice across collections. A waiting pick out of sight
   // (see offThemePicks) frees its card for a collection that wants it.
   const taken = new Set<number>();
   for (const p of picks) {
-    if (offTheme(p)) continue;
+    if (p.status === "new" && outOfSight(p)) continue;
     const f = ofPick(p);
     if (f) taken.add(f.c.pid);
   }
   const unseen = (pid: number) => !onList.has(pid) && !taken.has(pid);
   const order = [...collections, WILDCARDS];
   const needOf = (coll: string) =>
-    MIN_OPEN -
+    Math.max(MIN_OPEN, depth?.get(coll) ?? 0) -
     picks.filter(
       (p) =>
-        p.coll === coll && p.status === "new" && !(p.tcgProduct && onList.has(p.tcgProduct)) && !offTheme(p),
+        p.coll === coll &&
+        p.status === "new" &&
+        !(p.tcgProduct && onList.has(p.tcgProduct)) &&
+        !outOfSight(p),
     ).length;
-  // A kept Wildcard goes once its Pokémon joins a collection, and a kept pick of another Pokémon once its
-  // collection turns out to be about its own Pokémon, as a fresh ranking would drop either.
+  // A kept Wildcard goes once its Pokémon joins a collection, and a kept pick once it turns out clearly off
+  // its collection's theme (another Pokémon, or far off its look), as a fresh ranking would drop either.
   const collected = examplesFor(WILDCARDS).collected;
   const stillFits = (k: KeptPick, f: CardFeatures) =>
     unseen(k.pid) &&
-    fitsTheme(examplesFor(k.coll).theme, f) &&
+    !offThemeFor(k.coll, f) &&
     !(k.coll === WILDCARDS && f.species.some((sp) => collected.has(sp)));
   // Picks on screen belong to their collection: no other collection may take them while they're shown.
   const reserved = new Map<number, string>();
@@ -331,7 +422,7 @@ export function refillPicks(input: RefillInput): PickCard[] {
     // Kept picks were capped when they were first chosen, so only ranked picks are capped here.
     // Open picks already saved count toward the caps too.
     for (const p of picks) {
-      if (p.coll !== coll || p.status !== "new" || offTheme(p)) continue;
+      if (p.coll !== coll || p.status !== "new" || outOfSight(p)) continue;
       const f = ofPick(p);
       if (!f) continue;
       const sp = f.species[0] ?? f.name;

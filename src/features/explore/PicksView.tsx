@@ -1,5 +1,5 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import { Fragment, useCallback, useEffect, useMemo, useRef } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useOverlayNav } from "~/app/overlayNav";
 import { useAuth } from "~/features/auth/AuthProvider";
 import { useCards } from "~/features/cards/api";
@@ -41,7 +41,10 @@ import {
 } from "./state";
 import { usePickStatus } from "./usePickStatus";
 import { usePicks } from "./usePicks";
+import { depthOf, depthStore, depthToday, showDeeper } from "./recs/depth";
 import { rememberShown } from "./recs/shown";
+import { MIN_OPEN } from "./refill";
+import { useStore } from "~/lib/store";
 import { useCollections } from "~/features/cards/useCollections";
 
 const SORTS: readonly { value: PicksSort; label: string }[] = [
@@ -57,6 +60,12 @@ const LOOKS = [
   { value: "any", label: "Any look" },
   { value: "full", label: "Full art only" },
 ] as const;
+
+/** Scrolling to the end of a tab shows this many more picks for its collection, or for each in "All picks"... */
+const PAGE = 8;
+const ALL_PAGE = 4;
+/** ...up to this many open picks per collection. */
+const MAX_DEPTH = 240;
 
 interface CollTab {
   name: string;
@@ -229,10 +238,18 @@ export function PicksView() {
 
   // A new tab or filter fades the picks in; passing on one lets the rest glide into its place.
   const grid = useRef<HTMLDivElement>(null);
-  useEnterAnimation(
-    grid,
-    [tab, artist, ui.sort, ui.cap, ui.rarity, ui.fullArt, ui.era, ui.showPassed, ui.hideAdded].join("|"),
-  );
+  const view = [
+    tab,
+    artist,
+    ui.sort,
+    ui.cap,
+    ui.rarity,
+    ui.fullArt,
+    ui.era,
+    ui.showPassed,
+    ui.hideAdded,
+  ].join("|");
+  useEnterAnimation(grid, view);
   const pass = (p: PickCard) => {
     const tile = document.querySelector(`[data-sr="${CSS.escape(p.id)}"]`);
     glide(
@@ -241,7 +258,40 @@ export function PicksView() {
     );
   };
 
-  useScrollRestoration(`picks:${tab ?? ""}:${artist}`, loaded);
+  // The end of the tab coming into view shows more picks, while its collections still have more to give
+  // (one that came up short of how many it should show has run out) and the last page showed something:
+  // with filters that hide nearly everything, it stops rather than loading page after page out of sight.
+  const tabDepth = depthToday(useStore(depthStore), day);
+  const target = (c: string) => Math.max(MIN_OPEN, depthOf(tabDepth, c));
+  const reach = tab ? target(tab) : MIN_OPEN;
+  const searched = `${view}|${q}`;
+  const [lastPage, setLastPage] = useState<{ view: string; shown: number } | null>(null);
+  const stalled = lastPage?.view === searched && lastPage.shown === shown.length;
+  const more =
+    loaded &&
+    !stalled &&
+    reach < MAX_DEPTH &&
+    (isAll
+      ? tabs.some((t) => t.open >= target(t.name))
+      : (tabs.find((t) => t.name === tab)?.open ?? 0) >= reach);
+  const foot = useRef<HTMLParagraphElement>(null);
+  // A fresh observer after every page, so a page that still leaves the end in view loads the next one.
+  useEffect(() => {
+    const el = foot.current;
+    if (!el || !more || !tab) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        setLastPage({ view: searched, shown: shown.length });
+        showDeeper(tab, day, reach, isAll ? ALL_PAGE : PAGE, MAX_DEPTH);
+      },
+      { rootMargin: "1500px 0px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [more, tab, day, reach, isAll, searched, shown.length]);
+
+  useScrollRestoration(`picks:${tab ?? ""}:${artist}`, loaded, reach);
 
   if (!loaded) return <SkeletonGrid className="ex-grid" count={6} />;
   if (!tab)
@@ -444,6 +494,11 @@ export function PicksView() {
           </div>
         )}
       </div>
+      {more ? (
+        <p className="hint lv-foot" ref={foot}>
+          Loading more…
+        </p>
+      ) : null}
       <p className="hint">
         {about} Prices are TCGplayer market before shipping{asOf ? `, as of ${formatDate(asOf)}` : ""}. Picks
         refill on their own as you add cards or pass on them. Ask Claude in chat for hand-picked ones.
